@@ -1,3 +1,11 @@
+/**
+ * JavaScript for the Navigation Timing MediaWiki extension.
+ * @see https://secure.wikimedia.org/wikipedia/mediawiki/wiki/Extension:NavigationTiming
+ *
+ * @licence GNU GPL v3 or later
+ * @author Patrick Reilly <preilly@wikimedia.org>
+ */
+
 mw.navigationTiming = ( function( $ ) {
 function init() {
 	var timing, navigation, timingBase64Str, navigationBase64Str, timingSHA1, navigationSHA1, eventString;
