@@ -32,6 +32,20 @@ $wgExtensionCredits['other'][] = array(
 );
 
 $dir = dirname( __FILE__ ) . '/';
+// Autoload classes
+$wgAutoloadClasses['NavigationTimingHooks'] = $dir . 'NavigationTiming.hooks.php';
+
+// Hooked functions
+$wgHooks['BeforePageDisplay'][] = 'NavigationTimingHooks::beforePageDisplay';
 
 // i18n
 $wgExtensionMessagesFiles['NavigationTiming'] = $dir . 'NavigationTiming.i18n.php';
+
+// Resource modules
+$ctResourceTemplate = array(
+	'localBasePath' => $dir . 'modules',
+	'remoteExtPath' => 'NavigationTiming/modules',
+);
+$wgResourceModules['jquery.NavigationTiming'] = array(
+	'scripts' => array( 'jquery.crypt.js', 'ext.NavigationTiming.js' ),
+) + $ctResourceTemplate;
