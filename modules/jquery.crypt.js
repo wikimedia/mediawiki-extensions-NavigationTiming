@@ -1,4 +1,5 @@
 /*
+ * Trimmed by Patrick Reilly <preilly@wikimedia.org>
  * jQuery Cryptography Plug-in
  * version: 1.0.0 (24 Sep 2008)
  * copyright 2008 Scott Thompson http://www.itsyndicate.ca - scott@itsyndicate.ca
@@ -31,10 +32,6 @@
  * Distributed under the BSD License
  * See http://pajhome.org.uk/crypt/md5 for more info.
  *
- * xTea Encrypt and Decrypt
- * copyright 2000-2005 Chris Veness
- * http://www.movable-type.co.uk
- *
  *
  * Examples:
  *
@@ -42,10 +39,6 @@
 		var sha1 = $().crypt({method:"sha1",source:$("#phrase").val()});
 		var b64 = $().crypt({method:"b64enc",source:$("#phrase").val()});
 		var b64dec = $().crypt({method:"b64dec",source:b64});
-		var xtea = $().crypt({method:"xteaenc",source:$("#phrase").val(),keyPass:$("#passPhrase").val()});
-		var xteadec = $().crypt({method:"xteadec",source:xtea,keyPass:$("#passPhrase").val()});
-		var xteab64 = $().crypt({method:"xteab64enc",source:$("#phrase").val(),keyPass:$("#passPhrase").val()});
-		var xteab64dec = $().crypt({method:"xteab64dec",source:xteab64,keyPass:$("#passPhrase").val()});
 
 	You can also pass source this way.
 	var md5 = $("#idOfSource").crypt({method:"md5"});
@@ -96,22 +89,7 @@
             return b64enc(opts);
         } else if (opts.method == 'b64dec') {
             return b64dec(opts);
-        } else if (opts.method == 'xteaenc') {
-            return xteaenc(opts);
-        } else if (opts.method == 'xteadec') {
-            return xteadec(opts);
-        } else if (opts.method == 'xteab64enc') {
-            var tmpenc = xteaenc(opts);
-            opts.method = "b64enc";
-            opts.source = tmpenc;
-            return b64enc(opts);
-        } else if (opts.method == 'xteab64dec') {
-            var tmpdec = b64dec(opts);
-            opts.method = "xteadec";
-            opts.source = tmpdec;
-            return xteadec(opts);
         }
-
 
         function b64enc(params) {
 
@@ -145,13 +123,9 @@
                 + params.b64Str.charAt(enc2)
                 + params.b64Str.charAt(enc3)
                 + params.b64Str.charAt(enc4);
-
-
             }
             while (i < params.source.length);
-
             return output;
-
         };
 
         function b64dec(params) {
@@ -195,7 +169,6 @@
 
             return output;
         };
-
 
         function md5(params) {
             /* This is a trimmed version of Paul Johnsons JavaScript
@@ -259,8 +232,6 @@
                 bin[i >> 5] |= (str.charCodeAt(i / params.chrsz) & mask) << (i % 32);
                 return bin;
             }
-
-
             /*
 			 * Bitwise rotate a 32-bit number to the left.
 			 */
@@ -268,8 +239,6 @@
             {
                 return (num << cnt) | (num >>> (32 - cnt));
             }
-
-
             /*
 			 * These functions implement the four basic operations the algorithm uses.
 			 */
@@ -314,7 +283,6 @@
                     var oldb = b;
                     var oldc = c;
                     var oldd = d;
-
                     a = md5_ff(a, b, c, d, x[i + 0], 7, -680876936);
                     d = md5_ff(d, a, b, c, x[i + 1], 12, -389564586);
                     c = md5_ff(c, d, a, b, x[i + 2], 17, 606105819);
@@ -331,7 +299,6 @@
                     d = md5_ff(d, a, b, c, x[i + 13], 12, -40341101);
                     c = md5_ff(c, d, a, b, x[i + 14], 17, -1502002290);
                     b = md5_ff(b, c, d, a, x[i + 15], 22, 1236535329);
-
                     a = md5_gg(a, b, c, d, x[i + 1], 5, -165796510);
                     d = md5_gg(d, a, b, c, x[i + 6], 9, -1069501632);
                     c = md5_gg(c, d, a, b, x[i + 11], 14, 643717713);
@@ -348,7 +315,6 @@
                     d = md5_gg(d, a, b, c, x[i + 2], 9, -51403784);
                     c = md5_gg(c, d, a, b, x[i + 7], 14, 1735328473);
                     b = md5_gg(b, c, d, a, x[i + 12], 20, -1926607734);
-
                     a = md5_hh(a, b, c, d, x[i + 5], 4, -378558);
                     d = md5_hh(d, a, b, c, x[i + 8], 11, -2022574463);
                     c = md5_hh(c, d, a, b, x[i + 11], 16, 1839030562);
@@ -365,7 +331,6 @@
                     d = md5_hh(d, a, b, c, x[i + 12], 11, -421815835);
                     c = md5_hh(c, d, a, b, x[i + 15], 16, 530742520);
                     b = md5_hh(b, c, d, a, x[i + 2], 23, -995338651);
-
                     a = md5_ii(a, b, c, d, x[i + 0], 6, -198630844);
                     d = md5_ii(d, a, b, c, x[i + 7], 10, 1126891415);
                     c = md5_ii(c, d, a, b, x[i + 14], 15, -1416354905);
@@ -382,16 +347,13 @@
                     d = md5_ii(d, a, b, c, x[i + 11], 10, -1120210379);
                     c = md5_ii(c, d, a, b, x[i + 2], 15, 718787259);
                     b = md5_ii(b, c, d, a, x[i + 9], 21, -343485551);
-
                     a = safe_add(a, olda);
                     b = safe_add(b, oldb);
                     c = safe_add(c, oldc);
                     d = safe_add(d, oldd);
                 };
                 return Array(a, b, c, d);
-
             };
-
         };
 
         /*
@@ -497,7 +459,6 @@
                 return str;
             }
 
-
             /*
 			 * Convert an 8-bit or 16-bit string to an array of big-endian words
 			 * In 8-bit function, characters >255 have their hi-byte silently ignored.
@@ -510,94 +471,9 @@
                 bin[i >> 5] |= (str.charCodeAt(i / params.chrsz) & mask) << (32 - params.chrsz - i % 32);
                 return bin;
             }
-
         };
 
-        function xteaenc(params) {
-            var v = new Array(2),
-            k = new Array(4),
-            s = "",
-            i;
-
-            params.source = escape(params.source);
-            // use escape() so only have single-byte chars to encode
-            // build key directly from 1st 16 chars of strKey
-            for (var i = 0; i < 4; i++) k[i] = Str4ToLong(params.strKey.slice(i * 4, (i + 1) * 4));
-
-            for (i = 0; i < params.source.length; i += 8) {
-                // encode strSource into s in 64-bit (8 char) blocks
-                v[0] = Str4ToLong(params.source.slice(i, i + 4));
-                // ... note this is 'electronic codebook' mode
-                v[1] = Str4ToLong(params.source.slice(i + 4, i + 8));
-                code(v, k);
-                s += LongToStr4(v[0]) + LongToStr4(v[1]);
-            }
-
-            return escCtrlCh(s);
-            // note: if strSource or strKey are passed as string objects, rather than strings, this
-            // function will throw an 'Object doesn't support this property or method' error
-            function code(v, k) {
-                // Extended TEA: this is the 1997 revised version of Needham & Wheeler's algorithm
-                // params: v[2] 64-bit value block; k[4] 128-bit key
-                var y = v[0],
-                z = v[1];
-                var delta = 0x9E3779B9,
-                limit = delta * 32,
-                sum = 0;
-
-                while (sum != limit) {
-                    y += (z << 4 ^ z >>> 5) + z ^ sum + k[sum & 3];
-                    sum += delta;
-                    z += (y << 4 ^ y >>> 5) + y ^ sum + k[sum >>> 11 & 3];
-                    // note: unsigned right-shift '>>>' is used in place of original '>>', due to lack
-                    // of 'unsigned' type declaration in JavaScript (thanks to Karsten Kraus for this)
-                }
-                v[0] = y;
-                v[1] = z;
-            }
-        };
-
-        function xteadec(params) {
-            var v = new Array(2),
-            k = new Array(4),
-            s = "",
-            i;
-
-            for (var i = 0; i < 4; i++) k[i] = Str4ToLong(params.strKey.slice(i * 4, (i + 1) * 4));
-
-            ciphertext = unescCtrlCh(params.source);
-            for (i = 0; i < ciphertext.length; i += 8) {
-                // decode ciphertext into s in 64-bit (8 char) blocks
-                v[0] = Str4ToLong(ciphertext.slice(i, i + 4));
-                v[1] = Str4ToLong(ciphertext.slice(i + 4, i + 8));
-                decode(v, k);
-                s += LongToStr4(v[0]) + LongToStr4(v[1]);
-            }
-
-            // strip trailing null chars resulting from filling 4-char blocks:
-            s = s.replace(/\0+$/, '');
-
-            return unescape(s);
-
-
-            function decode(v, k) {
-                var y = v[0],
-                z = v[1];
-                var delta = 0x9E3779B9,
-                sum = delta * 32;
-
-                while (sum != 0) {
-                    z -= (y << 4 ^ y >>> 5) + y ^ sum + k[sum >>> 11 & 3];
-                    sum -= delta;
-                    y -= (z << 4 ^ z >>> 5) + z ^ sum + k[sum & 3];
-                }
-                v[0] = y;
-                v[1] = z;
-            }
-
-        };
-
-        // xtea supporting functions
+       // xtea supporting functions
         function Str4ToLong(s) {
             // convert 4 chars of s to a numeric long
             var v = 0;
@@ -626,10 +502,5 @@
                 return String.fromCharCode(c.slice(1, -1));
             });
         };
-
-
-
     };
 })(jQuery);
-
-
