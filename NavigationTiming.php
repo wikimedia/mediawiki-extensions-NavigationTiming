@@ -28,7 +28,7 @@ $wgExtensionCredits['other'][] = array(
 	'version' => '0.0.1',
 	'url' => 'https://www.mediawiki.org/wiki/Extension:NavigationTiming',
 	'author' => array( 'Patrick Reilly', 'Asher Feldman' ),
-	'descriptionmsg' => 'navigationtiming_desc',
+	'descriptionmsg' => 'navigationtiming-desc',
 );
 
 $dir = dirname( __FILE__ ) . '/';

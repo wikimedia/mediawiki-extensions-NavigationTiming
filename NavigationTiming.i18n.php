@@ -23,4 +23,3 @@ $messages['qqq'] = array(
 	'navigationtiming-desc' => '{{desc}}',
 );
 
-
