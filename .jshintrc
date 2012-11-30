@@ -1,0 +1,13 @@
+{
+	"globals": {
+		"$": true,
+		"browser": true,
+		"navigationtiming": true
+	},
+
+	"maxerr": 50,
+	"newcap": false,
+	"plusplus": false,
+	"supernew": true,
+	"white": false
+}
