@@ -8,8 +8,9 @@
 
 mw.navigationTiming = ( function( $ ) {
 function init() {
-	var timing, navigation, timingBase64Str, navigationBase64Str, timingSHA1, navigationSHA1, eventString;
+	var performance, timing, navigation, timingBase64Str, navigationBase64Str, timingSHA1, navigationSHA1, eventString;
 	if ( typeof JSON !== 'undefined' ) {
+		performance = window.performance || window.mozPerformance || window.msPerformance || window.webkitPerformance || {};
 		timing = JSON.stringify( performance.timing || {} );
 		navigation = JSON.stringify( performance.navigation || {} );
 		timingBase64Str = $().crypt( { method:"b64enc",
