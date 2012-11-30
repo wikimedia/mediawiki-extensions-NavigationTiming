@@ -47,5 +47,5 @@ $ctResourceTemplate = array(
 	'remoteExtPath' => 'NavigationTiming/modules',
 );
 $wgResourceModules['jquery.NavigationTiming'] = array(
-	'scripts' => array( 'jquery.crypt.js', 'ext.NavigationTiming.js' ),
+	'scripts' => array( 'jquery.crypt.js', 'ext.navigationTiming.js' ),
 ) + $ctResourceTemplate;
