@@ -12,7 +12,6 @@ $messages = array();
  * @author Patrick Reilly
  */
 $messages['en'] = array(
-	'navigationtiming' => 'Navigation Timing extension',
 	'navigationtiming-desc' => 'Navigation Timing for timing navigation',
 );
 
