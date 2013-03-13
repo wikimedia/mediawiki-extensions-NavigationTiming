@@ -1,35 +1,63 @@
 /**
- * JavaScript for the Navigation Timing MediaWiki extension.
- * @see https://secure.wikimedia.org/wikipedia/mediawiki/wiki/Extension:NavigationTiming
+ * JavaScript module for logging client-side latency measurements.
+ * @see https://mediawiki.org/wiki/Extension:NavigationTiming
  *
- * @licence GNU GPL v3 or later
- * @author Patrick Reilly <preilly@wikimedia.org>
+ * @licence GNU GPL v2 or later
+ * @author Ori Livneh <ori@wikimedia.org>
  */
-
 ( function ( mw, $ ) {
-	var timing;
+	'use strict';
 
-	var performance = mw.performance = { timing: {}, navigation: {}, memory: {} };
-	$.extend( performance, window.performance, window.mozPerformance,
-		window.msPerformance, window.webkitPerformance );
+	var timing = window.performance ? performance.timing : null;
 
-	var timing, navigation, timingBase64Str, navigationBase64Str, timingSHA1,
-		navigationSHA1, eventString;
-
-	timing = JSON.stringify( performance.timing || {}, null, 2 );
-	navigation = JSON.stringify( performance.navigation || {}, null, 2 );
-	timingBase64Str = $().crypt( { method:"b64enc",
-		source:timing } );
-	timingSHA1 = $().crypt( { method:"sha1",
-		source:timing } );
-	eventString = timingSHA1 + '::' +  timingBase64Str;
-
-	if ( mw.config.get( 'debug' ) ) {
-		mw.log( 'json: ' + timing );
-		mw.log( 'json: ' + navigation );
-		mw.log( 'json in base64: ' + timingBase64Str );
-		mw.log( 'json sha1: ' + timingSHA1 );
-		mw.log( 'event string: ' + eventString );
+	function getRand( n ) {
+		return Math.floor( Math.random() * ( n + 1 ) );
 	}
 
-}( mediaWiki, jQuery ) );
+	function inSample() {
+		var factor = mw.config.get( 'wgNavigationTimingSamplingFactor' );
+		if ( !$.isNumeric( factor ) || factor < 1 ) {
+			return false;
+		}
+		return getRand( factor ) === getRand( factor );
+	}
+
+	function emitTiming() {
+		var event = {
+			userAgent : navigator.userAgent,
+			isHttps   : window.location.protocol === 'https:'
+		};
+
+		if ( $.isPlainObject( window.Geo ) && typeof Geo.country === 'string' ) {
+			event.originCountry = Geo.country;
+		}
+
+		$.each( {
+			dnsLookup  : timing.domainLookupEnd - timing.domainLookupStart,
+			connecting : timing.connectEnd - timing.connectStart,
+			sending    : timing.fetchStart - timing.navigationStart,
+			waiting    : timing.responseStart - timing.requestStart,
+			receiving  : timing.responseEnd - timing.responseStart,
+			rendering  : timing.loadEventEnd - timing.responseEnd
+		}, function ( k, v ) {
+			if ( $.isNumeric( v ) && v > 0 ) {
+				event[ k ] = v;
+			}
+		} );
+
+		if ( timing.redirectStart ) {
+			event.redirectCount = performance.navigation.redirectCount;
+			event.redirecting = timing.redirectEnd - timing.redirectStart;
+		}
+
+		mw.eventLog.logEvent( 'NavigationTiming', event );
+	}
+
+	if ( timing && inSample() ) {
+		// ensure we run after loadEventEnd.
+		window.onload = function () {
+			window.setTimeout( emitTiming, 0 );
+		};
+	}
+
+} ( mediaWiki, jQuery ) );

@@ -1,13 +1,36 @@
 {
-	"globals": {
-		"$": true,
-		"browser": true,
-		"navigationtiming": true
-	},
+	"predef": [
+		"Geo",
+		"QUnit",
+		"jQuery",
+		"mediaWiki",
+		"performance"
+	],
 
-	"maxerr": 50,
-	"newcap": false,
-	"plusplus": false,
-	"supernew": true,
-	"white": false
+	"bitwise": true,
+	"camelcase": true,
+	"curly": true,
+	"eqeqeq": true,
+	"forin": false,
+	"immed": true,
+	"latedef": true,
+	"newcap": true,
+	"noarg": true,
+	"noempty": true,
+	"nonew": true,
+	"quotmark": "single",
+	"regexp": false,
+	"undef": true,
+	"unused": true,
+	"strict": false,
+	"trailing": true,
+
+	"laxbreak": true,
+	"smarttabs": true,
+	"multistr": true,
+
+	"browser": true,
+
+	"nomen": true,
+	"onevar": true
 }

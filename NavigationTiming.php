@@ -6,46 +6,52 @@
  * @ingroup Extensions
  *
  * @author Asher Feldman <afeldman@wikimedia.org>
- * @author Patrick Reilly <preilly@wikimedia.org>
+ * @author Ori Livneh <ori@wikimedia.org>
+ * @author Patrick Reilly <preilly@php.net>
+ *
  * @license GPL v2 or later
  * @version 0.1.1
  */
 
-if ( !defined( 'MEDIAWIKI' ) ) {
-	die( 'This file is a MediaWiki extension, it is not a valid entry point' );
-}
-
-/**
- * CONFIGURATION
- * These variables may be overridden in LocalSettings.php after you include the
- * extension file.
- */
-
-/** Setup */
 $wgExtensionCredits['other'][] = array(
 	'path' => __FILE__,
 	'name' => 'NavigationTiming',
 	'version' => '0.0.1',
 	'url' => 'https://www.mediawiki.org/wiki/Extension:NavigationTiming',
-	'author' => array( 'Patrick Reilly', 'Asher Feldman' ),
+	'author' => array(
+		'Asher Feldman',
+		'Ori Livneh',
+		'Patrick Reilly'
+	),
 	'descriptionmsg' => 'navigationtiming-desc',
 );
 
-$dir = dirname( __FILE__ ) . '/';
-// Autoload classes
-$wgAutoloadClasses['NavigationTimingHooks'] = $dir . 'NavigationTiming.hooks.php';
+/** @var int|bool: If set, logs once per this many requests. False if unset. **/
+$wgNavigationTimingSamplingFactor = false;
 
-// Hooked functions
-$wgHooks['BeforePageDisplay'][] = 'NavigationTimingHooks::beforePageDisplay';
+$wgExtensionMessagesFiles[ 'NavigationTiming' ] = __DIR__ . '/NavigationTiming.i18n.php';
 
-// i18n
-$wgExtensionMessagesFiles['NavigationTiming'] = $dir . 'NavigationTiming.i18n.php';
-
-// Resource modules
-$ctResourceTemplate = array(
-	'localBasePath' => $dir . 'modules',
-	'remoteExtPath' => 'NavigationTiming/modules',
+$wgResourceModules += array(
+	'schema.NavigationTiming' => array(
+		'class'    => 'ResourceLoaderSchemaModule',
+		'schema'   => 'NavigationTiming',
+		'revision' => 5321444,
+	),
+	'ext.navigationTiming' => array(
+		'scripts'       => 'ext.navigationTiming.js',
+		'localBasePath' => __DIR__ . '/modules',
+		'remoteExtPath' => 'NavigationTiming',
+		'dependencies'  => 'schema.NavigationTiming',
+	)
 );
-$wgResourceModules['jquery.NavigationTiming'] = array(
-	'scripts' => array( 'jquery.crypt.js', 'ext.navigationTiming.js' ),
-) + $ctResourceTemplate;
+
+$wgHooks[ 'BeforePageDisplay' ][] = function ( &$out, &$skin ) {
+	$out->addModules( 'ext.navigationTiming' );
+	return true;
+};
+
+$wgHooks[ 'ResourceLoaderGetConfigVars' ][] = function ( &$vars ) {
+	global $wgNavigationTimingSamplingFactor;
+	$vars[ 'wgNavigationTimingSamplingFactor' ] = $wgNavigationTimingSamplingFactor;
+	return true;
+};
