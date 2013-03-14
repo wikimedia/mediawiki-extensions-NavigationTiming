@@ -25,7 +25,7 @@
 	function emitTiming() {
 		var event = {
 			userAgent : navigator.userAgent,
-			isHttps   : window.location.protocol === 'https:'
+			isHttps   : location.protocol === 'https:'
 		};
 
 		if ( $.isPlainObject( window.Geo ) && typeof Geo.country === 'string' ) {
@@ -55,9 +55,9 @@
 
 	if ( timing && inSample() ) {
 		// ensure we run after loadEventEnd.
-		window.onload = function () {
-			window.setTimeout( emitTiming, 0 );
-		};
+		$( window ).load( function () {
+			setTimeout( emitTiming, 0 );
+		} );
 	}
 
 } ( mediaWiki, jQuery ) );
