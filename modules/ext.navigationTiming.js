@@ -24,9 +24,15 @@
 
 	function emitTiming() {
 		var event = {
-			userAgent : navigator.userAgent,
-			isHttps   : location.protocol === 'https:'
-		};
+				userAgent : navigator.userAgent,
+				isHttps   : location.protocol === 'https:',
+				isAnon    : mw.user.isAnon()
+			},
+			page = {
+				pageId : mw.config.get( 'wgArticleId' ),
+				revId  : mw.config.get( 'wgCurRevisionId' ),
+				action : mw.config.get( 'wgAction' )  // view, submit, etc.
+			};
 
 		if ( $.isPlainObject( window.Geo ) && typeof Geo.country === 'string' ) {
 			event.originCountry = Geo.country;
@@ -48,6 +54,12 @@
 		if ( timing.redirectStart ) {
 			event.redirectCount = performance.navigation.redirectCount;
 			event.redirecting = timing.redirectEnd - timing.redirectStart;
+		}
+
+		// Omit page information for special pages: they don't have real page
+		// IDs or revisions. (They appear as 0 to client-side code.)
+		if ( page.revId ) {
+			$.extend( event, page );
 		}
 
 		mw.eventLog.logEvent( 'NavigationTiming', event );

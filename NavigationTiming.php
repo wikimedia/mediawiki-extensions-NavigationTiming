@@ -21,7 +21,7 @@ $wgExtensionCredits['other'][] = array(
 	'author' => array(
 		'Asher Feldman',
 		'Ori Livneh',
-		'Patrick Reilly'
+		'Patrick Reilly',
 	),
 	'descriptionmsg' => 'navigationtiming-desc',
 );
@@ -35,7 +35,7 @@ $wgResourceModules += array(
 	'schema.NavigationTiming' => array(
 		'class'    => 'ResourceLoaderSchemaModule',
 		'schema'   => 'NavigationTiming',
-		'revision' => 5321444,
+		'revision' => 5323808,
 	),
 	'ext.navigationTiming' => array(
 		'scripts'       => 'ext.navigationTiming.js',
