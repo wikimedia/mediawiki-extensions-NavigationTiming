@@ -40,7 +40,7 @@ $wgResourceModules += array(
 	'ext.navigationTiming' => array(
 		'scripts'       => 'ext.navigationTiming.js',
 		'localBasePath' => __DIR__ . '/modules',
-		'remoteExtPath' => 'NavigationTiming',
+		'remoteExtPath' => 'NavigationTiming/modules',
 		'dependencies'  => 'schema.NavigationTiming',
 	)
 );
