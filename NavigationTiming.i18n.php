@@ -58,3 +58,10 @@ $messages['ko'] = array(
 $messages['roa-tara'] = array(
 	'navigationtiming-desc' => "Aggiunge 'n'archivihe de le mesure de latenze late cliente",
 );
+
+/** Simplified Chinese (中文（简体）‎)
+ * @author Yfdyh000
+ */
+$messages['zh-hans'] = array(
+	'navigationtiming-desc' => '添加客户端的延迟测量记录',
+);
