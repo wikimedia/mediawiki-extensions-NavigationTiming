@@ -10,16 +10,12 @@
 
 	var timing = window.performance ? performance.timing : null;
 
-	function getRand( n ) {
-		return Math.floor( Math.random() * ( n + 1 ) );
-	}
-
 	function inSample() {
 		var factor = mw.config.get( 'wgNavigationTimingSamplingFactor' );
 		if ( !$.isNumeric( factor ) || factor < 1 ) {
 			return false;
 		}
-		return getRand( factor ) === getRand( factor );
+		return Math.floor( Math.random() * factor ) === 0;
 	}
 
 	function emitTiming() {
