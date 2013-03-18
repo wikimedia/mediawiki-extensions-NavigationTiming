@@ -38,6 +38,13 @@ $messages['he'] = array(
 	'navigationtiming-desc' => 'הוספת רישום יומן למדידות של זמן המתנה בצד הלקוח',
 );
 
+/** Upper Sorbian (hornjoserbsce)
+ * @author Michawiki
+ */
+$messages['hsb'] = array(
+	'navigationtiming-desc' => 'Přidawa protokolowanje měrjenjow ze strony klienta a z časowym zastatkom',
+);
+
 /** Japanese (日本語)
  * @author Shirayuki
  */
