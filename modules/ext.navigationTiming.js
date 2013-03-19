@@ -61,7 +61,10 @@
 		mw.eventLog.logEvent( 'NavigationTiming', event );
 	}
 
-	if ( timing && inSample() ) {
+	// The Navigation Timing API is broken in Firefox 7 and 8 and reports
+	// inaccurate measurements. See <https://bugzilla.mozilla.org/691547>.
+
+	if ( timing && inSample() && !/Firefox\/[78]/.test( navigator.userAgent ) ) {
 		// ensure we run after loadEventEnd.
 		$( window ).load( function () {
 			setTimeout( emitTiming, 0 );
