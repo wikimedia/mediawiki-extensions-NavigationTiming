@@ -31,6 +31,13 @@ $messages['de'] = array(
 	'navigationtiming-desc' => 'Ergänzt eine zeitverzögerte clientseitige Messungsprotokollierung',
 );
 
+/** French (français)
+ * @author Gomoko
+ */
+$messages['fr'] = array(
+	'navigationtiming-desc' => 'Ajouter une trace des mesures de latence côté client',
+);
+
 /** Hebrew (עברית)
  * @author Amire80
  */
@@ -57,6 +64,13 @@ $messages['ja'] = array(
  */
 $messages['ko'] = array(
 	'navigationtiming-desc' => '클라이언트 측 대기 시간을 측정하고 기록하는 기능을 추가합니다',
+);
+
+/** Macedonian (македонски)
+ * @author Bjankuloski06
+ */
+$messages['mk'] = array(
+	'navigationtiming-desc' => 'Додава заведување на измерени задоцнувања од клиентска страна',
 );
 
 /** tarandíne (tarandíne)
