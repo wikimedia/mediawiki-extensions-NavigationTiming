@@ -22,7 +22,7 @@
 		var event = {
 				userAgent : navigator.userAgent,
 				isHttps   : location.protocol === 'https:',
-				isAnon    : mw.user.isAnon()
+				isAnon    : mw.config.get( 'wgUserId' ) === null
 			},
 			page = {
 				pageId : mw.config.get( 'wgArticleId' ),

@@ -33,15 +33,19 @@ $wgExtensionMessagesFiles[ 'NavigationTiming' ] = __DIR__ . '/NavigationTiming.i
 
 $wgResourceModules += array(
 	'schema.NavigationTiming' => array(
-		'class'    => 'ResourceLoaderSchemaModule',
-		'schema'   => 'NavigationTiming',
-		'revision' => 5333197,
+		'class'         =>  'ResourceLoaderSchemaModule',
+		'schema'        =>  'NavigationTiming',
+		'revision'      =>  5333197,
+		'targets'       =>  array( 'desktop', 'mobile' ),
+		'mobileTargets' =>  array( 'alpha', 'beta' ),
 	),
 	'ext.navigationTiming' => array(
 		'scripts'       => 'ext.navigationTiming.js',
 		'localBasePath' => __DIR__ . '/modules',
 		'remoteExtPath' => 'NavigationTiming/modules',
 		'dependencies'  => 'schema.NavigationTiming',
+		'targets'       => array( 'desktop', 'mobile' ),
+		'mobileTargets' => array( 'alpha', 'beta' ),
 	)
 );
 
