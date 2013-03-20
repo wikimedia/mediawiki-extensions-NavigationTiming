@@ -24,6 +24,13 @@ $messages['qqq'] = array(
 	'navigationtiming-desc' => '{{desc|name=Navigation Timing|url=https://www.mediawiki.org/wiki/Extension:NavigationTiming}}',
 );
 
+/** Asturian (asturianu)
+ * @author Xuacu
+ */
+$messages['ast'] = array(
+	'navigationtiming-desc' => "Amiesta'l rexistru de midíes de latencia nel llau del cliente",
+);
+
 /** German (Deutsch)
  * @author Metalhead64
  */
@@ -71,6 +78,13 @@ $messages['ko'] = array(
  */
 $messages['mk'] = array(
 	'navigationtiming-desc' => 'Додава заведување на измерени задоцнувања од клиентска страна',
+);
+
+/** Dutch (Nederlands)
+ * @author Konovalov
+ */
+$messages['nl'] = array(
+	'navigationtiming-desc' => 'Client zijde wachttijdmetingen logboekregistratie wordt toegevoegd',
 );
 
 /** tarandíne (tarandíne)
