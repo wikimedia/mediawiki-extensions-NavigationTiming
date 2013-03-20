@@ -40,7 +40,8 @@
 			sending    : timing.fetchStart - timing.navigationStart,
 			waiting    : timing.responseStart - timing.requestStart,
 			receiving  : timing.responseEnd - timing.responseStart,
-			rendering  : timing.loadEventEnd - timing.responseEnd
+			rendering  : timing.loadEventEnd - timing.responseEnd,
+			loading    : timing.loadEventStart - timing.navigationStart
 		}, function ( k, v ) {
 			if ( $.isNumeric( v ) && v > 0 ) {
 				event[ k ] = v;
