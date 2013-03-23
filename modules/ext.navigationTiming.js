@@ -19,7 +19,11 @@
 	}
 
 	function emitTiming() {
-		var event = {
+		// Workaround for IE 9 bug: IE 9 sets a default value of zero for
+		// navigationStart, rather than use fetchStart as the specification
+		// requires. See <https://bugzilla.wikimedia.org/46474> for details.
+		var navStart = timing.navigationStart || timing.fetchStart,
+			event = {
 				userAgent : navigator.userAgent,
 				isHttps   : location.protocol === 'https:',
 				isAnon    : mw.config.get( 'wgUserId' ) === null
@@ -37,11 +41,11 @@
 		$.each( {
 			dnsLookup  : timing.domainLookupEnd - timing.domainLookupStart,
 			connecting : timing.connectEnd - timing.connectStart,
-			sending    : timing.fetchStart - timing.navigationStart,
+			sending    : timing.fetchStart - navStart,
 			waiting    : timing.responseStart - timing.requestStart,
 			receiving  : timing.responseEnd - timing.responseStart,
 			rendering  : timing.loadEventEnd - timing.responseEnd,
-			loading    : timing.loadEventStart - timing.navigationStart
+			loading    : timing.loadEventStart - navStart
 		}, function ( k, v ) {
 			if ( $.isNumeric( v ) && v > 0 ) {
 				event[ k ] = v;
