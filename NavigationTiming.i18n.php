@@ -31,6 +31,13 @@ $messages['ast'] = array(
 	'navigationtiming-desc' => "Amiesta'l rexistru de midíes de latencia nel llau del cliente",
 );
 
+/** Czech (česky)
+ * @author Mormegil
+ */
+$messages['cs'] = array(
+	'navigationtiming-desc' => 'Poskytuje zaznamenávání zpoždění na klientské straně',
+);
+
 /** German (Deutsch)
  * @author Metalhead64
  */
@@ -59,6 +66,13 @@ $messages['hsb'] = array(
 	'navigationtiming-desc' => 'Přidawa protokolowanje měrjenjow ze strony klienta a z časowym zastatkom',
 );
 
+/** Italian (italiano)
+ * @author Beta16
+ */
+$messages['it'] = array(
+	'navigationtiming-desc' => 'Aggiunge la registrazione delle misurazioni per la latenza lato client',
+);
+
 /** Japanese (日本語)
  * @author Shirayuki
  */
@@ -82,9 +96,10 @@ $messages['mk'] = array(
 
 /** Dutch (Nederlands)
  * @author Konovalov
+ * @author Siebrand
  */
 $messages['nl'] = array(
-	'navigationtiming-desc' => 'Client zijde wachttijdmetingen logboekregistratie wordt toegevoegd',
+	'navigationtiming-desc' => 'Maakt het vastleggen van tijdsmetingen voor clientbewerkingen mogelijk',
 );
 
 /** tarandíne (tarandíne)
@@ -92,6 +107,20 @@ $messages['nl'] = array(
  */
 $messages['roa-tara'] = array(
 	'navigationtiming-desc' => "Aggiunge 'n'archivihe de le mesure de latenze late cliente",
+);
+
+/** Tagalog (Tagalog)
+ * @author AnakngAraw
+ */
+$messages['tl'] = array(
+	'navigationtiming-desc' => 'Nagdaragdag ng pagtatala ng mga sukat ng kawalan ng galaw sa kinaroroonan ng kliyente',
+);
+
+/** Vietnamese (Tiếng Việt)
+ * @author Minh Nguyen
+ */
+$messages['vi'] = array(
+	'navigationtiming-desc' => 'Thêm nhật trình đo độ trễ trên trình khách',
 );
 
 /** Simplified Chinese (中文（简体）‎)
