@@ -64,7 +64,7 @@
 		}
 
 		if ( mw.mobileFrontend && mw.config.exists( 'wgMFMode' ) ) {
-			event.mobile = mw.config.get( 'wgMFMode' );
+			event.mobileMode = mw.config.get( 'wgMFMode' );
 		}
 
 		mw.eventLog.logEvent( 'NavigationTiming', event );
