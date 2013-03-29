@@ -52,6 +52,13 @@ $messages['fr'] = array(
 	'navigationtiming-desc' => 'Ajouter une trace des mesures de latence côté client',
 );
 
+/** Galician (galego)
+ * @author Toliño
+ */
+$messages['gl'] = array(
+	'navigationtiming-desc' => 'Engade un rexistro das medidas de latencia',
+);
+
 /** Hebrew (עברית)
  * @author Amire80
  */
