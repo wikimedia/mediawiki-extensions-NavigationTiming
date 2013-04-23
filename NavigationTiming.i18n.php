@@ -101,6 +101,13 @@ $messages['mk'] = array(
 	'navigationtiming-desc' => 'Додава заведување на измерени задоцнувања од клиентска страна',
 );
 
+/** Malay (Bahasa Melayu)
+ * @author Anakmalaysia
+ */
+$messages['ms'] = array(
+	'navigationtiming-desc' => 'Menambahkan pencatatan ukuran kependaman sebelah klien',
+);
+
 /** Dutch (Nederlands)
  * @author Konovalov
  * @author Siebrand
