@@ -143,3 +143,10 @@ $messages['vi'] = array(
 $messages['zh-hans'] = array(
 	'navigationtiming-desc' => '添加客户端的延迟测量记录',
 );
+
+/** Traditional Chinese (中文（繁體）‎)
+ * @author Justincheng12345
+ */
+$messages['zh-hant'] = array(
+	'navigationtiming-desc' => '添加用戶端的延遲測量記錄',
+);
