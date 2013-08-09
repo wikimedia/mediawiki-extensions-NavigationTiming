@@ -101,6 +101,13 @@ $messages['mk'] = array(
 	'navigationtiming-desc' => 'Додава заведување на измерени задоцнувања од клиентска страна',
 );
 
+/** Malayalam (മലയാളം)
+ * @author Praveenp
+ */
+$messages['ml'] = array(
+	'navigationtiming-desc' => 'ക്ലയന്റ്-ഭാഗത്ത് ഉണ്ടാകുന്ന വൈകലുകൾ ശേഖരിക്കൽ കൂട്ടിച്ചേർക്കുന്നു.',
+);
+
 /** Malay (Bahasa Melayu)
  * @author Anakmalaysia
  */
