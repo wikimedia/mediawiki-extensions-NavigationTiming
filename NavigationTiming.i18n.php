@@ -21,7 +21,7 @@ $messages['en'] = array(
  * @author Shirayuki
  */
 $messages['qqq'] = array(
-	'navigationtiming-desc' => '{{desc|name=Navigation Timing|url=https://www.mediawiki.org/wiki/Extension:NavigationTiming}}',
+	'navigationtiming-desc' => '{{desc|name=Navigation Timing|url=http://www.mediawiki.org/wiki/Extension:NavigationTiming}}',
 );
 
 /** Asturian (asturianu)
