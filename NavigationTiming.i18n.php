@@ -137,6 +137,13 @@ $messages['tl'] = array(
 	'navigationtiming-desc' => 'Nagdaragdag ng pagtatala ng mga sukat ng kawalan ng galaw sa kinaroroonan ng kliyente',
 );
 
+/** Ukrainian (українська)
+ * @author Andriykopanytsia
+ */
+$messages['uk'] = array(
+	'navigationtiming-desc' => 'Додає журналювання клієнтської затримки вимірювань',
+);
+
 /** Vietnamese (Tiếng Việt)
  * @author Minh Nguyen
  */
