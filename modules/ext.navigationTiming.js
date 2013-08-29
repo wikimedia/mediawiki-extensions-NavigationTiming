@@ -18,6 +18,33 @@
 		return Math.floor( Math.random() * factor ) === 0;
 	}
 
+	/** Assert that the attribute order complies with the W3C spec. **/
+	function isCompliant() {
+		// Tests derived from <http://w3c-test.org/web-platform-tests/
+		//   master/navigation-timing/test_timing_attributes_order.html>
+		var attr, current, last = 0, order = [
+			'loadEventEnd',
+			'loadEventStart',
+			'domContentLoadedEventEnd',
+			'domContentLoadedEventStart',
+			'domInteractive',
+			'responseEnd',
+			'responseStart',
+			'requestStart',
+			'connectEnd',
+			'connectStart'
+		];
+
+		while ( ( attr = order.pop() ) !== undefined ) {
+			current = timing[attr];
+			if ( current < 0 || current < last ) {
+				return false;
+			}
+			last = current;
+		}
+		return true;
+	}
+
 	function emitTiming() {
 		// Workaround for IE 9 bug: IE 9 sets a default value of zero for
 		// navigationStart, rather than use fetchStart as the specification
@@ -73,7 +100,12 @@
 	// The Navigation Timing API is broken in Firefox 7 and 8 and reports
 	// inaccurate measurements. See <https://bugzilla.mozilla.org/691547>.
 
-	if ( timing && inSample() && !/Firefox\/[78]/.test( navigator.userAgent ) ) {
+	if ( timing
+		&& performance.navigation.type === 0
+		&& inSample()
+		&& isCompliant()
+		&& !/Firefox\/[78]/.test( navigator.userAgent )
+	) {
 		// ensure we run after loadEventEnd.
 		$( window ).load( function () {
 			setTimeout( emitTiming, 0 );
