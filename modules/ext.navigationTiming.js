@@ -94,7 +94,9 @@
 			event.mobileMode = mw.config.get( 'wgMFMode' );
 		}
 
-		mw.eventLog.logEvent( 'NavigationTiming', event );
+		if ( isCompliant() ) {
+			mw.eventLog.logEvent( 'NavigationTiming', event );
+		}
 	}
 
 	// The Navigation Timing API is broken in Firefox 7 and 8 and reports
@@ -103,7 +105,6 @@
 	if ( timing
 		&& performance.navigation.type === 0
 		&& inSample()
-		&& isCompliant()
 		&& !/Firefox\/[78]/.test( navigator.userAgent )
 	) {
 		// ensure we run after loadEventEnd.
