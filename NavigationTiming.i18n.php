@@ -123,6 +123,13 @@ $messages['nl'] = array(
 	'navigationtiming-desc' => 'Maakt het vastleggen van tijdsmetingen voor clientbewerkingen mogelijk',
 );
 
+/** Occitan (occitan)
+ * @author Cedric31
+ */
+$messages['oc'] = array(
+	'navigationtiming-desc' => 'Apondre una traça de las mesuras de laténcia costat client',
+);
+
 /** tarandíne (tarandíne)
  * @author Joetaras
  */
