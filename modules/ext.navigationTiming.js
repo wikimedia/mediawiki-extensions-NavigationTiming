@@ -65,19 +65,28 @@
 			event.originCountry = Geo.country;
 		}
 
-		$.each( {
-			dnsLookup  : timing.domainLookupEnd - timing.domainLookupStart,
-			connecting : timing.connectEnd - timing.connectStart,
-			sending    : timing.fetchStart - navStart,
-			waiting    : timing.responseStart - timing.requestStart,
-			receiving  : timing.responseEnd - timing.responseStart,
-			rendering  : timing.loadEventEnd - timing.responseEnd,
-			loading    : timing.loadEventStart - navStart
-		}, function ( k, v ) {
-			if ( $.isNumeric( v ) && v > 0 ) {
-				event[ k ] = v;
+		// Note: This assumes if a browser is good enough to support window.performance it supports forEach
+		[
+			'connectEnd',
+			'connectStart',
+			'domComplete',
+			'domInteractive',
+			'fetchStart',
+			'loadEventEnd',
+			'loadEventStart',
+			'requestStart',
+			'responseEnd',
+			'responseStart'
+		].forEach( function ( marker ) {
+			var measure = timing[marker] - navStart;
+			if ( $.isNumeric( measure ) && measure > 0 ) {
+				event[ marker ] = measure;
 			}
 		} );
+
+		if ( timing.domainLookupStart ) {
+			event.dnsLookup = timing.domainLookupEnd - timing.domainLookupStart;
+		}
 
 		if ( timing.redirectStart ) {
 			event.redirectCount = performance.navigation.redirectCount;
