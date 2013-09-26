@@ -65,8 +65,7 @@
 			event.originCountry = Geo.country;
 		}
 
-		// Note: This assumes if a browser is good enough to support window.performance it supports forEach
-		[
+		$.each( [
 			'connectEnd',
 			'connectStart',
 			'domComplete',
@@ -77,7 +76,7 @@
 			'requestStart',
 			'responseEnd',
 			'responseStart'
-		].forEach( function ( marker ) {
+		], function ( _, marker ) {
 			var measure = timing[marker] - navStart;
 			if ( $.isNumeric( measure ) && measure > 0 ) {
 				event[ marker ] = measure;
