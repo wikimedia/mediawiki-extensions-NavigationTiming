@@ -37,7 +37,6 @@ $wgResourceModules += array(
 		'schema'        => 'NavigationTiming',
 		'revision'      => 5832704,
 		'targets'       => array( 'desktop', 'mobile' ),
-		'mobileTargets' => array( 'stable', 'beta', 'alpha' ),
 	),
 	'ext.navigationTiming' => array(
 		'scripts'       => 'ext.navigationTiming.js',
@@ -45,7 +44,6 @@ $wgResourceModules += array(
 		'remoteExtPath' => 'NavigationTiming/modules',
 		'dependencies'  => 'schema.NavigationTiming',
 		'targets'       => array( 'desktop', 'mobile' ),
-		'mobileTargets' => array( 'stable', 'beta', 'alpha' ),
 	)
 );
 
