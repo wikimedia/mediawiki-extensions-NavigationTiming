@@ -137,6 +137,13 @@ $messages['roa-tara'] = array(
 	'navigationtiming-desc' => "Aggiunge 'n'archivihe de le mesure de latenze late cliente",
 );
 
+/** Russian (русский)
+ * @author Okras
+ */
+$messages['ru'] = array(
+	'navigationtiming-desc' => 'Добавляет протоколирование измерения задержки на стороне клиента',
+);
+
 /** Tagalog (Tagalog)
  * @author AnakngAraw
  */
