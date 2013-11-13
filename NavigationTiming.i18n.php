@@ -73,6 +73,13 @@ $messages['hsb'] = array(
 	'navigationtiming-desc' => 'Přidawa protokolowanje měrjenjow ze strony klienta a z časowym zastatkom',
 );
 
+/** Iloko (Ilokano)
+ * @author Lam-ang
+ */
+$messages['ilo'] = array(
+	'navigationtiming-desc' => 'Aginayon ti panangilista kadagiti panagrukod ti pannakamalmeng ti bangir ti kliente',
+);
+
 /** Italian (italiano)
  * @author Beta16
  */
