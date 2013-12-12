@@ -4,6 +4,7 @@
 		"QUnit",
 		"jQuery",
 		"mediaWiki",
+		"mediaWikiLoadStart",
 		"performance"
 	],
 

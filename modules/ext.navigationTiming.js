@@ -35,6 +35,17 @@
 			'connectStart'
 		];
 
+		if ( !timing ) {
+			// Browser does not implement the Navigation Timing API.
+			return false;
+		}
+
+		if ( /Firefox\/[78]/.test( navigator.userAgent ) ) {
+			// The Navigation Timing API is broken in Firefox 7 and 8 and reports
+			// inaccurate measurements. See <https://bugzilla.mozilla.org/691547>.
+			return false;
+		}
+
 		while ( ( attr = order.pop() ) !== undefined ) {
 			current = timing[attr];
 			if ( current < 0 || current < last ) {
@@ -45,25 +56,12 @@
 		return true;
 	}
 
-	function emitTiming() {
+	function getNavTiming() {
 		// Workaround for IE 9 bug: IE 9 sets a default value of zero for
 		// navigationStart, rather than use fetchStart as the specification
 		// requires. See <https://bugzilla.wikimedia.org/46474> for details.
 		var navStart = timing.navigationStart || timing.fetchStart,
-			event = {
-				userAgent : navigator.userAgent,
-				isHttps   : location.protocol === 'https:',
-				isAnon    : mw.config.get( 'wgUserId' ) === null
-			},
-			page = {
-				pageId : mw.config.get( 'wgArticleId' ),
-				revId  : mw.config.get( 'wgCurRevisionId' ),
-				action : mw.config.get( 'wgAction' )  // view, submit, etc.
-			};
-
-		if ( $.isPlainObject( window.Geo ) && typeof Geo.country === 'string' ) {
-			event.originCountry = Geo.country;
-		}
+			timingData = {};
 
 		$.each( [
 			'connectEnd',
@@ -79,17 +77,41 @@
 		], function ( _, marker ) {
 			var measure = timing[marker] - navStart;
 			if ( $.isNumeric( measure ) && measure > 0 ) {
-				event[ marker ] = measure;
+				timingData[ marker ] = measure;
 			}
 		} );
 
 		if ( timing.domainLookupStart ) {
-			event.dnsLookup = timing.domainLookupEnd - timing.domainLookupStart;
+			timingData.dnsLookup = timing.domainLookupEnd - timing.domainLookupStart;
 		}
 
 		if ( timing.redirectStart ) {
-			event.redirectCount = performance.navigation.redirectCount;
-			event.redirecting = timing.redirectEnd - timing.redirectStart;
+			timingData.redirectCount = performance.navigation.redirectCount;
+			timingData.redirecting = timing.redirectEnd - timing.redirectStart;
+		}
+
+		return timingData;
+	}
+
+	function emitTiming() {
+		var mediaWikiLoadEnd = mw.now ? mw.now() : new Date().getTime(),
+			event = {
+				userAgent     : navigator.userAgent,
+				isHttps       : location.protocol === 'https:',
+				isAnon        : mw.config.get( 'wgUserId' ) === null
+			},
+			page = {
+				pageId : mw.config.get( 'wgArticleId' ),
+				revId  : mw.config.get( 'wgCurRevisionId' ),
+				action : mw.config.get( 'wgAction' )  // view, submit, etc.
+			};
+
+		if ( window.mediaWikiLoadStart ) {
+			event.mediaWikiLoadComplete = mediaWikiLoadEnd - mediaWikiLoadStart;
+		}
+
+		if ( $.isPlainObject( window.Geo ) && typeof Geo.country === 'string' ) {
+			event.originCountry = Geo.country;
 		}
 
 		// Omit page information for special pages: they don't have real page
@@ -102,19 +124,19 @@
 			event.mobileMode = mw.config.get( 'wgMFMode' );
 		}
 
-		if ( isCompliant() ) {
-			mw.eventLog.logEvent( 'NavigationTiming', event );
+		// The Navigation Timing API provides an attribute that can be used to
+		// know if a page load was triggered by link click or manual URL entry
+		// vs. by using the back/forward button or by reloading the page. A
+		// value of 0 corresponds with TYPE_NAVIGATENEXT, which indicates a
+		// normal page load.
+		if ( isCompliant() && performance.navigation.type === 0 ) {
+			$.extend( event, getNavTiming() );
 		}
+
+		mw.eventLog.logEvent( 'NavigationTiming', event );
 	}
 
-	// The Navigation Timing API is broken in Firefox 7 and 8 and reports
-	// inaccurate measurements. See <https://bugzilla.mozilla.org/691547>.
-
-	if ( timing
-		&& performance.navigation.type === 0
-		&& inSample()
-		&& !/Firefox\/[78]/.test( navigator.userAgent )
-	) {
+	if ( inSample() ) {
 		// ensure we run after loadEventEnd.
 		$( window ).load( function () {
 			setTimeout( emitTiming, 0 );
