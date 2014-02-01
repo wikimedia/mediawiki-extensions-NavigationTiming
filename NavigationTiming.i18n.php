@@ -31,6 +31,13 @@ $messages['ast'] = array(
 	'navigationtiming-desc' => "Amiesta'l rexistru de midíes de latencia nel llau del cliente",
 );
 
+/** Chechen (нохчийн)
+ * @author Умар
+ */
+$messages['ce'] = array(
+	'navigationtiming-desc' => 'ТӀетуху дустаран протокол клиентан хьедалар',
+);
+
 /** Czech (čeština)
  * @author Mormegil
  */
