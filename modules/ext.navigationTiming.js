@@ -107,7 +107,7 @@
 			};
 
 		if ( window.mediaWikiLoadStart ) {
-			event.mediaWikiLoadComplete = mediaWikiLoadEnd - mediaWikiLoadStart;
+			event.mediaWikiLoadComplete = Math.round( mediaWikiLoadEnd - mediaWikiLoadStart );
 		}
 
 		if ( $.isPlainObject( window.Geo ) && typeof Geo.country === 'string' ) {
