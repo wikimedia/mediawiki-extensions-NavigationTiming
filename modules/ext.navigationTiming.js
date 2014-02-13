@@ -104,7 +104,8 @@
 				pageId : mw.config.get( 'wgArticleId' ),
 				revId  : mw.config.get( 'wgCurRevisionId' ),
 				action : mw.config.get( 'wgAction' )  // view, submit, etc.
-			};
+			},
+			mobileMode = mw.config.get( 'wgMFMode' );
 
 		if ( window.mediaWikiLoadStart ) {
 			event.mediaWikiLoadComplete = Math.round( mediaWikiLoadEnd - mediaWikiLoadStart );
@@ -120,7 +121,7 @@
 			$.extend( event, page );
 		}
 
-		if ( mw.mobileFrontend && mw.config.exists( 'wgMFMode' ) ) {
+		if ( typeof mobileMode === 'string' && mobileMode.indexOf( 'desktop' ) === -1 ) {
 			event.mobileMode = mw.config.get( 'wgMFMode' );
 		}
 
