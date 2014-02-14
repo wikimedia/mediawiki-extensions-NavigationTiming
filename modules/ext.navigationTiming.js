@@ -96,7 +96,6 @@
 	function emitTiming() {
 		var mediaWikiLoadEnd = mw.now ? mw.now() : new Date().getTime(),
 			event = {
-				userAgent     : navigator.userAgent,
 				isHttps       : location.protocol === 'https:',
 				isAnon        : mw.config.get( 'wgUserId' ) === null
 			},
