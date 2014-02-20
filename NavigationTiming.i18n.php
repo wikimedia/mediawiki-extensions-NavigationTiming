@@ -52,6 +52,13 @@ $messages['de'] = array(
 	'navigationtiming-desc' => 'Ergänzt eine zeitverzögerte clientseitige Messungsprotokollierung',
 );
 
+/** Persian (فارسی)
+ * @author Armin1392
+ */
+$messages['fa'] = array(
+	'navigationtiming-desc' => 'افزودن اندازه‌گیری‌های سمت-مشتری پنهانی ورود',
+);
+
 /** French (français)
  * @author Gomoko
  */
