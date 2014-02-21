@@ -165,6 +165,13 @@ $messages['ru'] = array(
 	'navigationtiming-desc' => 'Добавляет протоколирование измерения задержки на стороне клиента',
 );
 
+/** Scots (Scots)
+ * @author John Reid
+ */
+$messages['sco'] = array(
+	'navigationtiming-desc' => 'Adds client-side latencie measurements loggin',
+);
+
 /** Tagalog (Tagalog)
  * @author AnakngAraw
  */
