@@ -172,6 +172,13 @@ $messages['sco'] = array(
 	'navigationtiming-desc' => 'Adds client-side latencie measurements loggin',
 );
 
+/** Swedish (svenska)
+ * @author Lokal Profil
+ */
+$messages['sv'] = array(
+	'navigationtiming-desc' => 'Lägger till loggning för latens mätningar på klientsidan',
+);
+
 /** Tagalog (Tagalog)
  * @author AnakngAraw
  */
