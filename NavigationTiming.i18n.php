@@ -169,7 +169,7 @@ $messages['ru'] = array(
  * @author John Reid
  */
 $messages['sco'] = array(
-	'navigationtiming-desc' => 'Adds client-side latencie measurements loggin',
+	'navigationtiming-desc' => 'Eiks client-side latencie measurements loggin',
 );
 
 /** Swedish (svenska)
