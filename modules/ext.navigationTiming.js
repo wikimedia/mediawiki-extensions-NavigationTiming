@@ -21,7 +21,7 @@
 	/** Assert that the attribute order complies with the W3C spec. **/
 	function isCompliant() {
 		// Tests derived from <http://w3c-test.org/web-platform-tests/
-		//   master/navigation-timing/test_timing_attributes_order.html>
+		// master/navigation-timing/test_timing_attributes_order.html>
 		var attr, current, last = 0, order = [
 			'loadEventEnd',
 			'loadEventStart',
@@ -40,7 +40,7 @@
 			return false;
 		}
 
-		if ( /Firefox\/[78]/.test( navigator.userAgent ) ) {
+		if ( /Firefox\/[78]\b/.test( navigator.userAgent ) ) {
 			// The Navigation Timing API is broken in Firefox 7 and 8 and reports
 			// inaccurate measurements. See <https://bugzilla.mozilla.org/691547>.
 			return false;
@@ -74,7 +74,7 @@
 			'requestStart',
 			'responseEnd',
 			'responseStart'
-		], function ( _, marker ) {
+		], function ( i, marker ) {
 			var measure = timing[marker] - navStart;
 			if ( $.isNumeric( measure ) && measure > 0 ) {
 				timingData[ marker ] = measure;
@@ -96,13 +96,13 @@
 	function emitTiming() {
 		var mediaWikiLoadEnd = mw.now ? mw.now() : new Date().getTime(),
 			event = {
-				isHttps       : location.protocol === 'https:',
-				isAnon        : mw.config.get( 'wgUserId' ) === null
+				isHttps: location.protocol === 'https:',
+				isAnon: mw.config.get( 'wgUserId' ) === null
 			},
 			page = {
-				pageId : mw.config.get( 'wgArticleId' ),
-				revId  : mw.config.get( 'wgCurRevisionId' ),
-				action : mw.config.get( 'wgAction' )  // view, submit, etc.
+				pageId: mw.config.get( 'wgArticleId' ),
+				revId: mw.config.get( 'wgCurRevisionId' ),
+				action: mw.config.get( 'wgAction' ) // view, submit, etc.
 			},
 			mobileMode = mw.config.get( 'wgMFMode' );
 
@@ -110,7 +110,7 @@
 			event.mediaWikiLoadComplete = Math.round( mediaWikiLoadEnd - mediaWikiLoadStart );
 		}
 
-		if ( $.isPlainObject( window.Geo ) && typeof Geo.country === 'string' ) {
+		if ( window.Geo && typeof Geo.country === 'string' ) {
 			event.originCountry = Geo.country;
 		}
 
@@ -137,9 +137,9 @@
 	}
 
 	if ( inSample() ) {
-		// ensure we run after loadEventEnd.
+		// Ensure we run after loadEventEnd.
 		$( window ).load( function () {
-			setTimeout( emitTiming, 0 );
+			setTimeout( emitTiming );
 		} );
 	}
 
