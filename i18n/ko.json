@@ -1,0 +1,8 @@
+{
+    "@metadata": {
+        "authors": [
+            "아라"
+        ]
+    },
+    "navigationtiming-desc": "클라이언트 측 대기 시간을 측정하고 기록하는 기능을 추가합니다"
+}

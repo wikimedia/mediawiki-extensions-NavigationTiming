@@ -1,0 +1,8 @@
+{
+    "@metadata": {
+        "authors": [
+            "Gomoko"
+        ]
+    },
+    "navigationtiming-desc": "Ajouter une trace des mesures de latence côté client"
+}

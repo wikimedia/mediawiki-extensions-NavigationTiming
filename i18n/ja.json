@@ -1,0 +1,8 @@
+{
+    "@metadata": {
+        "authors": [
+            "Shirayuki"
+        ]
+    },
+    "navigationtiming-desc": "クライアント側での待機時間を測定して記録する機能を追加する"
+}

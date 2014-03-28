@@ -16,7 +16,7 @@
 $wgExtensionCredits['other'][] = array(
 	'path' => __FILE__,
 	'name' => 'NavigationTiming',
-	'version' => '0.0.1',
+	'version' => '0.1.0',
 	'url' => 'https://www.mediawiki.org/wiki/Extension:NavigationTiming',
 	'author' => array(
 		'Asher Feldman',
@@ -29,6 +29,7 @@ $wgExtensionCredits['other'][] = array(
 /** @var int|bool: If set, logs once per this many requests. False if unset. **/
 $wgNavigationTimingSamplingFactor = false;
 
+$wgMessagesDirs['NavigationTiming'] = __DIR__ . '/i18n';
 $wgExtensionMessagesFiles[ 'NavigationTiming' ] = __DIR__ . '/NavigationTiming.i18n.php';
 
 $wgResourceModules += array(

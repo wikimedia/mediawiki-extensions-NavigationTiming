@@ -1,0 +1,8 @@
+{
+    "@metadata": {
+        "authors": [
+            "Lokal Profil"
+        ]
+    },
+    "navigationtiming-desc": "Lägger till loggning för latens mätningar på klientsidan"
+}

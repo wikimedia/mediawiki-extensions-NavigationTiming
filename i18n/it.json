@@ -1,0 +1,8 @@
+{
+    "@metadata": {
+        "authors": [
+            "Beta16"
+        ]
+    },
+    "navigationtiming-desc": "Aggiunge la registrazione delle misurazioni per la latenza lato client"
+}
