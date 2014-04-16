@@ -1,8 +1,8 @@
 {
-    "@metadata": {
-        "authors": [
-            "Bjankuloski06"
-        ]
-    },
-    "navigationtiming-desc": "Додава заведување на измерени задоцнувања од клиентска страна"
+	"@metadata": {
+		"authors": [
+			"Bjankuloski06"
+		]
+	},
+	"navigationtiming-desc": "Додава заведување на измерени задоцнувања од клиентска страна"
 }

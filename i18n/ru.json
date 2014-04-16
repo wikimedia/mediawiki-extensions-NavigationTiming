@@ -1,8 +1,8 @@
 {
-    "@metadata": {
-        "authors": [
-            "Okras"
-        ]
-    },
-    "navigationtiming-desc": "Добавляет протоколирование измерения задержки на стороне клиента"
+	"@metadata": {
+		"authors": [
+			"Okras"
+		]
+	},
+	"navigationtiming-desc": "Добавляет протоколирование измерения задержки на стороне клиента"
 }

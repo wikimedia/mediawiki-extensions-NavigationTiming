@@ -1,8 +1,8 @@
 {
-    "@metadata": {
-        "authors": [
-            "Andriykopanytsia"
-        ]
-    },
-    "navigationtiming-desc": "Додає журналювання клієнтської затримки вимірювань"
+	"@metadata": {
+		"authors": [
+			"Andriykopanytsia"
+		]
+	},
+	"navigationtiming-desc": "Додає журналювання клієнтської затримки вимірювань"
 }

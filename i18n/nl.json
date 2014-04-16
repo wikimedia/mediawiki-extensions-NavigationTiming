@@ -1,9 +1,9 @@
 {
-    "@metadata": {
-        "authors": [
-            "Konovalov",
-            "Siebrand"
-        ]
-    },
-    "navigationtiming-desc": "Maakt het vastleggen van tijdsmetingen voor clientbewerkingen mogelijk"
+	"@metadata": {
+		"authors": [
+			"Konovalov",
+			"Siebrand"
+		]
+	},
+	"navigationtiming-desc": "Maakt het vastleggen van tijdsmetingen voor clientbewerkingen mogelijk"
 }

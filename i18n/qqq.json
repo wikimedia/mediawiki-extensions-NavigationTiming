@@ -1,10 +1,10 @@
 {
-    "@metadata": {
-        "authors": [
-            "Asher Feldman",
-            "Patrick Reilly",
-            "Shirayuki"
-        ]
-    },
-    "navigationtiming-desc": "{{desc|name=Navigation Timing|url=http://www.mediawiki.org/wiki/Extension:NavigationTiming}}"
+	"@metadata": {
+		"authors": [
+			"Asher Feldman",
+			"Patrick Reilly",
+			"Shirayuki"
+		]
+	},
+	"navigationtiming-desc": "{{desc|name=Navigation Timing|url=http://www.mediawiki.org/wiki/Extension:NavigationTiming}}"
 }

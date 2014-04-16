@@ -1,8 +1,8 @@
 {
-    "@metadata": {
-        "authors": [
-            "Toliño"
-        ]
-    },
-    "navigationtiming-desc": "Engade un rexistro das medidas de latencia"
+	"@metadata": {
+		"authors": [
+			"Toliño"
+		]
+	},
+	"navigationtiming-desc": "Engade un rexistro das medidas de latencia"
 }
