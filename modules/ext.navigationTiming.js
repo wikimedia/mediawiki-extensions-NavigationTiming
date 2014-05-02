@@ -121,7 +121,7 @@
 		}
 
 		if ( typeof mobileMode === 'string' && mobileMode.indexOf( 'desktop' ) === -1 ) {
-			event.mobileMode = mw.config.get( 'wgMFMode' );
+			event.mobileMode = mobileMode;
 		}
 
 		// The Navigation Timing API provides an attribute that can be used to
