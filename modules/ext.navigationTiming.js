@@ -104,6 +104,7 @@
 				revId: mw.config.get( 'wgCurRevisionId' ),
 				action: mw.config.get( 'wgAction' ) // view, submit, etc.
 			},
+			isSpecialPage = !!mw.config.get( 'wgCanonicalSpecialPageName' ),
 			mobileMode = mw.config.get( 'wgMFMode' );
 
 		if ( window.mediaWikiLoadStart ) {
@@ -116,7 +117,7 @@
 
 		// Omit page information for special pages: they don't have real page
 		// IDs or revisions. (They appear as 0 to client-side code.)
-		if ( page.revId ) {
+		if ( !isSpecialPage ) {
 			$.extend( event, page );
 		}
 
