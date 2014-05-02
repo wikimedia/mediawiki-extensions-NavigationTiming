@@ -101,6 +101,7 @@
 			},
 			page = {
 				pageId: mw.config.get( 'wgArticleId' ),
+				namespaceId: mw.config.get( 'wgNamespaceNumber' ),
 				revId: mw.config.get( 'wgCurRevisionId' ),
 				action: mw.config.get( 'wgAction' ) // view, submit, etc.
 			},

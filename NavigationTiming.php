@@ -36,7 +36,7 @@ $wgResourceModules += array(
 	'schema.NavigationTiming' => array(
 		'class'         => 'ResourceLoaderSchemaModule',
 		'schema'        => 'NavigationTiming',
-		'revision'      => 7494934,
+		'revision'      => 8365252,
 		'targets'       => array( 'desktop', 'mobile' ),
 	),
 	'ext.navigationTiming' => array(
