@@ -93,7 +93,7 @@
 		return timingData;
 	}
 
-	function emitTiming() {
+	function getMediaWikiTiming() {
 		var mediaWikiLoadEnd = mw.now ? mw.now() : new Date().getTime(),
 			event = {
 				isHttps: location.protocol === 'https:',
@@ -125,6 +125,12 @@
 		if ( typeof mobileMode === 'string' && mobileMode.indexOf( 'desktop' ) === -1 ) {
 			event.mobileMode = mobileMode;
 		}
+
+		return event;
+	}
+
+	function emitTiming() {
+		var event = getMediaWikiTiming();
 
 		// The Navigation Timing API provides an attribute that can be used to
 		// know if a page load was triggered by link click or manual URL entry
