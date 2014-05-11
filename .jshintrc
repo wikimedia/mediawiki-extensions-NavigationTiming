@@ -5,7 +5,8 @@
 		"jQuery",
 		"mediaWiki",
 		"mediaWikiLoadStart",
-		"performance"
+		"performance",
+		"chrome"
 	],
 
 	"bitwise": true,

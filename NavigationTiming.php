@@ -33,12 +33,6 @@ $wgMessagesDirs['NavigationTiming'] = __DIR__ . '/i18n';
 $wgExtensionMessagesFiles[ 'NavigationTiming' ] = __DIR__ . '/NavigationTiming.i18n.php';
 
 $wgResourceModules += array(
-	'schema.NavigationTiming' => array(
-		'class'         => 'ResourceLoaderSchemaModule',
-		'schema'        => 'NavigationTiming',
-		'revision'      => 8365252,
-		'targets'       => array( 'desktop', 'mobile' ),
-	),
 	'ext.navigationTiming' => array(
 		'scripts'       => 'ext.navigationTiming.js',
 		'localBasePath' => __DIR__ . '/modules',
@@ -47,6 +41,8 @@ $wgResourceModules += array(
 		'targets'       => array( 'desktop', 'mobile' ),
 	)
 );
+
+$wgEventLoggingSchemas[ 'NavigationTiming' ] = 8477778;
 
 $wgHooks[ 'BeforePageDisplay' ][] = function ( &$out, &$skin ) {
 	$out->addModules( 'ext.navigationTiming' );
