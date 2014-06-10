@@ -112,8 +112,8 @@
 			event.mediaWikiLoadComplete = Math.round( mediaWikiLoadEnd - mediaWikiLoadStart );
 		}
 
-		if ( window.Geo && typeof Geo.country === 'string' ) {
-			event.originCountry = Geo.country;
+		if ( window.Geo && typeof window.Geo.country === 'string' ) {
+			event.originCountry = window.Geo.country;
 		}
 
 		// Omit page information for special pages: they don't have real page
