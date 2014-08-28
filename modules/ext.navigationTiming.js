@@ -129,6 +129,32 @@
 		return event;
 	}
 
+	function getPaintTiming() {
+		var loadTimes;
+
+		// on Chrome we need to call a method to get the paint timing values; this is non-standard
+		// and there is no safe way to feature-test it, so we'll just try and discard exceptions
+		try {
+			loadTimes = chrome.loadTimes();
+			// the loadTimes API returns seconds (with microsecond precision), we multiply by 1000
+			// to get results comparable with the NavigationTiming API
+			return {
+				firstPaint: Math.floor( loadTimes.firstPaintTime * 1000 ),
+				firstPaintAfterLoad: Math.floor( loadTimes.firstPaintAfterLoadTime * 1000 )
+			};
+		} catch( e ) {}
+
+		if ( timing && timing.msFirstPaint ) {
+			// IE version of first paint time
+			// http://msdn.microsoft.com/en-us/library/ff974719
+			return {
+				firstPaint: timing.msFirstPaint
+			};
+		}
+
+		return {};
+	}
+
 	function emitTiming() {
 		var event = getMediaWikiTiming();
 
@@ -140,6 +166,8 @@
 		if ( isCompliant() && performance.navigation.type === 0 ) {
 			$.extend( event, getNavTiming() );
 		}
+
+		$.extend( event, getPaintTiming() );
 
 		mw.eventLog.logEvent( 'NavigationTiming', event );
 	}
