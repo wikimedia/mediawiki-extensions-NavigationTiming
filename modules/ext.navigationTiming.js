@@ -103,7 +103,8 @@
 				pageId: mw.config.get( 'wgArticleId' ),
 				namespaceId: mw.config.get( 'wgNamespaceNumber' ),
 				revId: mw.config.get( 'wgCurRevisionId' ),
-				action: mw.config.get( 'wgAction' ) // view, submit, etc.
+				action: mw.config.get( 'wgAction' ), // view, submit, etc.
+				runtime: mw.config.get( 'wgPoweredByHHVM' ) ? 'HHVM' : 'PHP5'
 			},
 			isSpecialPage = !!mw.config.get( 'wgCanonicalSpecialPageName' ),
 			mobileMode = mw.config.get( 'wgMFMode' );

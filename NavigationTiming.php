@@ -42,7 +42,7 @@ $wgResourceModules += array(
 	)
 );
 
-$wgEventLoggingSchemas[ 'NavigationTiming' ] = 8477778;
+$wgEventLoggingSchemas[ 'NavigationTiming' ] = 10076863;
 
 $wgHooks[ 'BeforePageDisplay' ][] = function ( &$out, &$skin ) {
 	$out->addModules( 'ext.navigationTiming' );
