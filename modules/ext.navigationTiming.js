@@ -156,7 +156,7 @@
 		return {};
 	}
 
-	function emitTiming() {
+	function emitNavigationTiming() {
 		var event = getMediaWikiTiming();
 
 		// The Navigation Timing API provides an attribute that can be used to
@@ -173,11 +173,28 @@
 		mw.eventLog.logEvent( 'NavigationTiming', event );
 	}
 
-	if ( inSample() ) {
-		// Ensure we run after loadEventEnd.
-		$( window ).load( function () {
-			setTimeout( emitTiming );
-		} );
+	function emitSaveTiming() {
+		if (
+			mw.config.get( 'wgPostEdit' )
+			&& isCompliant()
+			&& performance.navigation.type === 0
+			&& performance.timing.navigationStart > 0
+		) {
+			mw.eventLog.logEvent( 'SaveTiming', {
+				duration: performance.timing.responseStart - performance.timing.navigationStart,
+				runtime: mw.config.get( 'wgPoweredByHHVM' ) ? 'HHVM' : 'PHP5'
+			} );
+		}
 	}
+
+	// Ensure we run after loadEventEnd.
+	$( window ).load( function () {
+		setTimeout( function () {
+			if ( inSample() ) {
+				emitNavigationTiming();
+			}
+			mw.hook( 'postEdit' ).add( emitSaveTiming );
+		} );
+	} );
 
 } ( mediaWiki, jQuery ) );

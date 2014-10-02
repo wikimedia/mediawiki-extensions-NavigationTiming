@@ -37,12 +37,16 @@ $wgResourceModules += array(
 		'scripts'       => 'ext.navigationTiming.js',
 		'localBasePath' => __DIR__ . '/modules',
 		'remoteExtPath' => 'NavigationTiming/modules',
-		'dependencies'  => 'schema.NavigationTiming',
+		'dependencies'  => array(
+			'schema.NavigationTiming',
+			'schema.SaveTiming',
+		),
 		'targets'       => array( 'desktop', 'mobile' ),
 	)
 );
 
 $wgEventLoggingSchemas[ 'NavigationTiming' ] = 10076863;
+$wgEventLoggingSchemas[ 'SaveTiming' ] = 10077760;
 
 $wgHooks[ 'BeforePageDisplay' ][] = function ( &$out, &$skin ) {
 	$out->addModules( 'ext.navigationTiming' );
