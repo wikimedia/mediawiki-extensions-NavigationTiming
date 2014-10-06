@@ -29,17 +29,24 @@ $wgExtensionCredits['other'][] = array(
 /** @var int|bool: If set, logs once per this many requests. False if unset. **/
 $wgNavigationTimingSamplingFactor = false;
 
+/** @var int|bool: Percent of users who should be routed to the HHVM cluster. False if unset. **/
+$wgPercentHHVM = false;
+
 $wgMessagesDirs['NavigationTiming'] = __DIR__ . '/i18n';
 $wgExtensionMessagesFiles[ 'NavigationTiming' ] = __DIR__ . '/NavigationTiming.i18n.php';
 
 $wgResourceModules += array(
 	'ext.navigationTiming' => array(
-		'scripts'       => 'ext.navigationTiming.js',
+		'scripts'       => array(
+			'ext.navigationTiming.js',
+			'ext.navigationTiming.HHVM.js',
+		),
 		'localBasePath' => __DIR__ . '/modules',
 		'remoteExtPath' => 'NavigationTiming/modules',
 		'dependencies'  => array(
 			'schema.NavigationTiming',
 			'schema.SaveTiming',
+			'json',
 		),
 		'targets'       => array( 'desktop', 'mobile' ),
 	)
@@ -54,7 +61,8 @@ $wgHooks[ 'BeforePageDisplay' ][] = function ( &$out, &$skin ) {
 };
 
 $wgHooks[ 'ResourceLoaderGetConfigVars' ][] = function ( &$vars ) {
-	global $wgNavigationTimingSamplingFactor;
+	global $wgNavigationTimingSamplingFactor, $wgPercentHHVM;
 	$vars[ 'wgNavigationTimingSamplingFactor' ] = $wgNavigationTimingSamplingFactor;
+	$vars[ 'wgPercentHHVM' ] = $wgPercentHHVM;
 	return true;
 };
