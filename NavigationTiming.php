@@ -53,7 +53,7 @@ $wgResourceModules += array(
 	)
 );
 
-$wgEventLoggingSchemas[ 'NavigationTiming' ] = 10076863;
+$wgEventLoggingSchemas[ 'NavigationTiming' ] = 10374055;
 $wgEventLoggingSchemas[ 'SaveTiming' ] = 10077760;
 
 $wgHooks[ 'BeforePageDisplay' ][] = function ( &$out, &$skin ) {

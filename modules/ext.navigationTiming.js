@@ -73,7 +73,8 @@
 			'loadEventStart',
 			'requestStart',
 			'responseEnd',
-			'responseStart'
+			'responseStart',
+			'secureConnectionStart'
 		], function ( i, marker ) {
 			var measure = timing[marker] - navStart;
 			if ( $.isNumeric( measure ) && measure > 0 ) {
