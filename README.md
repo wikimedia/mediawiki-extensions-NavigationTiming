@@ -8,8 +8,8 @@ Timing API.
 Sample configuration:
 
 ```
-require_once( "$IP/extensions/EventLogging/EventLogging.php" ); // dependency
-require_once( "$IP/extensions/NavigationTiming/NavigationTiming.php" );
+require_once "$IP/extensions/EventLogging/EventLogging.php"; // dependency
+require_once "$IP/extensions/NavigationTiming/NavigationTiming.php";
 $wgNavigationTimingSamplingFactor = 10000; // log 1:10,000 requests
 ```
 
