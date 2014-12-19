@@ -8,7 +8,12 @@
 ( function ( mw, $ ) {
 	'use strict';
 
-	var timing = window.performance ? performance.timing : null;
+	var timing, navigation;
+
+	if ( window.performance ) {
+		timing = performance.timing;
+		navigation = performance.navigation;
+	}
 
 	function inSample() {
 		var factor = mw.config.get( 'wgNavigationTimingSamplingFactor' );
@@ -35,7 +40,7 @@
 			'connectStart'
 		];
 
-		if ( !timing ) {
+		if ( !timing || !performance ) {
 			// Browser does not implement the Navigation Timing API.
 			return false;
 		}
@@ -56,12 +61,36 @@
 		return true;
 	}
 
+	function getPaintTiming() {
+		var firstPaint, relativeTo;
+
+		if ( $.isPlainObject( window.chrome ) && $.isFunction( chrome.loadTimes ) ) {
+			// Chrome
+			firstPaint = chrome.loadTimes().firstPaintTime * 1000;
+			relativeTo = chrome.loadTimes().startLoadTime * 1000;
+		} else if ( timing && timing.msFirstPaint ) {
+			// Internet Explorer 9+ (<http://msdn.microsoft.com/ff974719>)
+			firstPaint = timing.msFirstPaint;
+			relativeTo = timing.navigationStart;
+		}
+
+		if ( firstPaint > relativeTo ) {
+			return { firstPaint: Math.round( firstPaint - relativeTo ) };
+		}
+	}
+
 	function getNavTiming() {
+		var navStart, timingData;
+
+		if ( !isCompliant() || navigation.type !== 0 ) {
+			return {};
+		}
+
 		// Workaround for IE 9 bug: IE 9 sets a default value of zero for
 		// navigationStart, rather than use fetchStart as the specification
 		// requires. See <https://bugzilla.wikimedia.org/46474> for details.
-		var navStart = timing.navigationStart || timing.fetchStart,
-			timingData = {};
+		navStart = timing.navigationStart || timing.fetchStart;
+		timingData = {};
 
 		$.each( [
 			'connectEnd',
@@ -91,10 +120,13 @@
 			timingData.redirecting = timing.redirectEnd - timing.redirectStart;
 		}
 
+		$.extend( timingData, getPaintTiming() );
+
 		return timingData;
 	}
 
-	function getMediaWikiTiming() {
+
+	function emitNavigationTiming() {
 		var mediaWikiLoadEnd = mw.now ? mw.now() : new Date().getTime(),
 			event = {
 				isHttps: location.protocol === 'https:',
@@ -104,8 +136,7 @@
 				pageId: mw.config.get( 'wgArticleId' ),
 				namespaceId: mw.config.get( 'wgNamespaceNumber' ),
 				revId: mw.config.get( 'wgCurRevisionId' ),
-				action: mw.config.get( 'wgAction' ), // view, submit, etc.
-				runtime: mw.config.get( 'wgPoweredByHHVM' ) ? 'HHVM' : 'PHP5'
+				action: mw.config.get( 'wgAction' ) // view, submit, etc.
 			},
 			isSpecialPage = !!mw.config.get( 'wgCanonicalSpecialPageName' ),
 			mobileMode = mw.config.get( 'wgMFMode' );
@@ -128,63 +159,21 @@
 			event.mobileMode = mobileMode;
 		}
 
-		return event;
-	}
-
-	function getPaintTiming() {
-		var loadTimes;
-
-		// on Chrome we need to call a method to get the paint timing values; this is non-standard
-		// and there is no safe way to feature-test it, so we'll just try and discard exceptions
-		try {
-			loadTimes = chrome.loadTimes();
-			// the loadTimes API returns seconds (with microsecond precision), we multiply by 1000
-			// to get results comparable with the NavigationTiming API
-			return {
-				firstPaint: Math.floor( loadTimes.firstPaintTime * 1000 ),
-				firstPaintAfterLoad: Math.floor( loadTimes.firstPaintAfterLoadTime * 1000 )
-			};
-		} catch( e ) {}
-
-		if ( timing && timing.msFirstPaint ) {
-			// IE version of first paint time
-			// http://msdn.microsoft.com/en-us/library/ff974719
-			return {
-				firstPaint: timing.msFirstPaint
-			};
-		}
-
-		return {};
-	}
-
-	function emitNavigationTiming() {
-		var event = getMediaWikiTiming();
-
-		// The Navigation Timing API provides an attribute that can be used to
-		// know if a page load was triggered by link click or manual URL entry
-		// vs. by using the back/forward button or by reloading the page. A
-		// value of 0 corresponds with TYPE_NAVIGATENEXT, which indicates a
-		// normal page load.
-		if ( isCompliant() && performance.navigation.type === 0 ) {
-			$.extend( event, getNavTiming() );
-		}
-
-		$.extend( event, getPaintTiming() );
+		$.extend( event, getNavTiming() );
 
 		mw.eventLog.logEvent( 'NavigationTiming', event );
 	}
 
 	function emitSaveTiming() {
-		if (
-			mw.config.get( 'wgPostEdit' )
-			&& isCompliant()
-			&& performance.navigation.type === 0
-			&& performance.timing.navigationStart > 0
-		) {
-			mw.eventLog.logEvent( 'SaveTiming', {
-				duration: performance.timing.responseStart - performance.timing.navigationStart,
-				runtime: mw.config.get( 'wgPoweredByHHVM' ) ? 'HHVM' : 'PHP5'
-			} );
+		var navTiming;
+
+		if ( !mw.config.get( 'wgPostEdit' ) ) {
+			return;
+		}
+
+		navTiming = getNavTiming();
+		if ( navTiming ) {
+			mw.eventLog.logEvent( 'SaveTiming', { duration: navTiming.responseStart } );
 		}
 	}
 

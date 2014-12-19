@@ -10,13 +10,13 @@
  * @author Patrick Reilly <preilly@php.net>
  *
  * @license GPL v2 or later
- * @version 0.1.1
+ * @version 1.0
  */
 
 $wgExtensionCredits['other'][] = array(
 	'path' => __FILE__,
 	'name' => 'NavigationTiming',
-	'version' => '0.1.0',
+	'version' => '1.0',
 	'url' => 'https://www.mediawiki.org/wiki/Extension:NavigationTiming',
 	'author' => array(
 		'Asher Feldman',
@@ -29,9 +29,6 @@ $wgExtensionCredits['other'][] = array(
 /** @var int|bool: If set, logs once per this many requests. False if unset. **/
 $wgNavigationTimingSamplingFactor = false;
 
-/** @var int|bool: Percent of users who should be routed to the HHVM cluster. False if unset. **/
-$wgPercentHHVM = false;
-
 $wgMessagesDirs['NavigationTiming'] = __DIR__ . '/i18n';
 $wgExtensionMessagesFiles[ 'NavigationTiming' ] = __DIR__ . '/NavigationTiming.i18n.php';
 
@@ -39,7 +36,6 @@ $wgResourceModules += array(
 	'ext.navigationTiming' => array(
 		'scripts'       => array(
 			'ext.navigationTiming.js',
-			'ext.navigationTiming.HHVM.js',
 		),
 		'localBasePath' => __DIR__ . '/modules',
 		'remoteExtPath' => 'NavigationTiming/modules',
@@ -53,8 +49,10 @@ $wgResourceModules += array(
 	)
 );
 
-$wgEventLoggingSchemas[ 'NavigationTiming' ] = 10374055;
-$wgEventLoggingSchemas[ 'SaveTiming' ] = 10077760;
+$wgEventLoggingSchemas += array(
+	'NavigationTiming' => 10785754,
+	'SaveTiming'       => 10785299,
+);
 
 $wgHooks[ 'BeforePageDisplay' ][] = function ( &$out, &$skin ) {
 	$out->addModules( 'ext.navigationTiming' );
@@ -62,8 +60,7 @@ $wgHooks[ 'BeforePageDisplay' ][] = function ( &$out, &$skin ) {
 };
 
 $wgHooks[ 'ResourceLoaderGetConfigVars' ][] = function ( &$vars ) {
-	global $wgNavigationTimingSamplingFactor, $wgPercentHHVM;
+	global $wgNavigationTimingSamplingFactor;
 	$vars[ 'wgNavigationTimingSamplingFactor' ] = $wgNavigationTimingSamplingFactor;
-	$vars[ 'wgPercentHHVM' ] = $wgPercentHHVM;
 	return true;
 };
