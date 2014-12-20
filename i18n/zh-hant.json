@@ -1,8 +1,9 @@
 {
 	"@metadata": {
 		"authors": [
-			"Justincheng12345"
+			"Justincheng12345",
+			"Cwlin0416"
 		]
 	},
-	"navigationtiming-desc": "添加用戶端的延遲測量記錄"
+	"navigationtiming-desc": "新增客戶端的延遲測量記錄"
 }
