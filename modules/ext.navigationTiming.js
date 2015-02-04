@@ -180,7 +180,7 @@
 	// Ensure we run after loadEventEnd.
 	$( window ).load( function () {
 		setTimeout( function () {
-			if ( inSample() || ( timing && timing.secureConnectionStart ) ) {
+			if ( inSample() ) {
 				emitNavigationTiming();
 			}
 			mw.hook( 'postEdit' ).add( emitSaveTiming );

@@ -49,6 +49,9 @@ $wgResourceModules += array(
 	)
 );
 
+if ( !isset( $wgEventLoggingSchemas ) ) {
+	$wgEventLoggingSchemas = array();
+}
 $wgEventLoggingSchemas += array(
 	'NavigationTiming' => 10785754,
 	'SaveTiming'       => 10785299,
