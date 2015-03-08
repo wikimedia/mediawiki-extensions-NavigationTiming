@@ -1,8 +1,9 @@
 {
 	"@metadata": {
 		"authors": [
-			"Metalhead64"
+			"Metalhead64",
+			"Purodha"
 		]
 	},
-	"navigationtiming-desc": "Ergänzt eine zeitverzögerte clientseitige Messungsprotokollierung"
+	"navigationtiming-desc": "Fügt dem Wiki die Protokollierung von gemessenen clientseitigen Zeitverzögerungen hinzu"
 }
