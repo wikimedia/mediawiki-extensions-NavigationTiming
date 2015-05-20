@@ -54,7 +54,7 @@ if ( !isset( $wgEventLoggingSchemas ) ) {
 }
 $wgEventLoggingSchemas += array(
 	'NavigationTiming' => 10785754,
-	'SaveTiming'       => 10785299,
+	'SaveTiming'       => 12236257,
 );
 
 $wgHooks[ 'BeforePageDisplay' ][] = function ( &$out, &$skin ) {

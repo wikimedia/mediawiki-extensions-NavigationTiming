@@ -172,8 +172,10 @@
 		}
 
 		navTiming = getNavTiming();
-		if ( navTiming ) {
-			mw.eventLog.logEvent( 'SaveTiming', { duration: navTiming.responseStart } );
+		if ( navTiming && navTiming.responseStart ) {
+			mw.eventLog.logEvent( 'SaveTiming', {
+				saveTiming: navTiming.responseStart
+			} );
 		}
 	}
 
