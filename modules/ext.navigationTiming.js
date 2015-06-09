@@ -145,8 +145,14 @@
 			event.mediaWikiLoadComplete = Math.round( mediaWikiLoadEnd - mediaWikiLoadStart );
 		}
 
-		if ( window.Geo && typeof window.Geo.country === 'string' ) {
-			event.originCountry = window.Geo.country;
+		if ( window.Geo ) {
+			if ( typeof window.Geo.country === 'string' ) {
+				event.originCountry = window.Geo.country;
+			}
+
+			if ( typeof window.Geo.region === 'string' ) {
+				event.originRegion = window.Geo.region;
+			}
 		}
 
 		// Omit page information for special pages: they don't have real page
