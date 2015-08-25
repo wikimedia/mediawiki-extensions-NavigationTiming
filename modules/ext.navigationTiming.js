@@ -97,16 +97,25 @@
 		$.each( [
 			'connectEnd',
 			'connectStart',
+			'domainLookupStart',
+			'domainLookupEnd',
 			'domComplete',
+			'domContentLoadedEventStart',
+			'domContentLoadedEventEnd',
 			'domInteractive',
 			'domLoading',
 			'fetchStart',
 			'loadEventEnd',
 			'loadEventStart',
+			'redirectStart',
+			'redirectEnd',
 			'requestStart',
 			'responseEnd',
 			'responseStart',
-			'secureConnectionStart'
+			'secureConnectionStart',
+			'unloadEventStart',
+			'unloadEventEnd'
+
 		], function ( i, marker ) {
 			var measure = timing[ marker ] - navStart;
 			if ( $.isNumeric( measure ) && measure > 0 ) {
@@ -141,10 +150,16 @@
 				action: mw.config.get( 'wgAction' ) // view, submit, etc.
 			},
 			isSpecialPage = !!mw.config.get( 'wgCanonicalSpecialPageName' ),
-			mobileMode = mw.config.get( 'wgMFMode' );
+			mobileMode = mw.config.get( 'wgMFMode' ),
+			wikiLoadstartPoint;
+
+		// check startup.js for startup time
+		performance.mark( 'mwLoadEnd' );
 
 		if ( window.mediaWikiLoadStart ) {
-			event.mediaWikiLoadComplete = Math.round( mediaWikiLoadEnd - mediaWikiLoadStart );
+			wikiLoadstartPoint = timing.navigationStart || timing.fetchStart;
+			event.mediaWikiLoadStart = Math.round( mediaWikiLoadStart - wikiLoadstartPoint );
+			event.mediaWikiLoadEnd =  Math.round( mediaWikiLoadEnd - wikiLoadstartPoint );
 		}
 
 		if ( window.Geo ) {

@@ -54,7 +54,7 @@ if ( !isset( $wgEventLoggingSchemas ) ) {
 	$wgEventLoggingSchemas = array();
 }
 $wgEventLoggingSchemas += array(
-	'NavigationTiming' => 13317958,
+	'NavigationTiming' => 13332008,
 	'SaveTiming'       => 12236257,
 );
 
