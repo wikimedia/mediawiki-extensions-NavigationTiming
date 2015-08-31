@@ -24,6 +24,7 @@ $wgExtensionCredits['other'][] = array(
 		'Patrick Reilly',
 	),
 	'descriptionmsg' => 'navigationtiming-desc',
+	'license-name' => 'GPL-2.0+',
 );
 
 /** @var int|bool: If set, logs once per this many requests. False if unset. **/
