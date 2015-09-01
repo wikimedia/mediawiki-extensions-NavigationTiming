@@ -1,4 +1,4 @@
-/**
+/*!
  * JavaScript module for logging client-side latency measurements.
  * @see https://mediawiki.org/wiki/Extension:NavigationTiming
  *
@@ -27,18 +27,20 @@
 	function isCompliant() {
 		// Tests derived from <http://w3c-test.org/web-platform-tests/
 		// master/navigation-timing/test_timing_attributes_order.html>
-		var attr, current, last = 0, order = [
-			'loadEventEnd',
-			'loadEventStart',
-			'domContentLoadedEventEnd',
-			'domContentLoadedEventStart',
-			'domInteractive',
-			'responseEnd',
-			'responseStart',
-			'requestStart',
-			'connectEnd',
-			'connectStart'
-		];
+		var attr, current,
+			last = 0,
+			order = [
+				'loadEventEnd',
+				'loadEventStart',
+				'domContentLoadedEventEnd',
+				'domContentLoadedEventStart',
+				'domInteractive',
+				'responseEnd',
+				'responseStart',
+				'requestStart',
+				'connectEnd',
+				'connectStart'
+			];
 
 		if ( !timing || !performance ) {
 			// Browser does not implement the Navigation Timing API.
@@ -52,7 +54,7 @@
 		}
 
 		while ( ( attr = order.pop() ) !== undefined ) {
-			current = timing[attr];
+			current = timing[ attr ];
 			if ( current < 0 || current < last ) {
 				return false;
 			}
@@ -64,7 +66,7 @@
 	function getPaintTiming() {
 		var firstPaint, relativeTo;
 
-		if ( $.isPlainObject( window.chrome ) && $.isFunction( chrome.loadTimes ) ) {
+		if ( window.chrome && $.isFunction( chrome.loadTimes ) ) {
 			// Chrome
 			firstPaint = chrome.loadTimes().firstPaintTime * 1000;
 			relativeTo = chrome.loadTimes().startLoadTime * 1000;
@@ -106,7 +108,7 @@
 			'responseStart',
 			'secureConnectionStart'
 		], function ( i, marker ) {
-			var measure = timing[marker] - navStart;
+			var measure = timing[ marker ] - navStart;
 			if ( $.isNumeric( measure ) && measure > 0 ) {
 				timingData[ marker ] = measure;
 			}
@@ -125,7 +127,6 @@
 
 		return timingData;
 	}
-
 
 	function emitNavigationTiming() {
 		var mediaWikiLoadEnd = mw.now ? mw.now() : new Date().getTime(),
@@ -147,12 +148,12 @@
 		}
 
 		if ( window.Geo ) {
-			if ( typeof window.Geo.country === 'string' ) {
-				event.originCountry = window.Geo.country;
+			if ( typeof Geo.country === 'string' ) {
+				event.originCountry = Geo.country;
 			}
 
-			if ( typeof window.Geo.region === 'string' ) {
-				event.originRegion = window.Geo.region;
+			if ( typeof Geo.region === 'string' ) {
+				event.originRegion = Geo.region;
 			}
 		}
 
@@ -196,4 +197,4 @@
 		} );
 	} );
 
-} ( mediaWiki, jQuery ) );
+}( mediaWiki, jQuery ) );
