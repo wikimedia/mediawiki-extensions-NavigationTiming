@@ -187,14 +187,27 @@
 		}
 	}
 
-	// Ensure we run after loadEventEnd.
-	$( window ).load( function () {
-		setTimeout( function () {
-			if ( inSample() ) {
-				emitNavigationTiming();
-			}
-			mw.hook( 'postEdit' ).add( emitSaveTiming );
+	function onLoadComplete( callback ) {
+		mw.hook( 'resourceloader.loadEnd' ).add( function () {
+			var timer = setInterval( function () {
+				if (
+					!window.performance ||
+					!performance.timing ||
+					performance.timing.loadEventEnd > 0
+				) {
+					clearInterval( timer );
+					callback();
+				}
+			}, 10 );
 		} );
+	}
+
+	// Ensure we run after loadEventEnd.
+	onLoadComplete( function () {
+		if ( inSample() ) {
+			emitNavigationTiming();
+		}
+		mw.hook( 'postEdit' ).add( emitSaveTiming );
 	} );
 
 }( mediaWiki, jQuery ) );
