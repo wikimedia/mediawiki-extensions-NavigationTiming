@@ -23,68 +23,34 @@
 		return Math.floor( Math.random() * factor ) === 0;
 	}
 
-	/** Assert that the attribute order complies with the W3C spec. **/
+	/**
+	 * Assert that the attribute order complies with the W3C spec
+	 *
+	 * @return {boolean}
+	 */
 	function isCompliant() {
-		// Tests derived from <http://w3c-test.org/web-platform-tests/
-		// master/navigation-timing/test_timing_attributes_order.html>
-		var attr, current,
-			last = 0,
-			order = [
-				'loadEventEnd',
-				'loadEventStart',
-				'domContentLoadedEventEnd',
-				'domContentLoadedEventStart',
-				'domInteractive',
-				'responseEnd',
-				'responseStart',
-				'requestStart',
-				'connectEnd',
-				'connectStart'
-			];
-
-		if ( !timing || !performance ) {
-			// Browser does not implement the Navigation Timing API.
-			return false;
-		}
-
-		if ( /Firefox\/[78]\b/.test( navigator.userAgent ) ) {
-			// The Navigation Timing API is broken in Firefox 7 and 8 and reports
-			// inaccurate measurements. See <https://bugzilla.mozilla.org/691547>.
-			return false;
-		}
-
-		while ( ( attr = order.pop() ) !== undefined ) {
-			current = timing[ attr ];
-			if ( current < 0 || current < last ) {
-				return false;
-			}
-			last = current;
-		}
-		return true;
-	}
-
-	function getPaintTiming() {
-		var firstPaint, relativeTo;
-
-		if ( window.chrome && $.isFunction( chrome.loadTimes ) ) {
-			// Chrome
-			firstPaint = chrome.loadTimes().firstPaintTime * 1000;
-			relativeTo = chrome.loadTimes().startLoadTime * 1000;
-		} else if ( timing && timing.msFirstPaint ) {
-			// Internet Explorer 9+ (<http://msdn.microsoft.com/ff974719>)
-			firstPaint = timing.msFirstPaint;
-			relativeTo = timing.navigationStart;
-		}
-
-		if ( firstPaint > relativeTo ) {
-			return { firstPaint: Math.round( firstPaint - relativeTo ) };
-		}
+		// Tests derived from
+		// <http://w3c-test.org/navigation-timing/test_timing_attributes_order.html>
+		return (
+			timing                                                                  &&
+			timing.loadEventEnd               >= timing.loadEventStart              &&
+			timing.loadEventStart             >= timing.domContentLoadedEventEnd    &&
+			timing.domContentLoadedEventEnd   >= timing.domContentLoadedEventStart  &&
+			timing.domContentLoadedEventStart >= timing.domInteractive              &&
+			timing.domInteractive             >= timing.responseEnd                 &&
+			timing.responseEnd                >= timing.responseStart               &&
+			timing.responseStart              >= timing.requestStart                &&
+			timing.requestStart               >= timing.connectEnd                  &&
+			timing.connectEnd                 >= timing.connectStart                &&
+			timing.connectStart               >= 0
+		);
 	}
 
 	function getNavTiming() {
 		var navStart, timingData;
 
-		if ( !isCompliant() || navigation.type !== 0 ) {
+		// Only record data on TYPE_NAVIGATE (e.g. ignore TYPE_RELOAD)
+		if ( !isCompliant() && navigation && navigation.type !== 0 ) {
 			return {};
 		}
 
@@ -123,13 +89,18 @@
 			timingData.redirecting = timing.redirectEnd - timing.redirectStart;
 		}
 
-		$.extend( timingData, getPaintTiming() );
+		if ( timing.msFirstPaint > navStart ) {
+			timingData.firstPaint = timing.msFirstPaint - navStart;
+		} else if ( window.chrome && $.isFunction( chrome.loadTimes ) ) {
+			timingData.firstPaint = Math.round( 1000 *
+				( chrome.loadTimes().firstPaintTime - chrome.loadTimes().startLoadTime ) );
+		}
 
 		return timingData;
 	}
 
 	function emitNavigationTiming() {
-		var mediaWikiLoadEnd = mw.now ? mw.now() : new Date().getTime(),
+		var mediaWikiLoadEnd = mw.now(),
 			event = {
 				isHttps: location.protocol === 'https:',
 				isAnon: mw.config.get( 'wgUserId' ) === null
@@ -174,13 +145,12 @@
 
 	function emitSaveTiming() {
 		var navTiming;
-
 		if ( !mw.config.get( 'wgPostEdit' ) ) {
 			return;
 		}
 
 		navTiming = getNavTiming();
-		if ( navTiming && navTiming.responseStart ) {
+		if ( navTiming.responseStart ) {
 			mw.eventLog.logEvent( 'SaveTiming', {
 				saveTiming: navTiming.responseStart
 			} );
@@ -190,11 +160,7 @@
 	function onLoadComplete( callback ) {
 		mw.hook( 'resourceloader.loadEnd' ).add( function () {
 			var timer = setInterval( function () {
-				if (
-					!window.performance ||
-					!performance.timing ||
-					performance.timing.loadEventEnd > 0
-				) {
+				if ( !timing || timing.loadEventEnd > 0 ) {
 					clearInterval( timer );
 					callback();
 				}
