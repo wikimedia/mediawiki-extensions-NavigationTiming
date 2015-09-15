@@ -8,7 +8,7 @@
 ( function ( mw, $ ) {
 	'use strict';
 
-	var timing, navigation;
+	var timing, navigation, mediaWikiLoadEnd;
 
 	if ( window.performance ) {
 		timing = performance.timing;
@@ -100,8 +100,7 @@
 	}
 
 	function emitNavigationTiming() {
-		var mediaWikiLoadEnd = mw.now(),
-			event = {
+		var event = {
 				isHttps: location.protocol === 'https:',
 				isAnon: mw.config.get( 'wgUserId' ) === null
 			},
@@ -159,7 +158,9 @@
 
 	function onLoadComplete( callback ) {
 		mw.hook( 'resourceloader.loadEnd' ).add( function () {
-			var timer = setInterval( function () {
+			var timer;
+			mediaWikiLoadEnd = mw.now();
+			timer = setInterval( function () {
 				if ( !timing || timing.loadEventEnd > 0 ) {
 					clearInterval( timer );
 					callback();
