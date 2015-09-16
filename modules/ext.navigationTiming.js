@@ -138,6 +138,10 @@
 		}
 
 		$.extend( event, getNavTiming() );
+		if ( navigation && navigation.type === 0 && !isCompliant() ) {
+			// Keep track of non-compliant browsers (only on TYPE_NAVIGATE)
+			mw.eventLog.logFailure( 'NavigationTiming', 'nonCompliant' );
+		}
 
 		mw.eventLog.logEvent( 'NavigationTiming', event );
 	}
