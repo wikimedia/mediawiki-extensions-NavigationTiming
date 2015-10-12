@@ -1,8 +1,8 @@
 {
-    "@metadata": {
-        "authors": [
-            "Patrick Reilly"
-        ]
-    },
-    "navigationtiming-desc": "Adds client-side latency measurements logging"
+	"@metadata": {
+		"authors": [
+			"Patrick Reilly"
+		]
+	},
+	"navigationtiming-desc": "Adds client-side latency measurements logging"
 }
