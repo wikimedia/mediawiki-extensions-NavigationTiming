@@ -8,7 +8,8 @@
 ( function ( mw, $ ) {
 	'use strict';
 
-	var timing, navigation, mediaWikiLoadEnd;
+	var timing, navigation, mediaWikiLoadEnd,
+		TYPE_NAVIGATE = 0;
 
 	if ( window.performance ) {
 		timing = performance.timing;
@@ -50,7 +51,8 @@
 		var navStart, timingData;
 
 		// Only record data on TYPE_NAVIGATE (e.g. ignore TYPE_RELOAD)
-		if ( !isCompliant() && navigation && navigation.type !== 0 ) {
+		// Only record data if implementation is compliant
+		if ( !navigation || navigation.type !== TYPE_NAVIGATE || !isCompliant() ) {
 			return {};
 		}
 
@@ -138,7 +140,7 @@
 		}
 
 		$.extend( event, getNavTiming() );
-		if ( navigation && navigation.type === 0 && !isCompliant() ) {
+		if ( navigation && navigation.type === TYPE_NAVIGATE && !isCompliant() ) {
 			// Keep track of non-compliant browsers (only on TYPE_NAVIGATE)
 			mw.eventLog.logFailure( 'NavigationTiming', 'nonCompliant' );
 		}
