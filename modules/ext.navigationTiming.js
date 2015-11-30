@@ -24,6 +24,17 @@
 		return Math.floor( Math.random() * factor ) === 0;
 	}
 
+	function getDevicePixelRatio() {
+		if ( window.screen && screen.logicalXDPI ) {
+			// IE10 mobile; see <http://stackoverflow.com/q/16383503/582542>
+			return screen.deviceXDPI / screen.logicalXDPI;
+		} else if ( window.devicePixelRatio ) {
+			return window.devicePixelRatio;
+		} else {
+			return 1;
+		}
+	}
+
 	/**
 	 * Assert that the attribute order complies with the W3C spec
 	 *
@@ -103,7 +114,8 @@
 
 	function emitNavigationTiming() {
 		var event = {
-				isHttps: location.protocol === 'https:',
+				isHttp2: /CP=H2/.test( document.cookie ),
+				isHiDPI: getDevicePixelRatio() > 1,
 				isAnon: mw.config.get( 'wgUserId' ) === null
 			},
 			page = {
