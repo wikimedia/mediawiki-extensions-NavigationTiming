@@ -44,7 +44,6 @@ $wgResourceModules += array(
 			'schema.NavigationTiming',
 			'schema.SaveTiming',
 			'json',
-			'jquery.cookie',
 		),
 		'targets'       => array( 'desktop', 'mobile' ),
 	)

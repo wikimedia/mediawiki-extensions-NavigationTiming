@@ -114,7 +114,7 @@
 
 	function emitNavigationTiming() {
 		var event = {
-				isHttp2: /CP=H2/.test( document.cookie ),
+				isHttp2: /(^|; ?)CP=H2/.test( document.cookie ),
 				isHiDPI: getDevicePixelRatio() > 1,
 				isAnon: mw.config.get( 'wgUserId' ) === null
 			},
