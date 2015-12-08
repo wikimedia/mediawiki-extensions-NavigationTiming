@@ -114,7 +114,7 @@
 
 	function emitNavigationTiming() {
 		var event = {
-				isHttp2: /(^|; ?)CP=H2/.test( document.cookie ),
+				isHttp2: /H2/.test( $.cookie( 'CP' ) ),
 				isHiDPI: getDevicePixelRatio() > 1,
 				isAnon: mw.config.get( 'wgUserId' ) === null
 			},
@@ -125,7 +125,12 @@
 				action: mw.config.get( 'wgAction' ) // view, submit, etc.
 			},
 			isSpecialPage = !!mw.config.get( 'wgCanonicalSpecialPageName' ),
-			mobileMode = mw.config.get( 'wgMFMode' );
+			mobileMode = mw.config.get( 'wgMFMode' ),
+			netSpeed = $.cookie( 'NetSpeed' );
+
+		if ( netSpeed === 'A' || netSpeed === 'B' || netSpeed === 'C' ) {
+			event.netSpeed = netSpeed;
+		}
 
 		if ( window.mediaWikiLoadStart ) {
 			event.mediaWikiLoadComplete = Math.round( mediaWikiLoadEnd - mediaWikiLoadStart );

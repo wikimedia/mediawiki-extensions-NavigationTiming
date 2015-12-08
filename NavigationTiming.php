@@ -44,6 +44,7 @@ $wgResourceModules += array(
 			'schema.NavigationTiming',
 			'schema.SaveTiming',
 			'json',
+			'jquery.cookie',
 		),
 		'targets'       => array( 'desktop', 'mobile' ),
 	)
@@ -53,7 +54,7 @@ if ( !isset( $wgEventLoggingSchemas ) ) {
 	$wgEventLoggingSchemas = array();
 }
 $wgEventLoggingSchemas += array(
-	'NavigationTiming' => 14899847,
+	'NavigationTiming' => 15033442,
 	'SaveTiming'       => 12236257,
 );
 
