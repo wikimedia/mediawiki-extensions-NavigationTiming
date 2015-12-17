@@ -1,0 +1,58 @@
+{
+	"name": "NavigationTiming",
+	"version": "1.0",
+	"author": [
+		"Asher Feldman",
+		"Ori Livneh",
+		"Patrick Reilly"
+	],
+	"url": "https://www.mediawiki.org/wiki/Extension:NavigationTiming",
+	"descriptionmsg": "navigationtiming-desc",
+	"license-name": "GPL-2.0+",
+	"type": "other",
+	"MessagesDirs": {
+		"NavigationTiming": [
+			"i18n"
+		]
+	},
+	"AutoloadClasses": {
+		"NavigationTimingHooks": "NavigationTiming.hooks.php"
+	},
+	"ResourceModules": {
+		"ext.navigationTiming": {
+			"scripts": [
+				"ext.navigationTiming.js"
+			],
+			"dependencies": [
+				"schema.NavigationTiming",
+				"schema.SaveTiming",
+				"json",
+				"jquery.cookie"
+			],
+			"targets": [
+				"desktop",
+				"mobile"
+			]
+		}
+	},
+	"ResourceFileModulePaths": {
+		"localBasePath": "modules",
+		"remoteExtPath": "NavigationTiming/modules"
+	},
+	"Hooks": {
+		"BeforePageDisplay": [
+			"NavigationTimingHooks::onBeforePageDisplay"
+		],
+		"ResourceLoaderGetConfigVars": [
+			"NavigationTimingHooks::onResourceLoaderGetConfigVars"
+		]
+	},
+	"EventLoggingSchemas": {
+		"NavigationTiming": 15033442,
+		"SaveTiming": 12236257
+	},
+	"config": {
+		"NavigationTimingSamplingFactor": false
+	},
+	"manifest_version": 1
+}
