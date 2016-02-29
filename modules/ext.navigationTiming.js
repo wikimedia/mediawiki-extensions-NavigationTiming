@@ -116,7 +116,8 @@
 		var event = {
 				isHttp2: /H2/.test( $.cookie( 'CP' ) ),
 				isHiDPI: getDevicePixelRatio() > 1,
-				isAnon: mw.config.get( 'wgUserId' ) === null
+				isAnon: mw.config.get( 'wgUserId' ) === null,
+				mediaWikiVersion: mw.config.get( 'wgVersion' )
 			},
 			page = {
 				pageId: mw.config.get( 'wgArticleId' ),
@@ -174,6 +175,7 @@
 		navTiming = getNavTiming();
 		if ( navTiming.responseStart ) {
 			mw.eventLog.logEvent( 'SaveTiming', {
+				mediaWikiVersion: mw.config.get( 'wgVersion' ),
 				saveTiming: navTiming.responseStart
 			} );
 		}

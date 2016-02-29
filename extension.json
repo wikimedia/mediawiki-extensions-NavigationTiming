@@ -48,8 +48,8 @@
 		]
 	},
 	"EventLoggingSchemas": {
-		"NavigationTiming": 15033442,
-		"SaveTiming": 12236257
+		"NavigationTiming": 15396488,
+		"SaveTiming": 15396492
 	},
 	"config": {
 		"NavigationTimingSamplingFactor": false
