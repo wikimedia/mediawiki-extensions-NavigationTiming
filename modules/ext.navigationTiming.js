@@ -126,10 +126,10 @@
 			},
 			isSpecialPage = !!mw.config.get( 'wgCanonicalSpecialPageName' ),
 			mobileMode = mw.config.get( 'wgMFMode' ),
-			netSpeed = $.cookie( 'NetSpeed' );
+			lazyLoadImages = $.cookie( 'mfLazyLoadImages' );
 
-		if ( netSpeed === 'A' || netSpeed === 'B' || netSpeed === 'C' ) {
-			event.netSpeed = netSpeed;
+		if ( lazyLoadImages === 'A' || lazyLoadImages === 'B' || lazyLoadImages === 'C' ) {
+			event.lazyLoadImages = lazyLoadImages;
 		}
 
 		if ( window.mediaWikiLoadStart ) {
