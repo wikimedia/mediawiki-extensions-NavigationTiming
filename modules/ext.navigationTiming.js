@@ -78,7 +78,6 @@
 			'connectStart',
 			'domComplete',
 			'domInteractive',
-			'domLoading',
 			'fetchStart',
 			'loadEventEnd',
 			'loadEventStart',
