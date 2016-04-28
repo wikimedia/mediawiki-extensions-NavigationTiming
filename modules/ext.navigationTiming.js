@@ -59,7 +59,7 @@
 	}
 
 	function getNavTiming() {
-		var navStart, timingData;
+		var navStart, timingData, chromeLoadTimes;
 
 		// Only record data on TYPE_NAVIGATE (e.g. ignore TYPE_RELOAD)
 		// Only record data if implementation is compliant
@@ -104,8 +104,11 @@
 		if ( timing.msFirstPaint > navStart ) {
 			timingData.firstPaint = timing.msFirstPaint - navStart;
 		} else if ( window.chrome && $.isFunction( chrome.loadTimes ) ) {
-			timingData.firstPaint = Math.round( 1000 *
-				( chrome.loadTimes().firstPaintTime - chrome.loadTimes().startLoadTime ) );
+			chromeLoadTimes = chrome.loadTimes();
+			if ( chromeLoadTimes.firstPaintTime > chromeLoadTimes.startLoadTime ) {
+				timingData.firstPaint = Math.round( 1000 *
+					( chromeLoadTimes.firstPaintTime - chromeLoadTimes.startLoadTime ) );
+			}
 		}
 
 		return timingData;
