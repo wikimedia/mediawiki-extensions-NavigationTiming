@@ -128,11 +128,10 @@
 				action: mw.config.get( 'wgAction' ) // view, submit, etc.
 			},
 			isSpecialPage = !!mw.config.get( 'wgCanonicalSpecialPageName' ),
-			mobileMode = mw.config.get( 'wgMFMode' ),
-			lazyLoadImages = $.cookie( 'mfLazyLoadImages' );
+			mobileMode = mw.config.get( 'wgMFMode' );
 
-		if ( lazyLoadImages === 'A' || lazyLoadImages === 'B' || lazyLoadImages === 'C' ) {
-			event.lazyLoadImages = lazyLoadImages;
+		if ( mw.config.get( 'wgMFLazyLoadImages' ) ) {
+			event.lazyLoadImages = 'A';
 		}
 
 		if ( window.mediaWikiLoadStart ) {
