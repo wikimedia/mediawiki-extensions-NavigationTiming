@@ -36,26 +36,63 @@
 	}
 
 	/**
-	 * Assert that the attribute order complies with the W3C spec
+	 * Check if the order of Navigation Timing marker values conforms
+	 * to the specification.
+	 *
+	 * Markers may be undefined or zero if they are not implemented or not
+	 * applicable to the current page.  Markers which have a value must be
+	 * in ascending order.
 	 *
 	 * @return {boolean}
 	 */
 	function isCompliant() {
-		// Tests derived from
-		// <http://w3c-test.org/navigation-timing/test_timing_attributes_order.html>
-		return (
-			timing                                                                  &&
-			timing.loadEventEnd               >= timing.loadEventStart              &&
-			timing.loadEventStart             >= timing.domContentLoadedEventEnd    &&
-			timing.domContentLoadedEventEnd   >= timing.domContentLoadedEventStart  &&
-			timing.domContentLoadedEventStart >= timing.domInteractive              &&
-			timing.domInteractive             >= timing.responseEnd                 &&
-			timing.responseEnd                >= timing.responseStart               &&
-			timing.responseStart              >= timing.requestStart                &&
-			timing.requestStart               >= timing.connectEnd                  &&
-			timing.connectEnd                 >= timing.connectStart                &&
-			timing.connectStart               >= 0
-		);
+		var sequences, markers, curr, prev;
+
+		if ( !timing ) {
+			return false;
+		}
+
+		sequences = [ [
+			'navigationStart',
+			'fetchStart',
+			'domainLookupStart',
+			'domainLookupEnd',
+			'connectStart',
+			'connectEnd',
+			'requestStart',
+			'responseStart',
+			'responseEnd',
+			'domInteractive',
+			'domContentLoadedEventStart',
+			'domContentLoadedEventEnd',
+			'loadEventStart',
+			'loadEventEnd'
+		], [
+			'secureConnectionStart',
+			'requestStart'
+		], [
+			'fetchStart',
+			'domLoading'
+		], [
+			'domContentLoadedEventEnd',
+			'domComplete'
+		] ];
+
+		while ( sequences.length ) {
+			markers = sequences.shift();
+			prev = null;
+			while ( markers.length ) {
+				curr = timing[ markers.shift() ];
+				if ( curr ) {
+					if ( curr < prev ) {
+						return false;
+					}
+					prev = curr;
+				}
+			}
+		}
+
+		return true;
 	}
 
 	function getNavTiming() {
