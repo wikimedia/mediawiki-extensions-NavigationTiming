@@ -1,0 +1,8 @@
+{
+	"@metadata": {
+		"authors": [
+			"Jon Harald Søby"
+		]
+	},
+	"navigationtiming-desc": "Legger til logging av latensmålinger på klientens side"
+}
