@@ -8,12 +8,39 @@
 ( function ( mw, $ ) {
 	'use strict';
 
-	var timing, navigation, mediaWikiLoadEnd,
+	var timing, navigation, mediaWikiLoadEnd, hiddenProp, visibilityEvent,
+		visibilityChanged = false,
 		TYPE_NAVIGATE = 0;
 
 	if ( window.performance ) {
 		timing = performance.timing;
 		navigation = performance.navigation;
+	}
+
+	// Don't report measurements for pages that have loaded in the background.
+	// Browsers defer or deprioritize loading background pages, causing them to
+	// take longer to load, which throws off our measurements.
+	// See <https://phabricator.wikimedia.org/T146510#2794213> for more details.
+	if ( typeof document.hidden !== 'undefined' ) {
+		hiddenProp = 'hidden';
+		visibilityEvent = 'visibilitychange';
+	} else if ( typeof document.mozHidden !== 'undefined' ) {
+		hiddenProp = 'mozHidden';
+		visibilityEvent = 'mozvisibilitychange';
+	} else if ( typeof document.msHidden !== 'undefined' ) {
+		hiddenProp = 'msHidden';
+		visibilityEvent = 'msvisibilitychange';
+	} else if ( typeof document.webkitHidden !== 'undefined' ) {
+		hiddenProp = 'webkitHidden';
+		visibilityEvent = 'webkitvisibilitychange';
+	}
+	if ( hiddenProp ) {
+		$( document ).one( visibilityEvent, function () {
+			visibilityChanged = true;
+		} );
+		if ( document[ hiddenProp ] ) {
+			visibilityChanged = true;
+		}
 	}
 
 	function inSample() {
@@ -234,7 +261,7 @@
 
 	// Ensure we run after loadEventEnd.
 	onLoadComplete( function () {
-		if ( inSample() ) {
+		if ( inSample() && !visibilityChanged ) {
 			emitNavigationTiming();
 		}
 		mw.hook( 'postEdit' ).add( emitSaveTiming );
