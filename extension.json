@@ -26,7 +26,6 @@
 			"dependencies": [
 				"schema.NavigationTiming",
 				"schema.SaveTiming",
-				"json",
 				"jquery.cookie"
 			],
 			"targets": [
