@@ -1,0 +1,8 @@
+{
+	"@metadata": {
+		"authors": [
+			"Dgstranz"
+		]
+	},
+	"navigationtiming-desc": "Añade el registro de mediciones de latencia del lado del cliente"
+}
