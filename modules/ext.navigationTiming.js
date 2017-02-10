@@ -167,6 +167,7 @@
 
 		if ( timing.msFirstPaint > navStart ) {
 			timingData.firstPaint = timing.msFirstPaint - navStart;
+		/* global chrome */
 		} else if ( window.chrome && $.isFunction( chrome.loadTimes ) ) {
 			chromeLoadTimes = chrome.loadTimes();
 			if ( chromeLoadTimes.firstPaintTime > chromeLoadTimes.startLoadTime ) {
@@ -199,10 +200,12 @@
 		}
 
 		if ( window.mediaWikiLoadStart ) {
+			/* global mediaWikiLoadStart */
 			event.mediaWikiLoadComplete = Math.round( mediaWikiLoadEnd - mediaWikiLoadStart );
 		}
 
 		if ( window.Geo ) {
+			/* global Geo */
 			if ( typeof Geo.country === 'string' ) {
 				event.originCountry = Geo.country;
 			}
