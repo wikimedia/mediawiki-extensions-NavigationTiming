@@ -4,7 +4,8 @@
 	"author": [
 		"Asher Feldman",
 		"Ori Livneh",
-		"Patrick Reilly"
+		"Patrick Reilly",
+		"Timo Tijhof"
 	],
 	"url": "https://www.mediawiki.org/wiki/Extension:NavigationTiming",
 	"descriptionmsg": "navigationtiming-desc",
@@ -41,6 +42,9 @@
 	"Hooks": {
 		"BeforePageDisplay": [
 			"NavigationTimingHooks::onBeforePageDisplay"
+		],
+		"ResourceLoaderTestModules": [
+			"NavigationTimingHooks::onResourceLoaderTestModules"
 		],
 		"ResourceLoaderGetConfigVars": [
 			"NavigationTimingHooks::onResourceLoaderGetConfigVars"

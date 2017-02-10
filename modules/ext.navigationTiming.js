@@ -270,4 +270,22 @@
 		mw.hook( 'postEdit' ).add( emitSaveTiming );
 	} );
 
+	if ( typeof QUnit !== 'undefined' ) {
+		/**
+		 * For testing only. Subject to change any time.
+		 *
+		 * @private
+		 */
+		module.exports = {
+			emitNavTiming: emitNavigationTiming,
+			reinit: function () {
+				// performance is recursively read-only and can only be
+				// mocked from the top down via window.performance. The test
+				// needs to force this module to re-resolve this cached
+				// reference. See ext.navigationTiming.test.js
+				navigation = performance.navigation;
+			}
+		};
+	}
+
 }( mediaWiki, jQuery ) );
