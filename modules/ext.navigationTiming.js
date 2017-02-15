@@ -195,10 +195,6 @@
 			isSpecialPage = !!mw.config.get( 'wgCanonicalSpecialPageName' ),
 			mobileMode = mw.config.get( 'wgMFMode' );
 
-		if ( mw.config.get( 'wgMFLazyLoadImages' ) ) {
-			event.lazyLoadImages = 'A';
-		}
-
 		if ( window.mediaWikiLoadStart ) {
 			/* global mediaWikiLoadStart */
 			event.mediaWikiLoadComplete = Math.round( mediaWikiLoadEnd - mediaWikiLoadStart );
