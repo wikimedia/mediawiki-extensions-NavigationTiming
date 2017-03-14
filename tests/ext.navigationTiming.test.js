@@ -1,5 +1,5 @@
 /* global mw */
-// eslint-env qunit
+/* eslint-env qunit */
 QUnit.module( 'ext.navigationTiming' );
 
 // Basic test will ensure no exceptions are thrown and various
