@@ -13,7 +13,11 @@ class NavigationTimingHooks {
 	public static function onResourceLoaderTestModules( array &$modules, ResourceLoader &$rl ) {
 		$modules['qunit']['ext.navigationTiming.test'] = [
 			'scripts' => [ 'tests/ext.navigationTiming.test.js' ],
-			'dependencies' => [ 'ext.navigationTiming' ],
+			'dependencies' => [
+				'ext.navigationTiming',
+				'schema.NavigationTiming',
+				'schema.SaveTiming',
+			],
 			'localBasePath' => __DIR__ ,
 			'remoteExtPath' => 'NavigationTiming',
 		];
