@@ -9,7 +9,7 @@
 	'use strict';
 
 	var timing, navigation, mediaWikiLoadEnd, hiddenProp, visibilityEvent,
-		loadEL,
+		loadEL, isInSample,
 		visibilityChanged = false,
 		TYPE_NAVIGATE = 0;
 
@@ -259,23 +259,25 @@
 		}
 	}
 
-	// Only perform actual instrumentation when page load is in the sampling
+	// Only load EventLogging when page load is in the sampling
 	// Use a conditional block instead of early return since module.exports
 	// must happen unconditionally for unit tests.
-	if ( inSample() ) {
+	isInSample = inSample();
+	if ( isInSample ) {
 		// Preload EventLogging and schema modules
 		loadEL = mw.loader.using( [ 'schema.NavigationTiming', 'schema.SaveTiming' ] );
-
-		// Ensure we run after loadEventEnd.
-		onLoadComplete( function () {
-			if ( !visibilityChanged ) {
-				loadEL.done( emitNavigationTiming );
-			}
-			mw.hook( 'postEdit' ).add( function () {
-				loadEL.done( emitSaveTiming );
-			} );
-		} );
 	}
+
+	// Ensure we run after loadEventEnd.
+	onLoadComplete( function () {
+		if ( isInSample && !visibilityChanged ) {
+			loadEL.done( emitNavigationTiming );
+		}
+		mw.hook( 'postEdit' ).add( function () {
+			mw.loader.using( 'schema.SaveTiming' )
+				.done( emitSaveTiming );
+		} );
+	} );
 
 	if ( typeof QUnit !== 'undefined' ) {
 		/**
