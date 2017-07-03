@@ -237,6 +237,73 @@
 		} );
 	}
 
+	function inAsiaSample() {
+		var factor;
+
+		// Only regular page views, ignore any non-compliant data
+		if ( !navigation || navigation.type !== TYPE_NAVIGATE || !isCompliant() ) {
+			return false;
+		}
+
+		// For the Asia sample, only collect First Paint Time from Chrome
+		if ( !window.chrome || !$.isFunction( chrome.loadTimes ) ) {
+			return false;
+		}
+
+		// From Asia
+		if ( !window.Geo || Geo.region !== 'Asia' ) {
+			return false;
+		}
+
+		// Sampled (unlike main sampling factor, this is applied within and
+		// after the above filters).
+		factor = mw.config.get( 'wgNavigationTimingFirstPaintAsiaSamplingFactor' );
+		if ( !$.isNumeric( factor ) || factor < 1 ) {
+			return false;
+		}
+
+		return Math.floor( Math.random() * factor ) === 0;
+	}
+
+	function emitAsiaFirstPaint() {
+		var navigationEvents, paintEvents, firstPaint, firstContentfulPaint, fetchStart;
+
+		firstPaint = Math.round( chrome.loadTimes().firstPaintTime * 1000 );
+		fetchStart = timing.fetchStart;
+
+		// Get the values from the new NavigationTiming and Paint APIs if possible
+		if ( performance.getEntriesByType ) {
+			navigationEvents = performance.getEntriesByType( 'navigation' );
+			paintEvents = performance.getEntriesByType( 'paint' );
+
+			if ( paintEvents.length && navigationEvents.length ) {
+				paintEvents.forEach( function ( event ) {
+					if ( event.name === 'first-paint' ) {
+						firstPaint = event.startTime;
+					}
+
+					if ( event.name === 'first-contentful-paint' ) {
+						firstContentfulPaint = event.startTime;
+					}
+				} );
+
+				navigationEvents.forEach( function ( event ) {
+					if ( event.fetchStart ) {
+						fetchStart = event.fetchStart;
+					}
+				} );
+			}
+		}
+
+		if ( firstPaint > fetchStart ) {
+			mw.track( 'timing.frontend.navtiming_asia.firstPaint', firstPaint - fetchStart );
+		}
+
+		if ( firstContentfulPaint > fetchStart ) {
+			mw.track( 'timing.frontend.navtiming_asia.firstContentfulPaint', firstContentfulPaint - fetchStart );
+		}
+	}
+
 	if ( window.performance ) {
 		timing = performance.timing;
 		navigation = performance.navigation;
@@ -282,6 +349,9 @@
 		if ( isInSample && !visibilityChanged ) {
 			loadEL.done( emitNavigationTiming );
 		}
+		if ( inAsiaSample() && !visibilityChanged ) {
+			emitAsiaFirstPaint();
+		}
 		mw.hook( 'postEdit' ).add( function () {
 			mw.loader.using( 'schema.SaveTiming' )
 				.done( emitSaveTiming );
@@ -296,6 +366,7 @@
 		 */
 		module.exports = {
 			emitNavTiming: emitNavigationTiming,
+			emitAsiaFirstPaint: emitAsiaFirstPaint,
 			reinit: function () {
 				// performance is recursively read-only and can only be
 				// mocked from the top down via window.performance. The test

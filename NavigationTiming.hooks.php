@@ -6,8 +6,10 @@ class NavigationTimingHooks {
 	}
 
 	public static function onResourceLoaderGetConfigVars( &$vars ) {
-		global $wgNavigationTimingSamplingFactor;
+		global $wgNavigationTimingSamplingFactor, $wgNavigationTimingFirstPaintAsiaSamplingFactor;
 		$vars[ 'wgNavigationTimingSamplingFactor' ] = $wgNavigationTimingSamplingFactor;
+		$vars[ 'wgNavigationTimingFirstPaintAsiaSamplingFactor' ] =
+		$wgNavigationTimingFirstPaintAsiaSamplingFactor;
 	}
 
 	public static function onResourceLoaderTestModules( array &$modules, ResourceLoader &$rl ) {

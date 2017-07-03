@@ -167,3 +167,65 @@ QUnit.test( 'Repeat view', function ( assert ) {
 		assert.strictEqual( event[ key ], val, 'Value of event property: ' + key );
 	}
 } );
+
+QUnit.test( 'Asia (old)', function ( assert ) {
+	var stub = this.sandbox.stub( mw, 'track' );
+	this.sandbox.stub( window, 'chrome', {
+		loadTimes: function () {
+			return { firstPaintTime: 1301637600.420 };
+		}
+	} );
+	this.sandbox.stub( window, 'performance', {
+		timing: { fetchStart: 1301637600000 },
+		getEntriesByType: function () {
+			return [];
+		}
+	} );
+	require( 'ext.navigationTiming' ).reinit();
+	require( 'ext.navigationTiming' ).emitAsiaFirstPaint();
+
+	assert.deepEqual(
+		stub.getCall( 0 ) && stub.getCall( 0 ).args,
+		[ 'timing.frontend.navtiming_asia.firstPaint', 420 ],
+		'First paint'
+	);
+	assert.strictEqual(
+		stub.getCall( 1 ),
+		null,
+		'First contentful paint'
+	);
+} );
+
+QUnit.test( 'Asia (new)', function ( assert ) {
+	var stub = this.sandbox.stub( mw, 'track' );
+	this.sandbox.stub( window, 'chrome', {
+		loadTimes: function () {
+			return { firstPaintTime: 1301637600.420 };
+		}
+	} );
+	this.sandbox.stub( window, 'performance', {
+		timing: { fetchStart: 1400000000000 },
+		getEntriesByType: function () {
+			return [
+				// navigation
+				{ fetchStart: 15 },
+				// paint
+				{ name: 'first-paint', startTime: 615 },
+				{ name: 'first-contentful-paint', startTime: 655 }
+			];
+		}
+	} );
+	require( 'ext.navigationTiming' ).reinit();
+	require( 'ext.navigationTiming' ).emitAsiaFirstPaint();
+
+	assert.deepEqual(
+		stub.getCall( 0 ) && stub.getCall( 0 ).args,
+		[ 'timing.frontend.navtiming_asia.firstPaint', 600 ],
+		'First paint'
+	);
+	assert.deepEqual(
+		stub.getCall( 1 ) && stub.getCall( 1 ).args,
+		[ 'timing.frontend.navtiming_asia.firstContentfulPaint', 640 ],
+		'First contentful paint'
+	);
+} );

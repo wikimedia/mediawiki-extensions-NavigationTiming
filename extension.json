@@ -53,7 +53,8 @@
 		"SaveTiming": 15396492
 	},
 	"config": {
-		"NavigationTimingSamplingFactor": false
+		"NavigationTimingSamplingFactor": false,
+		"NavigationTimingFirstPaintAsiaSamplingFactor": false
 	},
 	"manifest_version": 1
 }
