@@ -120,10 +120,7 @@
 			'responseStart',
 			'secureConnectionStart'
 		], function ( i, marker ) {
-			var measure = timing[ marker ] - navStart;
-			if ( $.isNumeric( measure ) && measure > 0 ) {
-				timingData[ marker ] = measure;
-			}
+			timingData[ marker ] = timing[ marker ] - navStart;
 		} );
 
 		if ( timing.domainLookupStart ) {
@@ -133,6 +130,10 @@
 		if ( timing.redirectStart ) {
 			timingData.redirectCount = performance.navigation.redirectCount;
 			timingData.redirecting = timing.redirectEnd - timing.redirectStart;
+		}
+
+		if ( timing.unloadEventStart ) {
+			timingData.unload = timing.unloadEventEnd - timing.unloadEventStart;
 		}
 
 		if ( timing.msFirstPaint > navStart ) {
