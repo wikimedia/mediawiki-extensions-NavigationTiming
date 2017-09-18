@@ -120,7 +120,15 @@
 			'responseStart',
 			'secureConnectionStart'
 		], function ( i, marker ) {
-			timingData[ marker ] = timing[ marker ] - navStart;
+			// Verify the key exists and that it is above zero to avoid submit
+			// of invalid or negative values after subtracting navStart.
+			// While these keys are meant to be timestamps, they may be absent
+			// or 0 where the measured operation did not ocurr.
+			// E.g. secureConnectionStart is 0 when the connection is reused (T176105)
+			var value = timing[ marker ];
+			if ( typeof value === 'number' && value > 0 ) {
+				timingData[ marker ] = value - navStart;
+			}
 		} );
 
 		if ( timing.domainLookupStart ) {
@@ -293,6 +301,7 @@
 				// mocked from the top down via window.performance. The test
 				// needs to force this module to re-resolve this cached
 				// reference. See ext.navigationTiming.test.js
+				timing = performance.timing;
 				navigation = performance.navigation;
 			}
 		};
