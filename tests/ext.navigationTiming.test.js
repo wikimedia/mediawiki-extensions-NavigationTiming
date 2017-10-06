@@ -1,6 +1,24 @@
 /* global mw */
 /* eslint-env qunit */
-QUnit.module( 'ext.navigationTiming' );
+QUnit.module( 'ext.navigationTiming', QUnit.newMwEnvironment( {
+	setup: function () {
+		mw.config.set( 'wgNavigationTimingFirstPaintAsiaSamplingFactor', 1 );
+		// Because stubs can't work on undefined properties and the presence
+		// of window.Geo and window.chrome isn't guaranteed
+		this.Geo = window.Geo;
+		if ( !window.Geo ) {
+			window.Geo = {};
+		}
+		this.chrome = window.chrome;
+		if ( !window.chrome ) {
+			window.chrome = {};
+		}
+	},
+	teardown: function() {
+		window.Geo = this.Geo;
+		window.chrome = this.chrome;
+	}
+} ) );
 
 // Basic test will ensure no exceptions are thrown and various
 // of the core properties are set as expected.
@@ -227,5 +245,49 @@ QUnit.test( 'Asia (new)', function ( assert ) {
 		stub.getCall( 1 ) && stub.getCall( 1 ).args,
 		[ 'timing.frontend.navtiming_asia.firstContentfulPaint', 640 ],
 		'First contentful paint'
+	);
+} );
+
+QUnit.test( 'Asia (sample check)', function ( assert ) {
+	var stub;
+
+	this.sandbox.stub( window, 'chrome', {
+		loadTimes: function() {}
+	} );
+
+	this.sandbox.stub( window, 'performance', {
+		timing: performance.timing,
+		navigation: {
+			// Force TYPE_NAVIGATE instead of e.g. TYPE_REDIRECT.
+			// Since we only collect metrics from regular requests,
+			// but we don't want that logic to apply to the unit test,
+			// as otherwise it may omit the main Navigation Timing keys.
+			type: 0,
+			redirectCount: 0
+		}
+	} );
+
+	require( 'ext.navigationTiming' ).reinit();
+
+	stub = this.sandbox.stub( window, 'Geo', {
+		country: 'HK'
+	} );
+
+	assert.strictEqual(
+		require( 'ext.navigationTiming' ).inAsiaSample(),
+		true,
+		'Is in Asia sample'
+	);
+
+	stub.restore();
+
+	this.sandbox.stub( window, 'Geo', {
+		country: 'FR'
+	} );
+
+	assert.strictEqual(
+		require( 'ext.navigationTiming' ).inAsiaSample(),
+		false,
+		'Is not in Asia sample'
 	);
 } );

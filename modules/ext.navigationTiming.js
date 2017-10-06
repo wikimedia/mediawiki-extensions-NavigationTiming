@@ -238,7 +238,14 @@
 	}
 
 	function inAsiaSample() {
-		var factor;
+		var factor,
+			// From https://dev.maxmind.com/geoip/legacy/codes/country_continent/
+			asianCountries = [ 'AE', 'AF', 'AM', 'AP', 'AZ', 'BD', 'BH', 'BN',
+				'BT', 'CC', 'CN', 'CX', 'CY', 'GE', 'HK', 'ID', 'IL', 'IN', 'IO',
+				'IQ', 'IR', 'JO', 'JP', 'KG', 'KH', 'KP', 'KR', 'KW', 'KZ', 'LA',
+				'LB', 'LK', 'MM', 'MN', 'MO', 'MV', 'MY', 'NP', 'OM', 'PH', 'PK',
+				'PS', 'QA', 'SA', 'SG', 'SY', 'TH', 'TJ', 'TL', 'TM', 'TW', 'UZ',
+				'VN', 'YE' ];
 
 		// Only regular page views, ignore any non-compliant data
 		if ( !navigation || navigation.type !== TYPE_NAVIGATE || !isCompliant() ) {
@@ -251,7 +258,7 @@
 		}
 
 		// From Asia
-		if ( !window.Geo || Geo.region !== 'Asia' ) {
+		if ( !window.Geo || asianCountries.indexOf( Geo.country || Geo.country_code ) === -1 ) {
 			return false;
 		}
 
@@ -367,6 +374,7 @@
 		module.exports = {
 			emitNavTiming: emitNavigationTiming,
 			emitAsiaFirstPaint: emitAsiaFirstPaint,
+			inAsiaSample: inAsiaSample,
 			reinit: function () {
 				// performance is recursively read-only and can only be
 				// mocked from the top down via window.performance. The test
