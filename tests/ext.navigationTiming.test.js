@@ -168,7 +168,7 @@ QUnit.test( 'Repeat view', function ( assert ) {
 	expected = {
 		dnsLookup: [ 'number', 0 ],
 		connectStart: [ 'number', 0 ],
-		secureConnectionStart: [ 'undefined' ],
+		secureConnectionStart: [ 'number', 0 ],
 		connectEnd: [ 'number', 0 ],
 		requestStart: [ 'number', 10 ],
 		responseStart: [ 'number', 100 ],
