@@ -90,12 +90,16 @@ QUnit.test( 'First view', function ( assert ) {
 			connectStart: 226,
 			secureConnectionStart: 235,
 			connectEnd: 250,
+			redirectEnd: 0,
+			redirectStart: 0,
 			requestStart: 250,
 			responseStart: 300,
 			responseEnd: 400,
 			domComplete: 450,
 			loadEventStart: 570,
-			loadEventEnd: 575
+			loadEventEnd: 575,
+			unload: 0,
+			redirecting: 0
 		},
 		navigation: {
 			// type: TYPE_NAVIGATE
@@ -120,7 +124,9 @@ QUnit.test( 'First view', function ( assert ) {
 		responseEnd: [ 'number', 300 ],
 		domComplete: [ 'number', 350 ],
 		loadEventStart: [ 'number', 470 ],
-		loadEventEnd: [ 'number', 475 ]
+		loadEventEnd: [ 'number', 475 ],
+		unload: [ 'number', 0 ],
+		redirecting: [ 'number', 0 ]
 	};
 
 	for ( key in expected ) {
@@ -145,12 +151,16 @@ QUnit.test( 'Repeat view', function ( assert ) {
 			connectStart: 100,
 			secureConnectionStart: 0,
 			connectEnd: 100,
+			redirectStart: 10,
+			redirectEnd: 20,
 			requestStart: 110,
 			responseStart: 200,
 			responseEnd: 300,
 			domComplete: 350,
 			loadEventStart: 470,
-			loadEventEnd: 475
+			loadEventEnd: 475,
+			unloadEventStart: 10,
+			unloadEventEnd: 21
 		},
 		navigation: {
 			// type: TYPE_NAVIGATE
@@ -175,7 +185,9 @@ QUnit.test( 'Repeat view', function ( assert ) {
 		responseEnd: [ 'number', 200 ],
 		domComplete: [ 'number', 250 ],
 		loadEventStart: [ 'number', 370 ],
-		loadEventEnd: [ 'number', 375 ]
+		loadEventEnd: [ 'number', 375 ],
+		unload: [ 'number', 11 ],
+		redirecting: [ 'number', 10 ]
 	};
 
 	for ( key in expected ) {

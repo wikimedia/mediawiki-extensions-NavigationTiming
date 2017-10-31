@@ -134,18 +134,27 @@
 				}
 			}
 		} );
+		// If DNS is cached, it will be marked as start/end matching fetchStart.
+		// so this will actually never be 0
+		timingData.dnsLookup = timing.domainLookupEnd - timing.domainLookupStart;
 
-		if ( timing.domainLookupStart ) {
-			timingData.dnsLookup = timing.domainLookupEnd - timing.domainLookupStart;
-		}
-
+		// Watchout: There are some fields that are handled differently than the rest
+		// * redirectStart/redirectEnd,
+		// * unloadEventStart/unloadEventEnd
+		// * secureConnectionStart
+		// They can be zeroes instead of timestamps.
+		// See https://www.w3.org/TR/navigation-timing-2/
 		if ( timing.redirectStart ) {
 			timingData.redirectCount = performance.navigation.redirectCount;
 			timingData.redirecting = timing.redirectEnd - timing.redirectStart;
+		} else {
+			timingData.redirecting = 0;
 		}
 
 		if ( timing.unloadEventStart ) {
 			timingData.unload = timing.unloadEventEnd - timing.unloadEventStart;
+		} else {
+			timingData.unload = 0;
 		}
 
 		if ( timing.msFirstPaint > navStart ) {
