@@ -49,12 +49,13 @@
 		]
 	},
 	"EventLoggingSchemas": {
-		"NavigationTiming": 17216284,
+		"NavigationTiming": 17703215,
 		"SaveTiming": 15396492
 	},
 	"config": {
 		"NavigationTimingSamplingFactor": false,
-		"NavigationTimingFirstPaintAsiaSamplingFactor": false
+		"NavigationTimingFirstPaintAsiaSamplingFactor": false,
+		"NavigationTimingOversampleFactor": false
 	},
 	"manifest_version": 1
 }

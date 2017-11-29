@@ -6,10 +6,33 @@ class NavigationTimingHooks {
 	}
 
 	public static function onResourceLoaderGetConfigVars( &$vars ) {
-		global $wgNavigationTimingSamplingFactor, $wgNavigationTimingFirstPaintAsiaSamplingFactor;
+		global $wgNavigationTimingSamplingFactor, $wgNavigationTimingFirstPaintAsiaSamplingFactor,
+			$wgNavigationTimingOversampleFactor;
 		$vars[ 'wgNavigationTimingSamplingFactor' ] = $wgNavigationTimingSamplingFactor;
 		$vars[ 'wgNavigationTimingFirstPaintAsiaSamplingFactor' ] =
-		$wgNavigationTimingFirstPaintAsiaSamplingFactor;
+			$wgNavigationTimingFirstPaintAsiaSamplingFactor;
+
+		// Filter to ensure that all values are reasonable.  This allows us to
+		// not filter on the client side
+		$oversampleFactor = $wgNavigationTimingOversampleFactor;
+		if ( $oversampleFactor && is_array( $oversampleFactor ) ) {
+			foreach ( $oversampleFactor as &$factor ) {
+				$factor = wfArrayFilter( $factor, function ( $val, $term ) {
+					if ( !is_int( $val ) || $val < 1 ) {
+						\MediaWiki\Logger\LoggerFactory::getInstance( 'NavigationTiming' )->error(
+							'Invalid sample value for NavTiming \'{term}\': {val}', [
+								'term' => $term,
+								'val' => $val
+							] );
+						return false;
+					}
+					return true;
+				} );
+			}
+		} else {
+			$oversampleFactor = false;
+		}
+		$vars[ 'wgNavigationTimingOversampleFactor' ] = $oversampleFactor;
 	}
 
 	public static function onResourceLoaderTestModules( array &$modules, ResourceLoader &$rl ) {
