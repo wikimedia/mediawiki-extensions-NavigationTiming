@@ -13,12 +13,35 @@
 		visibilityChanged = false,
 		TYPE_NAVIGATE = 0;
 
-	function inSample() {
-		var factor = mw.config.get( 'wgNavigationTimingSamplingFactor' );
-		if ( !$.isNumeric( factor ) || factor < 1 ) {
+	/**
+	 * Get random number between 0 (inclusive) and 1 (exclusive).
+	 *
+	 * @return {number}
+	 */
+	function getRandom() {
+		/* global Uint32Array */
+		if ( !window.crypto || typeof Uint32Array !== 'function' ) {
+			return Math.random();
+		}
+
+		// 4294967295 == 0xffffffff == max unsigned 32-bit integer
+		return window.crypto.getRandomValues( new Uint32Array( 1 ) )[ 0 ] / 4294967295;
+	}
+
+	/**
+	 * Determine result of random sampling.
+	 *
+	 * Based on ext.eventLogging.subscriber's mw.eventLog.inSample
+	 * Duplicated here because we need it without/before dependencies.
+	 *
+	 * @param {number} factor One in how many should be included. (0=nobody, 1=all, 2=50%)
+	 * @return {boolean}
+	 */
+	function inSample( factor ) {
+		if ( typeof factor !== 'number' || factor < 1 ) {
 			return false;
 		}
-		return Math.floor( Math.random() * factor ) === 0;
+		return Math.floor( getRandom() * factor ) === 0;
 	}
 
 	function getDevicePixelRatio() {
@@ -251,14 +274,13 @@
 	}
 
 	function inAsiaSample() {
-		var factor,
 			// From https://dev.maxmind.com/geoip/legacy/codes/country_continent/
-			asianCountries = [ 'AE', 'AF', 'AM', 'AP', 'AZ', 'BD', 'BH', 'BN',
-				'BT', 'CC', 'CN', 'CX', 'CY', 'GE', 'HK', 'ID', 'IL', 'IN', 'IO',
-				'IQ', 'IR', 'JO', 'JP', 'KG', 'KH', 'KP', 'KR', 'KW', 'KZ', 'LA',
-				'LB', 'LK', 'MM', 'MN', 'MO', 'MV', 'MY', 'NP', 'OM', 'PH', 'PK',
-				'PS', 'QA', 'SA', 'SG', 'SY', 'TH', 'TJ', 'TL', 'TM', 'TW', 'UZ',
-				'VN', 'YE' ];
+		var asianCountries = [ 'AE', 'AF', 'AM', 'AP', 'AZ', 'BD', 'BH', 'BN',
+			'BT', 'CC', 'CN', 'CX', 'CY', 'GE', 'HK', 'ID', 'IL', 'IN', 'IO',
+			'IQ', 'IR', 'JO', 'JP', 'KG', 'KH', 'KP', 'KR', 'KW', 'KZ', 'LA',
+			'LB', 'LK', 'MM', 'MN', 'MO', 'MV', 'MY', 'NP', 'OM', 'PH', 'PK',
+			'PS', 'QA', 'SA', 'SG', 'SY', 'TH', 'TJ', 'TL', 'TM', 'TW', 'UZ',
+			'VN', 'YE' ];
 
 		// Only regular page views, ignore any non-compliant data
 		if ( !navigation || navigation.type !== TYPE_NAVIGATE || !isCompliant() ) {
@@ -277,12 +299,7 @@
 
 		// Sampled (unlike main sampling factor, this is applied within and
 		// after the above filters).
-		factor = mw.config.get( 'wgNavigationTimingFirstPaintAsiaSamplingFactor' );
-		if ( !$.isNumeric( factor ) || factor < 1 ) {
-			return false;
-		}
-
-		return Math.floor( Math.random() * factor ) === 0;
+		return inSample( mw.config.get( 'wgNavigationTimingFirstPaintAsiaSamplingFactor' ) );
 	}
 
 	function emitAsiaFirstPaint() {
@@ -358,7 +375,7 @@
 	// Only load EventLogging when page load is in the sampling
 	// Use a conditional block instead of early return since module.exports
 	// must happen unconditionally for unit tests.
-	isInSample = inSample();
+	isInSample = inSample( mw.config.get( 'wgNavigationTimingSamplingFactor', 0 ) );
 	if ( isInSample ) {
 		// Preload EventLogging and schema modules
 		loadEL = mw.loader.using( [ 'schema.NavigationTiming', 'schema.SaveTiming' ] );
@@ -385,6 +402,7 @@
 		 * @private
 		 */
 		module.exports = {
+			inSample: inSample,
 			emitNavTiming: emitNavigationTiming,
 			emitAsiaFirstPaint: emitAsiaFirstPaint,
 			inAsiaSample: inAsiaSample,
