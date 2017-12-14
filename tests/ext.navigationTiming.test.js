@@ -1,5 +1,6 @@
 /* global mw */
 /* eslint-env qunit */
+
 QUnit.module( 'ext.navigationTiming', QUnit.newMwEnvironment( {
 	setup: function () {
 		mw.config.set( 'wgNavigationTimingFirstPaintAsiaSamplingFactor', 1 );
@@ -13,12 +14,63 @@ QUnit.module( 'ext.navigationTiming', QUnit.newMwEnvironment( {
 		if ( !window.chrome ) {
 			window.chrome = {};
 		}
+		this.Uint32Array = window.Uint32Array;
+		window.Uint32Array = {};
 	},
 	teardown: function() {
 		window.Geo = this.Geo;
 		window.chrome = this.chrome;
+		if ( this.Uint32Array ) {
+			window.Uint32Array = this.Uint32Array;
+		} else {
+			delete window.Uint32Array;
+		}
 	}
 } ) );
+
+QUnit.test( 'inSample - Math.random()', function ( assert ) {
+	var randStub,
+		navTiming = require( 'ext.navigationTiming' );
+
+	randStub = this.sandbox.stub( Math, 'random' );
+
+	randStub.returns( 0.99 );
+	assert.strictEqual( navTiming.inSample( 0 ), false, '0 is never' );
+	assert.strictEqual( navTiming.inSample( 0.9 ), false, '0.9 is never' );
+	assert.strictEqual( navTiming.inSample( 1 ), true, '1 is always' );
+	assert.strictEqual( navTiming.inSample( '1' ), false, 'non-number is never' );
+	assert.strictEqual( navTiming.inSample( 2 ), false, '2 not this time' );
+	assert.strictEqual( randStub.callCount, 2, 'Math.random() stub method called 2 times' );
+	randStub.reset();
+
+	randStub.returns( 0.01 );
+	assert.strictEqual( navTiming.inSample( 0 ), false, '0 is never' );
+	assert.strictEqual( navTiming.inSample( 1 ), true, '1 is always' );
+	assert.strictEqual( navTiming.inSample( 2 ), true, '2 this time' );
+	assert.strictEqual( randStub.callCount, 2, 'Math.random() stub method was called 2 times' );
+} );
+
+QUnit.test( 'inSample - crypto', function ( assert ) {
+	var navTiming = require( 'ext.navigationTiming' ),
+		getRandomStub = this.sandbox.stub( window.crypto, 'getRandomValues' );
+
+	window.Uint32Array = function () {};
+
+	getRandomStub.returns( [ 4294967294 ] );
+	assert.strictEqual( navTiming.inSample( 0 ), false, '0 is never' );
+	assert.strictEqual( navTiming.inSample( 0.9 ), false, '0.9 is never' );
+	assert.strictEqual( navTiming.inSample( 1 ), true, '1 is always' );
+	assert.strictEqual( navTiming.inSample( '1' ), false, 'non-number is never' );
+	assert.strictEqual( navTiming.inSample( 2 ), false, '2 not this time' );
+	assert.strictEqual( getRandomStub.callCount, 2, 'crypto.getRandomValues() was called 2 times' );
+	getRandomStub.reset();
+
+	getRandomStub.returns( [ 1 ] );
+	assert.strictEqual( navTiming.inSample( 0 ), false, '0 is never' );
+	assert.strictEqual( navTiming.inSample( 1 ), true, '1 is always' );
+	assert.strictEqual( navTiming.inSample( 2 ), true, '2 this time' );
+	assert.strictEqual( getRandomStub.callCount, 2, 'getRandomValues() was called 2 times' );
+} );
 
 // Basic test will ensure no exceptions are thrown and various
 // of the core properties are set as expected.
