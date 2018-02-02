@@ -33,7 +33,7 @@
 				userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.12345.94 Safari/537.36'
 			};
 		},
-		teardown: function() {
+		teardown: function () {
 			window.Geo = this.Geo;
 			window.chrome = this.chrome;
 			if ( this.Uint32Array ) {
@@ -348,7 +348,7 @@
 		} );
 
 		this.sandbox.stub( window, 'chrome', {
-			loadTimes: function() {}
+			loadTimes: function () {}
 		} );
 
 		this.sandbox.stub( window, 'performance', {

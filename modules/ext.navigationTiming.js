@@ -392,7 +392,7 @@
 	 * @return {boolean} True if the client should be sampled, else False
 	 */
 	function inAsiaSample() {
-			// From https://dev.maxmind.com/geoip/legacy/codes/country_continent/
+		// From https://dev.maxmind.com/geoip/legacy/codes/country_continent/
 		var asianCountries = [ 'AE', 'AF', 'AM', 'AP', 'AZ', 'BD', 'BH', 'BN',
 			'BT', 'CC', 'CN', 'CX', 'CY', 'GE', 'HK', 'ID', 'IL', 'IN', 'IO',
 			'IQ', 'IR', 'JO', 'JP', 'KG', 'KH', 'KP', 'KR', 'KW', 'KZ', 'LA',
@@ -521,7 +521,7 @@
 			if ( 'geo' in oversamples ) {
 				geoOversamples = testGeoOversamples( oversamples.geo );
 				if ( geoOversamples.length > 0 ) {
-					geoOversamples.forEach( function( key ) {
+					geoOversamples.forEach( function ( key ) {
 						oversampleReasons.push( 'geo:' + key );
 					} );
 				}
@@ -530,7 +530,7 @@
 			if ( 'userAgent' in oversamples ) {
 				uaOversamples = testUAOversamples( oversamples.userAgent );
 				if ( uaOversamples.length > 0 ) {
-					uaOversamples.forEach( function( key ) {
+					uaOversamples.forEach( function ( key ) {
 						oversampleReasons.push( 'ua:' + key );
 					} );
 				}
@@ -552,7 +552,7 @@
 		}
 
 		if ( oversampleReasons.length > 0 && !visibilityChanged ) {
-			loadEL.done( function() {
+			loadEL.done( function () {
 				emitNavigationTimingWithOversample( oversampleReasons );
 			} );
 		}
