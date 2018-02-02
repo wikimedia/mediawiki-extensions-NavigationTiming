@@ -2,17 +2,19 @@ NavigationTiming
 ----------------
 
 NavigationTiming is a MediaWiki extension for logging perceived latency
-measurements, exposed by browsers as part of the proposed Navigation
-Timing API.
+measurements, exposed by browsers as part of the Navigation Timing API.
 
-Sample configuration:
+Example configuration:
 
-```
-require_once "$IP/extensions/EventLogging/EventLogging.php"; // dependency
-require_once "$IP/extensions/NavigationTiming/NavigationTiming.php";
-$wgNavigationTimingSamplingFactor = 10000; // log 1:10,000 requests
-```
+<pre lang="php">
+// Dependency
+wfLoadExtension('EventLogging');
+$wgEventLoggingBaseUri = '/event';
 
-For more information, see the extension's documentation on MediaWiki.org:
+wfLoadExtension('NavigationTiming');
+$wgNavigationTimingSamplingFactor = 100; // log 1:100 requests
+</pre>
+
+For more information, see the extension's documentation on mediawiki.org:
 
 https://www.mediawiki.org/wiki/Extension:NavigationTiming
