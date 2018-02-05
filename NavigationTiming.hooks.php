@@ -6,11 +6,8 @@ class NavigationTimingHooks {
 	}
 
 	public static function onResourceLoaderGetConfigVars( &$vars ) {
-		global $wgNavigationTimingSamplingFactor, $wgNavigationTimingFirstPaintAsiaSamplingFactor,
-			$wgNavigationTimingOversampleFactor;
+		global $wgNavigationTimingSamplingFactor, $wgNavigationTimingOversampleFactor;
 		$vars[ 'wgNavigationTimingSamplingFactor' ] = $wgNavigationTimingSamplingFactor;
-		$vars[ 'wgNavigationTimingFirstPaintAsiaSamplingFactor' ] =
-			$wgNavigationTimingFirstPaintAsiaSamplingFactor;
 
 		// Filter to ensure that all values are reasonable.  This allows us to
 		// not filter on the client side

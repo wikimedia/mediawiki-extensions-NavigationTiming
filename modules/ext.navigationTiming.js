@@ -9,7 +9,7 @@
 	'use strict';
 
 	var timing, navigation, mediaWikiLoadEnd, hiddenProp, visibilityEvent,
-		isInSample, isInAsiaSample, geoOversamples, uaOversamples, oversamples,
+		isInSample, geoOversamples, uaOversamples, oversamples,
 		oversampleReasons = [],
 		loadEL = false,
 		visibilityChanged = false,
@@ -382,90 +382,6 @@
 	}
 
 	/**
-	 * Test whether this client is in a specific list of Asian countries that should
-	 * have extra data collected.  This is in preparation for the Singapore cache
-	 * location coming online in Jan, 2018.
-	 *
-	 * TODO: This should be removed, and we should use the generic oversample
-	 *   mechanism instead
-	 *
-	 * @return {boolean} True if the client should be sampled, else False
-	 */
-	function inAsiaSample() {
-		// From https://dev.maxmind.com/geoip/legacy/codes/country_continent/
-		var asianCountries = [ 'AE', 'AF', 'AM', 'AP', 'AZ', 'BD', 'BH', 'BN',
-			'BT', 'CC', 'CN', 'CX', 'CY', 'GE', 'HK', 'ID', 'IL', 'IN', 'IO',
-			'IQ', 'IR', 'JO', 'JP', 'KG', 'KH', 'KP', 'KR', 'KW', 'KZ', 'LA',
-			'LB', 'LK', 'MM', 'MN', 'MO', 'MV', 'MY', 'NP', 'OM', 'PH', 'PK',
-			'PS', 'QA', 'SA', 'SG', 'SY', 'TH', 'TJ', 'TL', 'TM', 'TW', 'UZ',
-			'VN', 'YE' ];
-
-		// Only regular page views, ignore any non-compliant data
-		if ( !navigation || navigation.type !== TYPE_NAVIGATE || !isCompliant() ) {
-			return false;
-		}
-
-		// For the Asia sample, only collect First Paint Time from Chrome
-		if ( !window.chrome || !$.isFunction( chrome.loadTimes ) ) {
-			return false;
-		}
-
-		// From Asia
-		if ( !window.Geo || asianCountries.indexOf( Geo.country || Geo.country_code ) === -1 ) {
-			return false;
-		}
-
-		// Sampled (unlike main sampling factor, this is applied within and
-		// after the above filters).
-		return inSample( mw.config.get( 'wgNavigationTimingFirstPaintAsiaSamplingFactor' ) );
-	}
-
-	/**
-	 * Emits specific additional data for clients where inAsiaSample() returns True.
-	 * Only first paint data is collected, and those data are submitted directly to a
-	 * specific statsd metric
-	 */
-	function emitAsiaFirstPaint() {
-		var navigationEvents, paintEvents, firstPaint, firstContentfulPaint,
-			fetchStart;
-
-		firstPaint = Math.round( chrome.loadTimes().firstPaintTime * 1000 );
-		fetchStart = timing.fetchStart;
-
-		// Get the values from the new NavigationTiming and Paint APIs if possible
-		if ( performance.getEntriesByType ) {
-			navigationEvents = performance.getEntriesByType( 'navigation' );
-			paintEvents = performance.getEntriesByType( 'paint' );
-
-			if ( paintEvents.length && navigationEvents.length ) {
-				paintEvents.forEach( function ( event ) {
-					if ( event.name === 'first-paint' ) {
-						firstPaint = event.startTime;
-					}
-
-					if ( event.name === 'first-contentful-paint' ) {
-						firstContentfulPaint = event.startTime;
-					}
-				} );
-
-				navigationEvents.forEach( function ( event ) {
-					if ( event.fetchStart ) {
-						fetchStart = event.fetchStart;
-					}
-				} );
-			}
-		}
-
-		if ( firstPaint > fetchStart ) {
-			mw.track( 'timing.frontend.navtiming_asia.firstPaint', firstPaint - fetchStart );
-		}
-
-		if ( firstContentfulPaint > fetchStart ) {
-			mw.track( 'timing.frontend.navtiming_asia.firstContentfulPaint', firstContentfulPaint - fetchStart );
-		}
-	}
-
-	/**
 	 *
 	 * Main - start of what runs on load
 	 *
@@ -511,10 +427,6 @@
 
 	// Ensure we run after loadEventEnd.
 	onLoadComplete( function () {
-		// If this happens before onLoadComplete, we may end up running before
-		// some deps have loaded (eg, Geo)
-		isInAsiaSample = inAsiaSample();
-
 		// Get any oversamples, and see whether we match
 		oversamples = mw.config.get( 'wgNavigationTimingOversampleFactor' );
 		if ( oversamples ) {
@@ -539,16 +451,12 @@
 
 		// If we're supposed to be sampling this page load (for any reason),
 		// then load the NavTiming and SaveTiming schemas
-		if ( ( isInAsiaSample || oversampleReasons.length > 0 ) && !isInSample ) {
+		if ( oversampleReasons.length > 0 && !isInSample ) {
 			loadEL = mw.loader.using( [ 'schema.NavigationTiming', 'schema.SaveTiming' ] );
 		}
 
 		if ( isInSample && !visibilityChanged ) {
 			loadEL.done( emitNavigationTiming );
-		}
-
-		if ( isInAsiaSample && !visibilityChanged ) {
-			emitAsiaFirstPaint();
 		}
 
 		if ( oversampleReasons.length > 0 && !visibilityChanged ) {
@@ -573,8 +481,6 @@
 			inSample: inSample,
 			emitNavTiming: emitNavigationTiming,
 			emitNavigationTimingWithOversample: emitNavigationTimingWithOversample,
-			emitAsiaFirstPaint: emitAsiaFirstPaint,
-			inAsiaSample: inAsiaSample,
 			testGeoOversamples: testGeoOversamples,
 			testUAOversamples: testUAOversamples,
 			reinit: function () {

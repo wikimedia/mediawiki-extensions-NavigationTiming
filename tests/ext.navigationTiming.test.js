@@ -10,7 +10,6 @@
 
 			// Ensure the starting value of these paraeters, regardless of what's
 			// set in LocalSettings.php
-			mw.config.set( 'wgNavigationTimingFirstPaintAsiaSamplingFactor', 1 );
 			mw.config.set( 'wgNavigationTimingOversampleFactor', {} );
 
 			// Because stubs can't work on undefined properties and the presence
@@ -272,116 +271,6 @@
 			assert.strictEqual( typeof event[ key ], type, 'Type of event property: ' + key );
 			assert.strictEqual( event[ key ], val, 'Value of event property: ' + key );
 		}
-	} );
-
-	QUnit.test( 'Asia (old)', function ( assert ) {
-		var stub = this.sandbox.stub( mw, 'track' );
-
-		this.sandbox.stub( window, 'chrome', {
-			loadTimes: function () {
-				return { firstPaintTime: 1301637600.420 };
-			}
-		} );
-		this.sandbox.stub( window, 'performance', {
-			timing: { fetchStart: 1301637600000 },
-			getEntriesByType: function () {
-				return [];
-			}
-		} );
-
-		navigationTiming.reinit();
-
-		navigationTiming.emitAsiaFirstPaint();
-
-		assert.deepEqual(
-			stub.getCall( 0 ) && stub.getCall( 0 ).args,
-			[ 'timing.frontend.navtiming_asia.firstPaint', 420 ],
-			'First paint'
-		);
-		assert.strictEqual(
-			stub.getCall( 1 ),
-			null,
-			'First contentful paint'
-		);
-	} );
-
-	QUnit.test( 'Asia (new)', function ( assert ) {
-		var stub = this.sandbox.stub( mw, 'track' );
-
-		this.sandbox.stub( window, 'chrome', {
-			loadTimes: function () {
-				return { firstPaintTime: 1301637600.420 };
-			}
-		} );
-		this.sandbox.stub( window, 'performance', {
-			timing: { fetchStart: 1400000000000 },
-			getEntriesByType: function () {
-				return [
-					// navigation
-					{ fetchStart: 15 },
-					// paint
-					{ name: 'first-paint', startTime: 615 },
-					{ name: 'first-contentful-paint', startTime: 655 }
-				];
-			}
-		} );
-
-		navigationTiming.reinit();
-
-		navigationTiming.emitAsiaFirstPaint();
-
-		assert.deepEqual(
-			stub.getCall( 0 ) && stub.getCall( 0 ).args,
-			[ 'timing.frontend.navtiming_asia.firstPaint', 600 ],
-			'First paint'
-		);
-		assert.deepEqual(
-			stub.getCall( 1 ) && stub.getCall( 1 ).args,
-			[ 'timing.frontend.navtiming_asia.firstContentfulPaint', 640 ],
-			'First contentful paint'
-		);
-	} );
-
-	QUnit.test( 'Asia (sample check)', function ( assert ) {
-		var stub = this.sandbox.stub( window, 'Geo', {
-			country: 'HK'
-		} );
-
-		this.sandbox.stub( window, 'chrome', {
-			loadTimes: function () {}
-		} );
-
-		this.sandbox.stub( window, 'performance', {
-			timing: performance.timing,
-			navigation: {
-				// Force TYPE_NAVIGATE instead of e.g. TYPE_REDIRECT.
-				// Since we only collect metrics from regular requests,
-				// but we don't want that logic to apply to the unit test,
-				// as otherwise it may omit the main Navigation Timing keys.
-				type: 0,
-				redirectCount: 0
-			}
-		} );
-
-		navigationTiming.reinit();
-
-		assert.strictEqual(
-			navigationTiming.inAsiaSample(),
-			true,
-			'Is in Asia sample'
-		);
-
-		stub.restore();
-
-		this.sandbox.stub( window, 'Geo', {
-			country: 'FR'
-		} );
-
-		assert.strictEqual(
-			navigationTiming.inAsiaSample(),
-			false,
-			'Is not in Asia sample'
-		);
 	} );
 
 	QUnit.test( 'Oversample config and activation', function ( assert ) {
