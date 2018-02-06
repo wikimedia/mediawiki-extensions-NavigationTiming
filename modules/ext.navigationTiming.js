@@ -261,6 +261,16 @@
 			event.mobileMode = mobileMode;
 		}
 
+		// If present, collect the effectiveConnectionType from the NetworkInfo API
+		// https://developer.mozilla.org/en-US/docs/Web/API/NetworkInformation
+		//
+		// This will require some post-processing in order to track usefully
+		if ( navigator.connection ) {
+			if ( typeof navigator.connection.effectiveType === 'string' ) {
+				event.netinfoEffectiveConnectionType = navigator.connection.effectiveType;
+			}
+		}
+
 		$.extend( event, getNavTiming() );
 
 		if ( navigation && navigation.type === TYPE_NAVIGATE && !isCompliant() ) {

@@ -29,7 +29,10 @@
 			this.navigator = Object.getOwnPropertyDescriptor( window, 'navigator' ) || {};
 			delete window.navigator;
 			window.navigator = {
-				userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.12345.94 Safari/537.36'
+				userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.12345.94 Safari/537.36',
+				connection: {
+					effectiveType: '4g'
+				}
 			};
 		},
 		teardown: function () {
@@ -126,6 +129,9 @@
 			// ResourceLoader
 			mediaWikiLoadComplete: 'number',
 
+			// NetworkInfo API
+			netinfoEffectiveConnectionType: 'string',
+
 			// Navigation Timing
 			responseStart: 'number',
 			domComplete: 'number',
@@ -145,6 +151,15 @@
 				assert.strictEqual( event[ key ], val, 'Value of event property: ' + key );
 			}
 		}
+
+		// Make sure things still work when the connection object isn't present
+		stub.reset();
+		delete window.navigator.connection;
+		navigationTiming.reinit();
+		navigationTiming.emitNavTiming();
+		event = stub.getCall( 0 ).args[ 1 ];
+		assert.strictEqual( event.hasOwnProperty( 'netinfoEffectiveConnectionType' ),
+			false, 'When the connection object is not present, things still work' );
 	} );
 
 	// Case with example values typical for a first view
