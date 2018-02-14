@@ -47,22 +47,6 @@
 	}
 
 	/**
-	 * Get the pixel ratio of the device.
-	 *
-	 * @return {number} The pixel ratio of the device, or 1 if unknown
-	 */
-	function getDevicePixelRatio() {
-		if ( window.screen && screen.logicalXDPI ) {
-			// IE10 mobile; see <http://stackoverflow.com/q/16383503/582542>
-			return screen.deviceXDPI / screen.logicalXDPI;
-		} else if ( window.devicePixelRatio ) {
-			return window.devicePixelRatio;
-		} else {
-			return 1;
-		}
-	}
-
-	/**
 	 * Check if the order of Navigation Timing marker values conforms
 	 * to the specification.
 	 *
@@ -90,19 +74,12 @@
 			'responseStart',
 			'responseEnd',
 			'domInteractive',
-			'domContentLoadedEventStart',
-			'domContentLoadedEventEnd',
+			'domComplete',
 			'loadEventStart',
 			'loadEventEnd'
 		], [
 			'secureConnectionStart',
 			'requestStart'
-		], [
-			'fetchStart',
-			'domLoading'
-		], [
-			'domContentLoadedEventEnd',
-			'domComplete'
 		] ];
 
 		while ( sequences.length ) {
@@ -216,19 +193,16 @@
 	 */
 	function emitNavigationTimingWithOversample( oversample ) {
 		var event = {
-				isHttp2: /H2/.test( $.cookie( 'CP' ) ),
-				isHiDPI: getDevicePixelRatio() > 1,
 				isAnon: mw.config.get( 'wgUserId' ) === null,
 				mediaWikiVersion: mw.config.get( 'wgVersion' ),
 				isOversample: oversample !== false
 			},
 			page = {
-				pageId: mw.config.get( 'wgArticleId' ),
 				namespaceId: mw.config.get( 'wgNamespaceNumber' ),
 				revId: mw.config.get( 'wgCurRevisionId' ),
 				action: mw.config.get( 'wgAction' ) // view, submit, etc.
 			},
-			isSpecialPage = !!mw.config.get( 'wgCanonicalSpecialPageName' ),
+			mwIsSpecialPage = !!mw.config.get( 'wgCanonicalSpecialPageName' ),
 			mobileMode = mw.config.get( 'wgMFMode' );
 
 		if ( oversample ) {
@@ -245,16 +219,15 @@
 			if ( typeof Geo.country === 'string' ) {
 				event.originCountry = Geo.country;
 			}
-
-			if ( typeof Geo.region === 'string' ) {
-				event.originRegion = Geo.region;
-			}
 		}
 
 		// Omit page information for special pages: they don't have real page
 		// IDs or revisions. (They appear as 0 to client-side code.)
-		if ( !isSpecialPage ) {
+		// Instead, add the name of the special page
+		if ( !mwIsSpecialPage ) {
 			$.extend( event, page );
+		} else {
+			event.mwSpecialPageName = mw.config.get( 'wgCanonicalSpecialPageName' );
 		}
 
 		if ( typeof mobileMode === 'string' && mobileMode.indexOf( 'desktop' ) === -1 ) {
