@@ -121,8 +121,6 @@
 		expected = {
 			// Base
 			isAnon: 'boolean',
-			isHiDPI: 'boolean',
-			isHttp2: 'boolean',
 			isOversample: 'boolean',
 			mediaWikiVersion: [ 'string', mw.config.get( 'wgVersion' ) ],
 
@@ -160,6 +158,19 @@
 		event = stub.getCall( 0 ).args[ 1 ];
 		assert.strictEqual( event.hasOwnProperty( 'netinfoEffectiveConnectionType' ),
 			false, 'When the connection object is not present, things still work' );
+
+		// Make sure things are correct if the page is a special page
+		stub.reset();
+		mw.config.set( 'wgCanonicalSpecialPageName', 'SpecialPageNameTest' );
+		navigationTiming.reinit();
+		navigationTiming.emitNavTiming();
+		event = stub.getCall( 0 ).args[ 1 ];
+		assert.strictEqual( event.mwSpecialPageName, 'SpecialPageNameTest',
+			'Special page name is correct in the emitted object' );
+		assert.strictEqual( event.hasOwnProperty( 'namespaceId' ), false,
+			'namespaceId is not included for Special Pages' );
+		assert.strictEqual( event.hasOwnProperty( 'revId' ), false,
+			'revId is not included for Special pages' );
 	} );
 
 	// Case with example values typical for a first view
