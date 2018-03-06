@@ -408,8 +408,10 @@
 		loadEL = mw.loader.using( [ 'schema.NavigationTiming', 'schema.SaveTiming' ] );
 	}
 
-	// Ensure we run after loadEventEnd.
-	onLoadComplete( function () {
+	/**
+	 * Called after loadEventEnd by onLoadComplete()
+	 */
+	function loadCallback() {
 		// Get any oversamples, and see whether we match
 		oversamples = mw.config.get( 'wgNavigationTimingOversampleFactor' );
 		if ( oversamples ) {
@@ -452,7 +454,10 @@
 			mw.loader.using( 'schema.SaveTiming' )
 				.done( emitSaveTiming );
 		} );
-	} );
+	}
+
+	// Ensure we run after loadEventEnd
+	onLoadComplete( loadCallback );
 
 	if ( typeof QUnit !== 'undefined' ) {
 		/**
@@ -466,6 +471,7 @@
 			emitNavigationTimingWithOversample: emitNavigationTimingWithOversample,
 			testGeoOversamples: testGeoOversamples,
 			testUAOversamples: testUAOversamples,
+			loadCallback: loadCallback,
 			reinit: function () {
 				// performance is recursively read-only and can only be
 				// mocked from the top down via window.performance. The test
@@ -473,6 +479,12 @@
 				// reference. See ext.navigationTiming.test.js
 				timing = performance.timing;
 				navigation = performance.navigation;
+
+				// For testing loadCallback()
+				isInSample = inSample( mw.config.get( 'wgNavigationTimingSamplingFactor', 0 ) );
+				if ( isInSample ) {
+					loadEL = mw.loader.using( [ 'schema.NavigationTiming', 'schema.SaveTiming' ] );
+				}
 			}
 		};
 	}

@@ -8,9 +8,9 @@
 	QUnit.module( 'ext.navigationTiming', QUnit.newMwEnvironment( {
 		setup: function () {
 
-			// Ensure the starting value of these paraeters, regardless of what's
+			// Ensure the starting value of these parameters, regardless of what's
 			// set in LocalSettings.php
-			mw.config.set( 'wgNavigationTimingOversampleFactor', {} );
+			mw.config.set( 'wgNavigationTimingOversampleFactor', false );
 
 			// Because stubs can't work on undefined properties and the presence
 			// of window.Geo and window.chrome isn't guaranteed
@@ -352,7 +352,6 @@
 			'When inSample returns false, the resulting list of oversample reasons is empty' );
 		Math.random.restore();
 		window.crypto.getRandomValues.restore();
-
 	} );
 
 	QUnit.test( 'emitOversampleNavigationTiming tests', function ( assert ) {
@@ -384,6 +383,58 @@
 			'Calling eONT with multiple reasons results in isOversample set to true' );
 		assert.propEqual( JSON.parse( logEventStub.args[ 0 ][ 1 ].oversampleReason ),
 			[ 'UA:Chrome', 'geo:XX' ], 'Both reasons listed after calling ENTWO' );
+	} );
 
+	QUnit.test( 'Oversample Geo integration tests', function ( assert ) {
+		var logEvent;
+
+		// Mock PerformanceNavigation for TYPE_NAVIGATE
+		this.sandbox.stub( window, 'performance', {
+			timing: { /* empty stub */ },
+			navigation: {
+				type: 0,
+				redirectCount: 0
+			}
+		} );
+		// Mock Geo for country=XX
+		this.sandbox.stub( window, 'Geo', {
+			country: 'XX'
+		} );
+		// Mock config for oversampling country=XX
+		mw.config.set( 'wgNavigationTimingSamplingFactor', 1 );
+		mw.config.set( 'wgNavigationTimingOversampleFactor', {
+			geo: {
+				XX: 1
+			}
+		} );
+		// Stub EventLogging
+		logEvent = this.sandbox.stub( mw.eventLog, 'logEvent' );
+		// Stub mw.hook (unrelated)
+		this.sandbox.stub( mw, 'hook', function () {
+			return { add: function () {} };
+		} );
+
+		navigationTiming.reinit();
+		navigationTiming.loadCallback();
+
+		// There should be two events
+		assert.equal( logEvent.args.length, 2, 'Two events were emitted' );
+
+		// There should be one event with isOversample == false
+		assert.equal( logEvent.args.filter( function ( event ) {
+			return event[ 1 ].isOversample === false;
+		} ).length, 1, 'Exactly one event has isOversample === false' );
+		// There should be one event with isOversample == true
+		assert.equal( logEvent.args.filter( function ( event ) {
+			return event[ 1 ].isOversample === true;
+		} ).length, 1, 'Exactly one event has isOversample === true' );
+
+		// Delete properties that are expected to be different and check remainder
+		[ logEvent.args[ 0 ], logEvent.args[ 1 ] ].forEach( function ( event ) {
+			delete event[ 1 ].isOversample;
+			delete event[ 1 ].oversampleReason;
+		} );
+		assert.deepEqual( logEvent.args[ 0 ][ 1 ], logEvent.args[ 1 ][ 1 ],
+			'Oversample and regular sample contain the same data' );
 	} );
 }( mediaWiki ) );
