@@ -436,4 +436,40 @@
 		assert.deepEqual( logEvent.args[ 0 ][ 1 ], logEvent.args[ 1 ][ 1 ],
 			'Oversample and regular sample contain the same data' );
 	} );
+
+	QUnit.test( 'Paint Timing API', function ( assert ) {
+		this.sandbox.stub( window, 'performance', {
+			timing: { /* empty stub */ },
+			navigation: {
+				type: 0,
+				redirectCount: 0
+			},
+			getEntriesByType: function () { }
+		} );
+		this.sandbox.stub( window.performance, 'getEntriesByType' ).returns(
+			[
+				{
+					duration: 0,
+					entryType: 'paint',
+					name: 'first-paint',
+					startTime: 990.3000454
+				},
+				{
+					duration: 0,
+					entryType: 'paint',
+					name: 'first-contentful-paint',
+					startTime: 1000.10101
+				} ] );
+		this.sandbox.stub( mw.eventLog, 'logEvent' );
+		this.sandbox.stub( mw.eventLog, 'logFailure' );
+
+		navigationTiming.reinit();
+		navigationTiming.emitNavTiming();
+
+		assert.equal( window.performance.getEntriesByType.callCount, 2,
+			'getEntriesByType was called twice' );
+		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].firstPaint,
+			990, 'firstPaint value was set using the Paint Timing API call' );
+
+	} );
 }( mediaWiki ) );

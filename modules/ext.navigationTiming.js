@@ -47,12 +47,40 @@
 	}
 
 	/**
+	 * Get first paint value
+	 */
+	function getFirstPaint( navStart ) {
+		var chromeLoadTimes, firstPaint = false;
+
+		// getEntriesByType has really hit or miss support:
+		//    https://developer.mozilla.org/en-US/docs/Web/API/Performance/getEntriesByType
+		if ( performance && performance.getEntriesByType &&
+			performance.getEntriesByType( 'paint' ).length > 0 ) {
+			performance.getEntriesByType( 'paint' ).forEach( function ( entry ) {
+				if ( entry.name === 'first-paint' ) {
+					firstPaint = Math.round( entry.startTime );
+				}
+			} );
+		} else if ( timing.msFirstPaint > navStart ) {
+			firstPaint = timing.msFirstPaint - navStart;
+		/* global chrome */
+		} else if ( window.chrome && $.isFunction( chrome.loadTimes ) ) {
+			chromeLoadTimes = chrome.loadTimes();
+			if ( chromeLoadTimes.firstPaintTime > chromeLoadTimes.startLoadTime ) {
+				firstPaint = Math.round( 1000 *
+					( chromeLoadTimes.firstPaintTime - chromeLoadTimes.startLoadTime ) );
+			}
+		}
+		return firstPaint;
+	}
+
+	/**
 	 * Get Navigation Timing data from the browser
 	 *
 	 * @return {Object} timingData with normalized fields
 	 */
 	function getNavTiming() {
-		var navStart, timingData, chromeLoadTimes;
+		var firstPaint, navStart, timingData;
 
 		// Only record data on TYPE_NAVIGATE (e.g. ignore TYPE_RELOAD)
 		// Only record data if implementation is compliant
@@ -113,15 +141,9 @@
 			timingData.unload = 0;
 		}
 
-		if ( timing.msFirstPaint > navStart ) {
-			timingData.firstPaint = timing.msFirstPaint - navStart;
-		/* global chrome */
-		} else if ( window.chrome && $.isFunction( chrome.loadTimes ) ) {
-			chromeLoadTimes = chrome.loadTimes();
-			if ( chromeLoadTimes.firstPaintTime > chromeLoadTimes.startLoadTime ) {
-				timingData.firstPaint = Math.round( 1000 *
-					( chromeLoadTimes.firstPaintTime - chromeLoadTimes.startLoadTime ) );
-			}
+		firstPaint = getFirstPaint( navStart );
+		if ( firstPaint ) {
+			timingData.firstPaint = firstPaint;
 		}
 
 		// We probably have gaps in the navigation timing data so measure them.
