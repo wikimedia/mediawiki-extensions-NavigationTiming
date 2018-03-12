@@ -39,6 +39,7 @@ class NavigationTimingHooks {
 				'ext.navigationTiming',
 				'schema.NavigationTiming',
 				'schema.SaveTiming',
+				'ext.navigationTiming.rumSpeedIndex',
 			],
 			'localBasePath' => __DIR__ ,
 			'remoteExtPath' => 'NavigationTiming',

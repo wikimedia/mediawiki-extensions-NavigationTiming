@@ -31,6 +31,15 @@
 				"desktop",
 				"mobile"
 			]
+		},
+		"ext.navigationTiming.rumSpeedIndex": {
+			"scripts": [
+				"RUM-SpeedIndex/rum-speedindex.js"
+			],
+			"targets": [
+				"desktop",
+				"mobile"
+			]
 		}
 	},
 	"ResourceFileModulePaths": {

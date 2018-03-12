@@ -517,6 +517,8 @@
 	} );
 
 	QUnit.test( 'Paint Timing API', function ( assert ) {
+		var stub;
+
 		this.sandbox.stub( window, 'performance', {
 			timing: { /* empty stub */ },
 			navigation: {
@@ -525,30 +527,54 @@
 			},
 			getEntriesByType: function () { }
 		} );
-		this.sandbox.stub( window.performance, 'getEntriesByType' ).returns(
-			[
-				{
-					duration: 0,
-					entryType: 'paint',
-					name: 'first-paint',
-					startTime: 990.3000454
-				},
-				{
-					duration: 0,
-					entryType: 'paint',
-					name: 'first-contentful-paint',
-					startTime: 1000.10101
-				} ] );
+
+		stub = this.sandbox.stub( window.performance, 'getEntriesByType' );
+
+		stub.withArgs( 'resource' ).returns(
+			[ {
+				duration: 1902.7,
+				entryType: 'resource',
+				name: 'http://dev.wiki.local.wmftest.net/w/resources/assets/poweredby_mediawiki_88x31.png',
+				startTime: 8895.899999999983
+			} ]
+		);
+
+		stub.withArgs( 'paint' ).returns(
+			[ {
+				duration: 0,
+				entryType: 'paint',
+				name: 'first-paint',
+				startTime: 990.3000454
+			},
+			{
+				duration: 0,
+				entryType: 'paint',
+				name: 'first-contentful-paint',
+				startTime: 1000.10101
+			} ]
+		);
+
+		stub.withArgs( 'navigation' ).returns(
+			[ {
+				duration: 18544.49,
+				entryType: 'navigation',
+				name: 'http://dev.wiki.local.wmftest.net/wiki/Main_Page',
+				startTime: 0
+			} ]
+		);
+
 		this.sandbox.stub( mw.eventLog, 'logEvent' );
 		this.sandbox.stub( mw.eventLog, 'logFailure' );
 
 		navigationTiming.reinit();
 		navigationTiming.emitNavTiming();
 
-		assert.equal( window.performance.getEntriesByType.callCount, 2,
-			'getEntriesByType was called twice' );
+		assert.equal( window.performance.getEntriesByType.callCount, 5,
+			'getEntriesByType was called the expected amount of times' );
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].firstPaint,
 			990, 'firstPaint value was set using the Paint Timing API call' );
+		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].RSI,
+			990, 'RSI value was set using the rumSpeedIndex library firstPaint fallback' );
 
 	} );
 }( mediaWiki ) );

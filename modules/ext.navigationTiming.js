@@ -13,7 +13,8 @@
 		oversampleReasons = [],
 		loadEL = false,
 		visibilityChanged = false,
-		TYPE_NAVIGATE = 0;
+		TYPE_NAVIGATE = 0,
+		preloadedModules = [ 'schema.NavigationTiming', 'schema.SaveTiming', 'ext.navigationTiming.rumSpeedIndex' ];
 
 	/**
 	 * Get random number between 0 (inclusive) and 1 (exclusive).
@@ -47,31 +48,50 @@
 	}
 
 	/**
-	 * Get first paint value
+	 * Get paint values
 	 */
-	function getFirstPaint( navStart ) {
-		var chromeLoadTimes, firstPaint = false;
+	function getPaintTiming( navStart ) {
+		var paintEntries, resourceEntries,
+			ptFirstPaint, chromeLoadTimes, rumSpeedIndex,
+			res = {};
 
-		// getEntriesByType has really hit or miss support:
-		//    https://developer.mozilla.org/en-US/docs/Web/API/Performance/getEntriesByType
-		if ( performance && performance.getEntriesByType &&
-			performance.getEntriesByType( 'paint' ).length > 0 ) {
-			performance.getEntriesByType( 'paint' ).forEach( function ( entry ) {
+		try {
+			// getEntriesByType has really hit or miss support:
+			// https://developer.mozilla.org/en-US/docs/Web/API/Performance/getEntriesByType
+			paintEntries = performance.getEntriesByType( 'paint' );
+			resourceEntries = performance.getEntriesByType( 'resource' );
+		} catch ( e ) {
+			resourceEntries = [];
+			paintEntries = [];
+		}
+
+		if ( paintEntries.length ) {
+			paintEntries.forEach( function ( entry ) {
 				if ( entry.name === 'first-paint' ) {
-					firstPaint = Math.round( entry.startTime );
+					ptFirstPaint = res.firstPaint = Math.round( entry.startTime );
 				}
 			} );
 		} else if ( timing.msFirstPaint > navStart ) {
-			firstPaint = timing.msFirstPaint - navStart;
+			res.firstPaint = timing.msFirstPaint - navStart;
 		/* global chrome */
-		} else if ( window.chrome && $.isFunction( chrome.loadTimes ) ) {
+		} else if ( window.chrome && chrome.loadTimes ) {
 			chromeLoadTimes = chrome.loadTimes();
 			if ( chromeLoadTimes.firstPaintTime > chromeLoadTimes.startLoadTime ) {
-				firstPaint = Math.round( 1000 *
+				res.firstPaint = Math.round( 1000 *
 					( chromeLoadTimes.firstPaintTime - chromeLoadTimes.startLoadTime ) );
 			}
 		}
-		return firstPaint;
+
+		if ( resourceEntries.length && paintEntries.length ) {
+			if ( ptFirstPaint === undefined || ptFirstPaint < 0 || ptFirstPaint > 120000 ) {
+				res.RSI = 0;
+			} else {
+				rumSpeedIndex = require( 'ext.navigationTiming.rumSpeedIndex' );
+				res.RSI = Math.round( rumSpeedIndex() );
+			}
+		}
+
+		return res;
 	}
 
 	/**
@@ -80,7 +100,7 @@
 	 * @return {Object} timingData with normalized fields
 	 */
 	function getNavTiming() {
-		var firstPaint, navStart, timingData;
+		var navStart, timingData;
 
 		// Only record data on TYPE_NAVIGATE (e.g. ignore TYPE_RELOAD)
 		if ( !navigation || navigation.type !== TYPE_NAVIGATE ) {
@@ -140,10 +160,7 @@
 			timingData.unload = 0;
 		}
 
-		firstPaint = getFirstPaint( navStart );
-		if ( firstPaint ) {
-			timingData.firstPaint = firstPaint;
-		}
+		$.extend( timingData, getPaintTiming( navStart ) );
 
 		// We probably have gaps in the navigation timing data so measure them.
 		timingData.gaps = timing.domainLookupStart - timing.fetchStart;
@@ -367,8 +384,8 @@
 
 	isInSample = inSample( mw.config.get( 'wgNavigationTimingSamplingFactor', 0 ) );
 	if ( isInSample ) {
-		// Preload NavTiming and SaveTiming schemas
-		loadEL = mw.loader.using( [ 'schema.NavigationTiming', 'schema.SaveTiming' ] );
+		// Preload NavTiming, SaveTiming schemas and RUMSpeedIndex
+		loadEL = mw.loader.using( preloadedModules );
 	}
 
 	/**
@@ -398,9 +415,9 @@
 		}
 
 		// If we're supposed to be sampling this page load (for any reason),
-		// then load the NavTiming and SaveTiming schemas
+		// then load the NavTiming, SaveTiming schemas and RUMSpeedIndex
 		if ( oversampleReasons.length > 0 && !isInSample ) {
-			loadEL = mw.loader.using( [ 'schema.NavigationTiming', 'schema.SaveTiming' ] );
+			loadEL = mw.loader.using( preloadedModules );
 		}
 
 		if ( isInSample && !visibilityChanged ) {
@@ -446,7 +463,7 @@
 				// For testing loadCallback()
 				isInSample = inSample( mw.config.get( 'wgNavigationTimingSamplingFactor', 0 ) );
 				if ( isInSample ) {
-					loadEL = mw.loader.using( [ 'schema.NavigationTiming', 'schema.SaveTiming' ] );
+					loadEL = mw.loader.using( preloadedModules );
 				}
 			}
 		};
