@@ -180,6 +180,11 @@
 			}
 		}
 
+		// We probably have gaps in the navigation timing data so measure them.
+		timingData.gaps = timing.domainLookupStart - timing.fetchStart;
+		timingData.gaps += timing.connectStart - timing.domainLookupEnd;
+		timingData.gaps += timing.requestStart - timing.connectEnd;
+		timingData.gaps += timing.loadEventStart - timing.domComplete;
 		return timingData;
 	}
 

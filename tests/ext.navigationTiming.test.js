@@ -225,7 +225,8 @@
 			loadEventStart: [ 'number', 470 ],
 			loadEventEnd: [ 'number', 475 ],
 			unload: [ 'number', 0 ],
-			redirecting: [ 'number', 0 ]
+			redirecting: [ 'number', 0 ],
+			gaps: [ 'number', 131 ]
 		};
 
 		for ( key in expected ) {
