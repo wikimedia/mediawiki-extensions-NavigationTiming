@@ -1,11 +1,11 @@
 {
 	"name": "NavigationTiming",
-	"version": "1.0",
 	"author": [
-		"Asher Feldman",
-		"Ori Livneh",
 		"Patrick Reilly",
-		"Timo Tijhof"
+		"Ori Livneh",
+		"Asher Feldman",
+		"Timo Tijhof",
+		"Ian Marlier"
 	],
 	"url": "https://www.mediawiki.org/wiki/Extension:NavigationTiming",
 	"descriptionmsg": "navigationtiming-desc",
