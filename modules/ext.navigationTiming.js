@@ -47,59 +47,6 @@
 	}
 
 	/**
-	 * Check if the order of Navigation Timing marker values conforms
-	 * to the specification.
-	 *
-	 * Markers may be undefined or zero if they are not implemented or not
-	 * applicable to the current page.  Markers which have a value must be
-	 * in ascending order.
-	 *
-	 * @return {boolean}
-	 */
-	function isCompliant() {
-		var sequences, markers, curr, prev;
-
-		if ( !timing ) {
-			return false;
-		}
-
-		sequences = [ [
-			'navigationStart',
-			'fetchStart',
-			'domainLookupStart',
-			'domainLookupEnd',
-			'connectStart',
-			'connectEnd',
-			'requestStart',
-			'responseStart',
-			'responseEnd',
-			'domInteractive',
-			'domComplete',
-			'loadEventStart',
-			'loadEventEnd'
-		], [
-			'secureConnectionStart',
-			'requestStart'
-		] ];
-
-		while ( sequences.length ) {
-			markers = sequences.shift();
-			prev = null;
-			while ( markers.length ) {
-				curr = timing[ markers.shift() ];
-				if ( curr ) {
-					if ( curr < prev ) {
-						return false;
-					}
-					prev = curr;
-				}
-			}
-		}
-
-		return true;
-	}
-
-	/**
 	 * Get Navigation Timing data from the browser
 	 *
 	 * @return {Object} timingData with normalized fields
@@ -109,7 +56,7 @@
 
 		// Only record data on TYPE_NAVIGATE (e.g. ignore TYPE_RELOAD)
 		// Only record data if implementation is compliant
-		if ( !navigation || navigation.type !== TYPE_NAVIGATE || !isCompliant() ) {
+		if ( !navigation || navigation.type !== TYPE_NAVIGATE ) {
 			return {};
 		}
 
@@ -251,10 +198,6 @@
 
 		$.extend( event, getNavTiming() );
 
-		if ( navigation && navigation.type === TYPE_NAVIGATE && !isCompliant() ) {
-			// Keep track of non-compliant browsers (only on TYPE_NAVIGATE)
-			mw.eventLog.logFailure( 'NavigationTiming', 'nonCompliant' );
-		}
 		mw.eventLog.logEvent( 'NavigationTiming', event );
 	}
 
