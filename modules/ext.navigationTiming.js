@@ -136,36 +136,39 @@
 	}
 
 	/**
-	 * Create the actual NavigationTiming message, and then hand it off to
-	 * the EventLogging system to deliver
+	 * Collect the actual event data and send the EventLogging beacon
 	 *
 	 * @params {string|boolean} oversample Either a string that indicates the reason
 	 *     that an oversample was collected, or boolean
 	 *     false to indicate that it's not an oversample
 	 */
 	function emitNavigationTimingWithOversample( oversample ) {
-		var event = {
-				isAnon: mw.config.get( 'wgUserId' ) === null,
-				mediaWikiVersion: mw.config.get( 'wgVersion' ),
-				isOversample: oversample !== false
-			},
-			page = {
-				namespaceId: mw.config.get( 'wgNamespaceNumber' ),
-				revId: mw.config.get( 'wgCurRevisionId' ),
-				action: mw.config.get( 'wgAction' ) // view, submit, etc.
-			},
-			mwIsSpecialPage = !!mw.config.get( 'wgCanonicalSpecialPageName' ),
+		var event = {},
 			mobileMode = mw.config.get( 'wgMFMode' );
 
-		if ( oversample ) {
-			event.oversampleReason = JSON.stringify( oversample );
+		// Properties: MediaWiki
+		//
+		// Custom properties from MediaWiki.
+		event.mediaWikiVersion = mw.config.get( 'wgVersion' );
+		event.isAnon = mw.config.get( 'wgUserId' ) === null;
+		if ( mw.config.get( 'wgCanonicalSpecialPageName' ) ) {
+			// Omit page information for special pages,
+			// these don't have IDs, revisions or actions.
+			event.mwSpecialPageName = mw.config.get( 'wgCanonicalSpecialPageName' );
+		} else {
+			event.namespaceId = mw.config.get( 'wgNamespaceNumber' );
+			event.revId = mw.config.get( 'wgCurRevisionId' );
+			// e.g. "view", "edit", "history", etc.
+			event.action = mw.config.get( 'wgAction' );
 		}
-
+		if ( typeof mobileMode === 'string' && mobileMode.indexOf( 'desktop' ) === -1 ) {
+			// e.g. "stable" or "beta"
+			event.mobileMode = mobileMode;
+		}
 		if ( window.mediaWikiLoadStart ) {
 			/* global mediaWikiLoadStart */
 			event.mediaWikiLoadComplete = Math.round( mediaWikiLoadEnd - mediaWikiLoadStart );
 		}
-
 		if ( window.Geo ) {
 			/* global Geo */
 			if ( typeof Geo.country === 'string' ) {
@@ -173,19 +176,14 @@
 			}
 		}
 
-		// Omit page information for special pages: they don't have real page
-		// IDs or revisions. (They appear as 0 to client-side code.)
-		// Instead, add the name of the special page
-		if ( !mwIsSpecialPage ) {
-			$.extend( event, page );
-		} else {
-			event.mwSpecialPageName = mw.config.get( 'wgCanonicalSpecialPageName' );
+		// Properties: meta
+		event.isOversample = oversample !== false;
+		if ( oversample ) {
+			event.oversampleReason = JSON.stringify( oversample );
 		}
 
-		if ( typeof mobileMode === 'string' && mobileMode.indexOf( 'desktop' ) === -1 ) {
-			event.mobileMode = mobileMode;
-		}
-
+		// Properties: NetworkInfo API
+		//
 		// If present, collect the effectiveConnectionType from the NetworkInfo API
 		// https://developer.mozilla.org/en-US/docs/Web/API/NetworkInformation
 		//
@@ -196,6 +194,7 @@
 			}
 		}
 
+		// Properties: Navigation Timing API
 		$.extend( event, getNavTiming() );
 
 		mw.eventLog.logEvent( 'NavigationTiming', event );
