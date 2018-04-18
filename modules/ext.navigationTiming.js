@@ -60,10 +60,7 @@
 			return {};
 		}
 
-		// Workaround for IE 9 bug: IE 9 sets a default value of zero for
-		// navigationStart, rather than use fetchStart as the specification
-		// requires. See <https://bugzilla.wikimedia.org/46474> for details.
-		navStart = timing.navigationStart || timing.fetchStart;
+		navStart = timing.navigationStart;
 		timingData = {};
 
 		$.each( [
