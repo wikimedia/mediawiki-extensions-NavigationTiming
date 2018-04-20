@@ -119,13 +119,11 @@
 
 		event = stub.getCall( 0 ).args[ 1 ];
 		expected = {
-			// Base
+			// MediaWiki
 			isAnon: 'boolean',
 			isOversample: 'boolean',
 			mediaWikiVersion: [ 'string', mw.config.get( 'wgVersion' ) ],
-
-			// ResourceLoader
-			mediaWikiLoadComplete: 'number',
+			mediaWikiLoadEnd: 'number',
 
 			// NetworkInfo API
 			netinfoEffectiveConnectionType: 'string',

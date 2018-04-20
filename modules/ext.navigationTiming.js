@@ -162,10 +162,7 @@
 			// e.g. "stable" or "beta"
 			event.mobileMode = mobileMode;
 		}
-		if ( window.mediaWikiLoadStart ) {
-			/* global mediaWikiLoadStart */
-			event.mediaWikiLoadComplete = Math.round( mediaWikiLoadEnd - mediaWikiLoadStart );
-		}
+		event.mediaWikiLoadEnd = Math.round( mediaWikiLoadEnd );
 		if ( window.Geo ) {
 			/* global Geo */
 			if ( typeof Geo.country === 'string' ) {
