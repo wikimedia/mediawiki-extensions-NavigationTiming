@@ -221,14 +221,15 @@
 
 	function onLoadComplete( callback ) {
 		mw.hook( 'resourceloader.loadEnd' ).add( function () {
-			var timer;
 			mediaWikiLoadEnd = mw.now();
-			timer = setInterval( function () {
-				if ( !timing || timing.loadEventEnd > 0 ) {
-					clearInterval( timer );
-					callback();
-				}
-			}, 10 );
+			// Defer one tick for loadEventEnd to get set.
+			if ( document.readyState === 'complete' ) {
+				setTimeout( callback );
+			} else {
+				document.addEventListener( 'load', function () {
+					setTimeout( callback );
+				} );
+			}
 		} );
 	}
 
