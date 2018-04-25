@@ -9,7 +9,7 @@
 	'use strict';
 
 	var timing, navigation, mediaWikiLoadEnd, hiddenProp, visibilityEvent,
-		isInSample, geoOversamples, uaOversamples, oversamples,
+		isInSample, oversamples,
 		oversampleReasons = [],
 		loadEL = false,
 		visibilityChanged = false,
@@ -286,7 +286,7 @@
 		// CentralNotice extension.  We don't depend on it, though, because
 		// it's pretty heavy.
 		if ( !window.Geo ) {
-			return [];
+			return geoOversamples;
 		}
 
 		myGeo = Geo.country || Geo.country_code;
@@ -312,11 +312,7 @@
 		var userAgent, userAgentSamples = [];
 
 		if ( !navigator.userAgent ) {
-			return [];
-		}
-
-		if ( Object.keys( userAgents ).length === 0 ) {
-			return [];
+			return userAgentSamples;
 		}
 
 		// Look at each user agent string that's been selected for oversampling,
@@ -382,9 +378,12 @@
 		}
 	}
 
+	// Make the main isInSample decision now so that we can start
+	// lazy-loading as early as possible.
+	// Oversampling is decided later because it depends on Geo,
+	// which may not've been set yet.
 	isInSample = inSample( mw.config.get( 'wgNavigationTimingSamplingFactor', 0 ) );
 	if ( isInSample ) {
-		// Preload NavTiming, SaveTiming schemas and RUMSpeedIndex
 		loadEL = mw.loader.using( preloadedModules );
 	}
 
@@ -392,48 +391,53 @@
 	 * Called after loadEventEnd by onLoadComplete()
 	 */
 	function loadCallback() {
-		// Get any oversamples, and see whether we match
-		oversamples = mw.config.get( 'wgNavigationTimingOversampleFactor' );
-		if ( oversamples ) {
-			if ( 'geo' in oversamples ) {
-				geoOversamples = testGeoOversamples( oversamples.geo );
-				if ( geoOversamples.length > 0 ) {
-					geoOversamples.forEach( function ( key ) {
-						oversampleReasons.push( 'geo:' + key );
-					} );
-				}
-			}
-
-			if ( 'userAgent' in oversamples ) {
-				uaOversamples = testUAOversamples( oversamples.userAgent );
-				if ( uaOversamples.length > 0 ) {
-					uaOversamples.forEach( function ( key ) {
-						oversampleReasons.push( 'ua:' + key );
-					} );
-				}
-			}
-		}
-
-		// If we're supposed to be sampling this page load (for any reason),
-		// then load the NavTiming, SaveTiming schemas and RUMSpeedIndex
-		if ( oversampleReasons.length > 0 && !isInSample ) {
-			loadEL = mw.loader.using( preloadedModules );
-		}
-
-		if ( isInSample && !visibilityChanged ) {
-			loadEL.done( emitNavigationTiming );
-		}
-
-		if ( oversampleReasons.length > 0 && !visibilityChanged ) {
-			loadEL.done( function () {
-				emitNavigationTimingWithOversample( oversampleReasons );
-			} );
-		}
-
+		// Maybe send SaveTiming beacon
 		mw.hook( 'postEdit' ).add( function () {
 			mw.loader.using( 'schema.SaveTiming' )
 				.done( emitSaveTiming );
 		} );
+
+		// Decide whether to send NavTiming beacon
+		if ( visibilityChanged ) {
+			// NavTiming: Ignore background tabs
+			return;
+		}
+
+		// Get any oversamples, and see whether we match
+		oversamples = mw.config.get( 'wgNavigationTimingOversampleFactor' );
+		if ( oversamples ) {
+			if ( 'geo' in oversamples ) {
+				testGeoOversamples( oversamples.geo ).forEach( function ( key ) {
+					oversampleReasons.push( 'geo:' + key );
+				} );
+			}
+
+			if ( 'userAgent' in oversamples ) {
+				testUAOversamples( oversamples.userAgent ).forEach( function ( key ) {
+					oversampleReasons.push( 'ua:' + key );
+				} );
+			}
+		}
+
+		if ( !oversampleReasons.length && !isInSample ) {
+			// NavTiming: Not sampled
+			return;
+		}
+
+		if ( !loadEL ) {
+			// Start lazy-loading modules if we haven't already.
+			loadEL = mw.loader.using( preloadedModules );
+		}
+
+		if ( isInSample ) {
+			loadEL.done( emitNavigationTiming );
+		}
+
+		if ( oversampleReasons.length ) {
+			loadEL.done( function () {
+				emitNavigationTimingWithOversample( oversampleReasons );
+			} );
+		}
 	}
 
 	// Ensure we run after loadEventEnd
@@ -462,7 +466,7 @@
 
 				// For testing loadCallback()
 				isInSample = inSample( mw.config.get( 'wgNavigationTimingSamplingFactor', 0 ) );
-				if ( isInSample ) {
+				if ( !loadEL ) {
 					loadEL = mw.loader.using( preloadedModules );
 				}
 			}
