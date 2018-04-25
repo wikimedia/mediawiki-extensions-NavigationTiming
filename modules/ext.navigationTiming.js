@@ -83,7 +83,6 @@
 		var firstPaint, navStart, timingData;
 
 		// Only record data on TYPE_NAVIGATE (e.g. ignore TYPE_RELOAD)
-		// Only record data if implementation is compliant
 		if ( !navigation || navigation.type !== TYPE_NAVIGATE ) {
 			return {};
 		}
