@@ -98,7 +98,7 @@
 	// Basic test will ensure no exceptions are thrown and various
 	// of the core properties are set as expected.
 	QUnit.test( 'Basic', function ( assert ) {
-		var stub, event, expected, key, type, val;
+		var stub, event, expected, key;
 
 		this.sandbox.stub( window, 'performance', {
 			timing: performance.timing,
@@ -109,21 +109,19 @@
 				redirectCount: 0
 			}
 		} );
-
 		navigationTiming.reinit();
 
 		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		navigationTiming.emitNavTiming();
-
 		assert.ok( stub.calledOnce, 'mw.eventLog.logEvent was called' );
 		assert.equal( stub.getCall( 0 ).args[ 0 ], 'NavigationTiming', 'Schema name' );
-
 		event = stub.getCall( 0 ).args[ 1 ];
+
 		expected = {
 			// MediaWiki
 			isAnon: 'boolean',
 			isOversample: 'boolean',
-			mediaWikiVersion: [ 'string', mw.config.get( 'wgVersion' ) ],
+			mediaWikiVersion: 'string',
 			mediaWikiLoadEnd: 'number',
 
 			// NetworkInfo API
@@ -136,17 +134,7 @@
 		};
 
 		for ( key in expected ) {
-			if ( Array.isArray( expected[ key ] ) ) {
-				type = expected[ key ][ 0 ];
-				val = expected[ key ][ 1 ];
-			} else {
-				type = expected[ key ];
-				val = undefined;
-			}
-			assert.strictEqual( typeof event[ key ], type, 'Type of event property: ' + key );
-			if ( val !== undefined ) {
-				assert.strictEqual( event[ key ], val, 'Value of event property: ' + key );
-			}
+			assert.strictEqual( typeof event[ key ], expected[ key ], 'Type of ' + key );
 		}
 
 		// Make sure things still work when the connection object isn't present
@@ -175,7 +163,7 @@
 	// Case with example values typical for a first view
 	// where DNS, TCP, SSL etc. all need to happen.
 	QUnit.test( 'First view', function ( assert ) {
-		var event, stub, expected, key, type, val;
+		var event, stub, expected, key, val;
 
 		this.sandbox.stub( window, 'performance', {
 			timing: {
@@ -213,29 +201,29 @@
 
 		expected = {
 			// MediaWiki
-			mediaWikiVersion: [ 'string' ],
-			isOversample: [ 'boolean' ],
-			mediaWikiLoadEnd: [ 'number' ],
+			mediaWikiVersion: { type: 'string' },
+			isOversample: { type: 'boolean' },
+			mediaWikiLoadEnd: { type: 'number' },
 			// Navigation Timing API
-			connectStart: [ 'number', 126 ],
-			secureConnectionStart: [ 'number', 135 ],
-			connectEnd: [ 'number', 150 ],
-			requestStart: [ 'number', 150 ],
-			responseStart: [ 'number', 200 ],
-			responseEnd: [ 'number', 300 ],
-			domComplete: [ 'number', 350 ],
-			loadEventStart: [ 'number', 470 ],
-			loadEventEnd: [ 'number', 475 ],
-			unload: [ 'number', 0 ],
-			redirecting: [ 'number', 0 ],
-			gaps: [ 'number', 131 ]
+			connectStart: 126,
+			secureConnectionStart: 135,
+			connectEnd: 150,
+			requestStart: 150,
+			responseStart: 200,
+			responseEnd: 300,
+			domComplete: 350,
+			loadEventStart: 470,
+			loadEventEnd: 475,
+			unload: 0,
+			redirecting: 0,
+			gaps: 131
 		};
 
 		for ( key in expected ) {
-			type = expected[ key ][ 0 ];
-			val = expected[ key ][ 1 ];
-			assert.strictEqual( typeof event[ key ], type, 'Type of ' + key );
-			if ( val !== undefined ) {
+			val = expected[ key ];
+			if ( val.type ) {
+				assert.strictEqual( typeof event[ key ], val.type, 'Type of ' + key );
+			} else {
 				assert.strictEqual( event[ key ], val, 'Value of ' + key );
 			}
 		}
@@ -244,7 +232,7 @@
 	// Case with example values typical for a repeat view
 	// where DNS, TCP, SSL etc. are cached/re-used.
 	QUnit.test( 'Repeat view', function ( assert ) {
-		var event, stub, expected, key, type, val;
+		var event, stub, expected, key, val;
 
 		this.sandbox.stub( window, 'performance', {
 			timing: {
@@ -282,29 +270,29 @@
 
 		expected = {
 			// MediaWiki
-			mediaWikiVersion: [ 'string' ],
-			isOversample: [ 'boolean' ],
-			mediaWikiLoadEnd: [ 'number' ],
+			mediaWikiVersion: { type: 'string' },
+			isOversample: { type: 'boolean' },
+			mediaWikiLoadEnd: { type: 'number' },
 			// Navigation Timing API
-			dnsLookup: [ 'number', 0 ],
-			connectStart: [ 'number', 0 ],
-			secureConnectionStart: [ 'number', 0 ],
-			connectEnd: [ 'number', 0 ],
-			requestStart: [ 'number', 10 ],
-			responseStart: [ 'number', 100 ],
-			responseEnd: [ 'number', 200 ],
-			domComplete: [ 'number', 250 ],
-			loadEventStart: [ 'number', 370 ],
-			loadEventEnd: [ 'number', 375 ],
-			unload: [ 'number', 11 ],
-			redirecting: [ 'number', 10 ]
+			dnsLookup: 0,
+			connectStart: 0,
+			secureConnectionStart: 0,
+			connectEnd: 0,
+			requestStart: 10,
+			responseStart: 100,
+			responseEnd: 200,
+			domComplete: 250,
+			loadEventStart: 370,
+			loadEventEnd: 375,
+			unload: 11,
+			redirecting: 10
 		};
 
 		for ( key in expected ) {
-			type = expected[ key ][ 0 ];
-			val = expected[ key ][ 1 ];
-			assert.strictEqual( typeof event[ key ], type, 'Type of ' + key );
-			if ( val !== undefined ) {
+			val = expected[ key ];
+			if ( val.type ) {
+				assert.strictEqual( typeof event[ key ], val.type, 'Type of ' + key );
+			} else {
 				assert.strictEqual( event[ key ], val, 'Value of ' + key );
 			}
 		}
