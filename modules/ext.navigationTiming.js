@@ -436,12 +436,12 @@
 			testUAOversamples: testUAOversamples,
 			loadCallback: loadCallback,
 			reinit: function () {
-				// performance is recursively read-only and can only be
-				// mocked from the top down via window.performance. The test
-				// needs to force this module to re-resolve this cached
-				// reference. See ext.navigationTiming.test.js
-				timing = performance.timing;
-				navigation = performance.navigation;
+				// The 'performance' global is recursively read-only in browsers.
+				// It can only be mocked in its entirety from 'window', after which
+				// the local references have to be updated here before we can test.
+				// Note: This should match the assignment at the start of "Main".
+				timing = window.performance && performance.timing;
+				navigation = window.performance && performance.navigation;
 
 				// For testing loadCallback()
 				isInSample = inSample( mw.config.get( 'wgNavigationTimingSamplingFactor', 0 ) );

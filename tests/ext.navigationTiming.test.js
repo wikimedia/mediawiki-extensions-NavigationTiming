@@ -4,7 +4,9 @@
 	'use strict';
 
 	var navigationTiming = require( 'ext.navigationTiming' ),
-		TYPE_NAVIGATE = 0;
+		// https://www.w3.org/TR/navigation-timing-2/#the-performancenavigation-interface
+		TYPE_NAVIGATE = 0,
+		TYPE_RELOAD = 1;
 
 	QUnit.module( 'ext.navigationTiming', QUnit.newMwEnvironment( {
 		setup: function () {
@@ -127,7 +129,7 @@
 			// NetworkInfo API
 			netinfoEffectiveConnectionType: 'string',
 
-			// Navigation Timing
+			// Navigation Timing API
 			responseStart: 'number',
 			domComplete: 'number',
 			loadEventEnd: 'number'
@@ -210,7 +212,11 @@
 		event = stub.getCall( 0 ).args[ 1 ];
 
 		expected = {
-			dnsLookup: [ 'number', 15 ],
+			// MediaWiki
+			mediaWikiVersion: [ 'string' ],
+			isOversample: [ 'boolean' ],
+			mediaWikiLoadEnd: [ 'number' ],
+			// Navigation Timing API
 			connectStart: [ 'number', 126 ],
 			secureConnectionStart: [ 'number', 135 ],
 			connectEnd: [ 'number', 150 ],
@@ -228,8 +234,10 @@
 		for ( key in expected ) {
 			type = expected[ key ][ 0 ];
 			val = expected[ key ][ 1 ];
-			assert.strictEqual( typeof event[ key ], type, 'Type of event property: ' + key );
-			assert.strictEqual( event[ key ], val, 'Value of event property: ' + key );
+			assert.strictEqual( typeof event[ key ], type, 'Type of ' + key );
+			if ( val !== undefined ) {
+				assert.strictEqual( event[ key ], val, 'Value of ' + key );
+			}
 		}
 	} );
 
@@ -273,6 +281,11 @@
 		event = stub.getCall( 0 ).args[ 1 ];
 
 		expected = {
+			// MediaWiki
+			mediaWikiVersion: [ 'string' ],
+			isOversample: [ 'boolean' ],
+			mediaWikiLoadEnd: [ 'number' ],
+			// Navigation Timing API
 			dnsLookup: [ 'number', 0 ],
 			connectStart: [ 'number', 0 ],
 			secureConnectionStart: [ 'number', 0 ],
@@ -290,8 +303,89 @@
 		for ( key in expected ) {
 			type = expected[ key ][ 0 ];
 			val = expected[ key ][ 1 ];
-			assert.strictEqual( typeof event[ key ], type, 'Type of event property: ' + key );
-			assert.strictEqual( event[ key ], val, 'Value of event property: ' + key );
+			assert.strictEqual( typeof event[ key ], type, 'Type of ' + key );
+			if ( val !== undefined ) {
+				assert.strictEqual( event[ key ], val, 'Value of ' + key );
+			}
+		}
+	} );
+
+	QUnit.test( 'Reloaded view', function ( assert ) {
+		var event, stub, expected, key;
+
+		this.sandbox.stub( window, 'performance', {
+			timing: {
+				navigationStart: 100,
+				fetchStart: 200,
+				domainLookupStart: 210,
+				domainLookupEnd: 225,
+				connectStart: 226,
+				connectEnd: 250,
+				redirectEnd: 0,
+				redirectStart: 0,
+				requestStart: 250,
+				responseStart: 300,
+				responseEnd: 400,
+				domComplete: 450,
+				loadEventStart: 570,
+				loadEventEnd: 575,
+				unload: 0,
+				redirecting: 0
+			},
+			navigation: {
+				type: TYPE_RELOAD,
+				redirectCount: 0
+			}
+		} );
+		navigationTiming.reinit();
+
+		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
+		navigationTiming.emitNavTiming();
+		assert.strictEqual( stub.args.length, 1, 'mw.eventLog.logEvent was called' );
+		assert.equal( stub.args[ 0 ][ 0 ], 'NavigationTiming', 'Schema name' );
+		event = stub.args[ 0 ][ 1 ];
+
+		expected = {
+			// MediaWiki
+			mediaWikiVersion: 'string',
+			isOversample: 'boolean',
+			mediaWikiLoadEnd: 'number',
+			// Navigation Timing API: Not included for TYPE_RELOAD
+			requestStart: 'undefined',
+			redirecting: 'undefined',
+			gaps: 'undefined'
+		};
+
+		for ( key in expected ) {
+			assert.strictEqual( typeof event[ key ], expected[ key ], 'Type of ' + key );
+		}
+	} );
+
+	QUnit.test( 'Without Navigation Timing API', function ( assert ) {
+		var event, stub, expected, key;
+
+		this.sandbox.stub( window, 'performance', undefined );
+		navigationTiming.reinit();
+
+		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
+		navigationTiming.emitNavTiming();
+		assert.strictEqual( stub.args.length, 1, 'mw.eventLog.logEvent was called' );
+		assert.equal( stub.args[ 0 ][ 0 ], 'NavigationTiming', 'Schema name' );
+		event = stub.args[ 0 ][ 1 ];
+
+		expected = {
+			// MediaWiki
+			mediaWikiVersion: 'string',
+			isOversample: 'boolean',
+			mediaWikiLoadEnd: 'number',
+			// Navigation Timing API: Unsupported
+			requestStart: 'undefined',
+			redirecting: 'undefined',
+			gaps: 'undefined'
+		};
+
+		for ( key in expected ) {
+			assert.strictEqual( typeof event[ key ], expected[ key ], 'Type of ' + key );
 		}
 	} );
 
