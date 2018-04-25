@@ -3,7 +3,8 @@
 ( function ( mw ) {
 	'use strict';
 
-	var navigationTiming = require( 'ext.navigationTiming' );
+	var navigationTiming = require( 'ext.navigationTiming' ),
+		TYPE_NAVIGATE = 0;
 
 	QUnit.module( 'ext.navigationTiming', QUnit.newMwEnvironment( {
 		setup: function () {
@@ -100,11 +101,9 @@
 		this.sandbox.stub( window, 'performance', {
 			timing: performance.timing,
 			navigation: {
-				// Force TYPE_NAVIGATE instead of e.g. TYPE_REDIRECT.
-				// Since we only collect metrics from regular requests,
-				// but we don't want that logic to apply to the unit test,
-				// as otherwise it may omit the main Navigation Timing keys.
-				type: 0,
+				// Use TYPE_NAVIGATE in the stub, since we don't collect types
+				// such as TYPE_RELOAD.
+				type: TYPE_NAVIGATE,
 				redirectCount: 0
 			}
 		} );
@@ -197,8 +196,7 @@
 				redirecting: 0
 			},
 			navigation: {
-				// type: TYPE_NAVIGATE
-				type: 0,
+				type: TYPE_NAVIGATE,
 				redirectCount: 0
 			}
 		} );
@@ -261,8 +259,7 @@
 				unloadEventEnd: 21
 			},
 			navigation: {
-				// type: TYPE_NAVIGATE
-				type: 0,
+				type: TYPE_NAVIGATE,
 				redirectCount: 0
 			}
 		} );
@@ -304,7 +301,7 @@
 		this.sandbox.stub( window, 'performance', {
 			timing: performance.timing,
 			navigation: {
-				type: 0,
+				type: TYPE_NAVIGATE,
 				redirectCount: 0
 			}
 		} );
@@ -391,7 +388,7 @@
 		this.sandbox.stub( window, 'performance', {
 			timing: { /* empty stub */ },
 			navigation: {
-				type: 0,
+				type: TYPE_NAVIGATE,
 				redirectCount: 0
 			}
 		} );
@@ -441,7 +438,7 @@
 		this.sandbox.stub( window, 'performance', {
 			timing: { /* empty stub */ },
 			navigation: {
-				type: 0,
+				type: TYPE_NAVIGATE,
 				redirectCount: 0
 			},
 			getEntriesByType: function () { }
