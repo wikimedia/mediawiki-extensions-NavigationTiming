@@ -299,7 +299,7 @@
 	} );
 
 	QUnit.test( 'Reloaded view', function ( assert ) {
-		var event, stub, expected, key;
+		var stub;
 
 		this.sandbox.stub( window, 'performance', {
 			timing: {
@@ -329,52 +329,18 @@
 
 		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		navigationTiming.emitNavTiming();
-		assert.strictEqual( stub.args.length, 1, 'mw.eventLog.logEvent was called' );
-		assert.equal( stub.args[ 0 ][ 0 ], 'NavigationTiming', 'Schema name' );
-		event = stub.args[ 0 ][ 1 ];
-
-		expected = {
-			// MediaWiki
-			mediaWikiVersion: 'string',
-			isOversample: 'boolean',
-			mediaWikiLoadEnd: 'number',
-			// Navigation Timing API: Not included for TYPE_RELOAD
-			requestStart: 'undefined',
-			redirecting: 'undefined',
-			gaps: 'undefined'
-		};
-
-		for ( key in expected ) {
-			assert.strictEqual( typeof event[ key ], expected[ key ], 'Type of ' + key );
-		}
+		assert.strictEqual( stub.args.length, 0, 'mw.eventLog.logEvent not called' );
 	} );
 
 	QUnit.test( 'Without Navigation Timing API', function ( assert ) {
-		var event, stub, expected, key;
+		var stub;
 
 		this.sandbox.stub( window, 'performance', undefined );
 		navigationTiming.reinit();
 
 		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		navigationTiming.emitNavTiming();
-		assert.strictEqual( stub.args.length, 1, 'mw.eventLog.logEvent was called' );
-		assert.equal( stub.args[ 0 ][ 0 ], 'NavigationTiming', 'Schema name' );
-		event = stub.args[ 0 ][ 1 ];
-
-		expected = {
-			// MediaWiki
-			mediaWikiVersion: 'string',
-			isOversample: 'boolean',
-			mediaWikiLoadEnd: 'number',
-			// Navigation Timing API: Unsupported
-			requestStart: 'undefined',
-			redirecting: 'undefined',
-			gaps: 'undefined'
-		};
-
-		for ( key in expected ) {
-			assert.strictEqual( typeof event[ key ], expected[ key ], 'Type of ' + key );
-		}
+		assert.strictEqual( stub.args.length, 0, 'mw.eventLog.logEvent not called' );
 	} );
 
 	QUnit.test( 'Oversample config and activation', function ( assert ) {
@@ -437,6 +403,15 @@
 
 		logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		logFailureStub = this.sandbox.stub( mw.eventLog, 'logFailure' );
+
+		// Mock at least navigation.type so that tests don't fail
+		// on testrunner reload.
+		this.sandbox.stub( window, 'performance', {
+			timing: performance.timing,
+			navigation: {
+				type: TYPE_NAVIGATE
+			}
+		} );
 
 		navigationTiming.emitNavTiming();
 		assert.equal( logEventStub.args[ 0 ][ 1 ].isOversample, false,

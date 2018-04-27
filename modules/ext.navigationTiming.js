@@ -8,7 +8,7 @@
 ( function ( mw, $ ) {
 	'use strict';
 
-	var timing, navigation, mediaWikiLoadEnd, hiddenProp, visibilityEvent,
+	var mediaWikiLoadEnd, hiddenProp, visibilityEvent,
 		isInSample, oversamples,
 		oversampleReasons = [],
 		loadEL = false,
@@ -50,7 +50,7 @@
 	/**
 	 * Get paint values
 	 */
-	function getPaintTiming( navStart ) {
+	function getPaintTiming( navStart, timing ) {
 		var paintEntries, resourceEntries,
 			ptFirstPaint, chromeLoadTimes, rumSpeedIndex,
 			res = {};
@@ -100,15 +100,13 @@
 	 * @return {Object} timingData with normalized fields
 	 */
 	function getNavTiming() {
-		var navStart, timingData;
+		var timing = window.performance && performance.timing,
+			navStart = timing && timing.navigationStart,
+			timingData = {};
 
-		// Only record data on TYPE_NAVIGATE (e.g. ignore TYPE_RELOAD)
-		if ( !navigation || navigation.type !== TYPE_NAVIGATE ) {
-			return {};
+		if ( !timing ) {
+			return timingData;
 		}
-
-		navStart = timing.navigationStart;
-		timingData = {};
 
 		$.each( [
 			'connectEnd',
@@ -160,7 +158,7 @@
 			timingData.unload = 0;
 		}
 
-		$.extend( timingData, getPaintTiming( navStart ) );
+		$.extend( timingData, getPaintTiming( navStart, timing ) );
 
 		// We probably have gaps in the navigation timing data so measure them.
 		timingData.gaps = timing.domainLookupStart - timing.fetchStart;
@@ -180,6 +178,18 @@
 	function emitNavigationTimingWithOversample( oversample ) {
 		var event = {},
 			mobileMode = mw.config.get( 'wgMFMode' );
+
+		// Minimal requirements:
+		// - W3C Navigation Timing Level 1 (performance.timing && performance.navigation)
+		// - Current navigation is TYPE_NAVIGATE (e.g. not TYPE_RELOAD)
+		if ( !window.performance ||
+			!performance.timing ||
+			!performance.navigation ||
+			performance.navigation.type !== TYPE_NAVIGATE
+		) {
+			// Don't send a beacon.
+			return;
+		}
 
 		// Properties: MediaWiki
 		//
@@ -345,10 +355,6 @@
 	 * Main - start of what runs on load
 	 *
 	 */
-	if ( window.performance ) {
-		timing = performance.timing;
-		navigation = performance.navigation;
-	}
 
 	/**
 	 * Don't report measurements for pages that have loaded in the background.
@@ -457,13 +463,6 @@
 			testUAOversamples: testUAOversamples,
 			loadCallback: loadCallback,
 			reinit: function () {
-				// The 'performance' global is recursively read-only in browsers.
-				// It can only be mocked in its entirety from 'window', after which
-				// the local references have to be updated here before we can test.
-				// Note: This should match the assignment at the start of "Main".
-				timing = window.performance && performance.timing;
-				navigation = window.performance && performance.navigation;
-
 				// For testing loadCallback()
 				isInSample = inSample( mw.config.get( 'wgNavigationTimingSamplingFactor', 0 ) );
 				if ( !loadEL ) {
