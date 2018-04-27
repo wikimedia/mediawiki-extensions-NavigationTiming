@@ -98,7 +98,8 @@
 	// Basic test will ensure no exceptions are thrown and various
 	// of the core properties are set as expected.
 	QUnit.test( 'Basic', function ( assert ) {
-		var stub, event, expected, key;
+		var stub, event, expected, key,
+			yearMs = 31536000 * 1000;
 
 		this.sandbox.stub( window, 'performance', {
 			timing: performance.timing,
@@ -107,7 +108,8 @@
 				// such as TYPE_RELOAD.
 				type: TYPE_NAVIGATE,
 				redirectCount: 0
-			}
+			},
+			now: performance.now.bind( performance )
 		} );
 		navigationTiming.reinit();
 
@@ -135,6 +137,18 @@
 
 		for ( key in expected ) {
 			assert.strictEqual( typeof event[ key ], expected[ key ], 'Type of ' + key );
+			if ( expected[ key ] === 'number' ) {
+				// Regression test for T160315
+				// Assert the metric is an offset and not an absolute timestamp
+				assert.pushResult( {
+					// If this is less than a year in milliseconds, assume it's an offset.
+					// Otherwise, it's probably a timestamp which is wrong.
+					result: event[ key ] < yearMs,
+					actual: event[ key ],
+					expected: yearMs,
+					message: key + ' must be an offset, not a timestamp'
+				} );
+			}
 		}
 
 		// Make sure things still work when the connection object isn't present

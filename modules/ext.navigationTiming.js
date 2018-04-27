@@ -210,7 +210,9 @@
 			// e.g. "stable" or "beta"
 			event.mobileMode = mobileMode;
 		}
-		event.mediaWikiLoadEnd = Math.round( mediaWikiLoadEnd );
+		if ( mediaWikiLoadEnd ) {
+			event.mediaWikiLoadEnd = mediaWikiLoadEnd;
+		}
 		if ( window.Geo ) {
 			/* global Geo */
 			if ( typeof Geo.country === 'string' ) {
@@ -267,9 +269,16 @@
 		}
 	}
 
+	function setMwLoadEnd() {
+		if ( window.performance && performance.now ) {
+			// Record this now, for later use by emitNavigationTiming
+			mediaWikiLoadEnd = Math.round( performance.now() );
+		}
+	}
 	function onLoadComplete( callback ) {
 		mw.hook( 'resourceloader.loadEnd' ).add( function () {
-			mediaWikiLoadEnd = mw.now();
+			setMwLoadEnd();
+
 			// Defer one tick for loadEventEnd to get set.
 			if ( document.readyState === 'complete' ) {
 				setTimeout( callback );
@@ -463,6 +472,10 @@
 			testUAOversamples: testUAOversamples,
 			loadCallback: loadCallback,
 			reinit: function () {
+				// Call manually because, during test execution, actual
+				// onLoadComplete will probably not have happened yet.
+				setMwLoadEnd();
+
 				// For testing loadCallback()
 				isInSample = inSample( mw.config.get( 'wgNavigationTimingSamplingFactor', 0 ) );
 				if ( !loadEL ) {
