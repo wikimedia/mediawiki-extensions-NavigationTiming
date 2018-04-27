@@ -5,7 +5,8 @@
 		"Ori Livneh",
 		"Asher Feldman",
 		"Timo Tijhof",
-		"Ian Marlier"
+		"Ian Marlier",
+		"Gilles Dubuc"
 	],
 	"url": "https://www.mediawiki.org/wiki/Extension:NavigationTiming",
 	"descriptionmsg": "navigationtiming-desc",
@@ -58,13 +59,15 @@
 		]
 	},
 	"EventLoggingSchemas": {
-		"NavigationTiming": 17957960,
+		"NavigationTiming": 17975587,
 		"SaveTiming": 15396492
 	},
 	"config": {
 		"NavigationTimingSamplingFactor": false,
 		"NavigationTimingFirstPaintAsiaSamplingFactor": false,
-		"NavigationTimingOversampleFactor": false
+		"NavigationTimingOversampleFactor": false,
+		"NavigationTimingSurveySamplingFactor": false,
+		"NavigationTimingSurveyName": false
 	},
 	"manifest_version": 1
 }

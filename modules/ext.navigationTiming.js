@@ -165,7 +165,39 @@
 		timingData.gaps += timing.connectStart - timing.domainLookupEnd;
 		timingData.gaps += timing.requestStart - timing.connectEnd;
 		timingData.gaps += timing.loadEventStart - timing.domComplete;
+
+		timingData.stickyRandomSessionId = mw.user.stickyRandomId();
+
 		return timingData;
+	}
+
+	/** Display a performance survey using the QuickSurveys extension
+	 * if the extension is present and based on a sub-sampling factor.
+	 *
+	 * The wgNavigationTimingSurveySamplingFactor sampling ratio is
+	 * applied after the general NavigationTiming sampling ratio has
+	 * been acted on. Meaning it's a percentage of the percentage of
+	 * pageviews NavigationTiming is sampled for.
+	 */
+	function showPerformanceSurvey() {
+		var isMainPage = mw.config.get( 'wgIsMainPage' ),
+			isArticle = mw.config.get( 'wgIsArticle' ),
+			surveyName = mw.config.get( 'wgNavigationTimingSurveyName' );
+
+		// QuickSurveys are only meant to be displayed on articles
+		if ( isMainPage || !isArticle || !surveyName ) {
+			return;
+		}
+
+		isInSample = inSample( mw.config.get( 'wgNavigationTimingSurveySamplingFactor', 0 ) );
+
+		if ( !isInSample ) {
+			return;
+		}
+
+		mw.loader.using( 'ext.quicksurveys.init' ).then( function () {
+			mw.extQuickSurveys.showSurvey( surveyName );
+		} );
 	}
 
 	/**
@@ -241,7 +273,7 @@
 		// Properties: Navigation Timing API
 		$.extend( event, getNavTiming() );
 
-		mw.eventLog.logEvent( 'NavigationTiming', event );
+		mw.eventLog.logEvent( 'NavigationTiming', event ).done( showPerformanceSurvey );
 	}
 
 	/**

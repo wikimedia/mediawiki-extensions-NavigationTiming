@@ -75,7 +75,8 @@
 
 	QUnit.test( 'inSample - crypto', function ( assert ) {
 		var navTiming = require( 'ext.navigationTiming' ),
-			getRandomStub = this.sandbox.stub( window.crypto, 'getRandomValues' );
+			getRandomStub = this.sandbox.stub( window.crypto, 'getRandomValues' ),
+			oldUint32Array = window.Uint32Array;
 
 		window.Uint32Array = function () {};
 
@@ -93,6 +94,8 @@
 		assert.strictEqual( navTiming.inSample( 1 ), true, '1 is always' );
 		assert.strictEqual( navTiming.inSample( 2 ), true, '2 this time' );
 		assert.strictEqual( getRandomStub.callCount, 2, 'getRandomValues() was called 2 times' );
+
+		window.Uint32Array = oldUint32Array;
 	} );
 
 	// Basic test will ensure no exceptions are thrown and various
@@ -114,6 +117,7 @@
 		navigationTiming.reinit();
 
 		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
+		stub.returns( $.Deferred().promise() );
 		navigationTiming.emitNavTiming();
 		assert.ok( stub.calledOnce, 'mw.eventLog.logEvent was called' );
 		assert.equal( stub.getCall( 0 ).args[ 0 ], 'NavigationTiming', 'Schema name' );
@@ -208,6 +212,7 @@
 		navigationTiming.reinit();
 
 		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
+		stub.returns( $.Deferred().promise() );
 		navigationTiming.emitNavTiming();
 		assert.ok( stub.calledOnce, 'mw.eventLog.logEvent was called' );
 		assert.equal( stub.getCall( 0 ).args[ 0 ], 'NavigationTiming', 'Schema name' );
@@ -277,6 +282,7 @@
 		navigationTiming.reinit();
 
 		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
+		stub.returns( $.Deferred().promise() );
 		navigationTiming.emitNavTiming();
 		assert.ok( stub.calledOnce, 'mw.eventLog.logEvent was called' );
 		assert.equal( stub.getCall( 0 ).args[ 0 ], 'NavigationTiming', 'Schema name' );
@@ -342,6 +348,7 @@
 		navigationTiming.reinit();
 
 		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
+		stub.returns( $.Deferred().promise() );
 		navigationTiming.emitNavTiming();
 		assert.strictEqual( stub.args.length, 0, 'mw.eventLog.logEvent not called' );
 	} );
@@ -353,6 +360,7 @@
 		navigationTiming.reinit();
 
 		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
+		stub.returns( $.Deferred().promise() );
 		navigationTiming.emitNavTiming();
 		assert.strictEqual( stub.args.length, 0, 'mw.eventLog.logEvent not called' );
 	} );
@@ -416,6 +424,7 @@
 		var logEventStub, logFailureStub;
 
 		logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
+		logEventStub.returns( $.Deferred().promise() );
 		logFailureStub = this.sandbox.stub( mw.eventLog, 'logFailure' );
 
 		// Mock at least navigation.type so that tests don't fail
@@ -476,6 +485,7 @@
 		} );
 		// Stub EventLogging
 		logEvent = this.sandbox.stub( mw.eventLog, 'logEvent' );
+		logEvent.returns( $.Deferred().promise() );
 		// Stub mw.hook (unrelated)
 		this.sandbox.stub( mw, 'hook', function () {
 			return { add: function () {} };
@@ -506,7 +516,7 @@
 	} );
 
 	QUnit.test( 'Paint Timing API', function ( assert ) {
-		var stub;
+		var stub, logEventStub;
 
 		this.sandbox.stub( window, 'performance', {
 			timing: { /* empty stub */ },
@@ -552,7 +562,8 @@
 			} ]
 		);
 
-		this.sandbox.stub( mw.eventLog, 'logEvent' );
+		logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
+		logEventStub.returns( $.Deferred().promise() );
 		this.sandbox.stub( mw.eventLog, 'logFailure' );
 
 		navigationTiming.reinit();
