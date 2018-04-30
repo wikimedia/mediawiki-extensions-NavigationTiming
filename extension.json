@@ -26,7 +26,8 @@
 				"ext.navigationTiming.js"
 			],
 			"dependencies": [
-				"jquery.cookie"
+				"jquery.cookie",
+				"mediawiki.user"
 			],
 			"targets": [
 				"desktop",
