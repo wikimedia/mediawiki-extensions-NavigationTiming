@@ -287,18 +287,23 @@
 	 * Emits an event with the time required to save an edit
 	 */
 	function emitSaveTiming() {
-		var navTiming;
-		if ( !mw.config.get( 'wgPostEdit' ) ) {
+		var timing = window.performance && performance.timing,
+			responseStart;
+
+		if ( !mw.config.get( 'wgPostEdit' ) || !timing ) {
 			return;
 		}
 
-		navTiming = getNavTiming();
-		if ( navTiming.responseStart ) {
-			mw.eventLog.logEvent( 'SaveTiming', {
-				mediaWikiVersion: mw.config.get( 'wgVersion' ),
-				saveTiming: navTiming.responseStart
-			} );
+		responseStart = timing.responseStart - timing.navigationStart;
+
+		if ( !responseStart ) {
+			return;
 		}
+
+		mw.eventLog.logEvent( 'SaveTiming', {
+			mediaWikiVersion: mw.config.get( 'wgVersion' ),
+			saveTiming: responseStart
+		} );
 	}
 
 	function setMwLoadEnd() {
