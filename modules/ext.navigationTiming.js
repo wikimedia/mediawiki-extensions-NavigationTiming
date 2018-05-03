@@ -315,7 +315,7 @@
 			if ( document.readyState === 'complete' ) {
 				setTimeout( callback );
 			} else {
-				document.addEventListener( 'load', function () {
+				window.addEventListener( 'load', function () {
 					setTimeout( callback );
 				} );
 			}
