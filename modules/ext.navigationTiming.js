@@ -312,31 +312,16 @@
 			mediaWikiLoadEnd = Math.round( performance.now() );
 		}
 	}
-
-	/**
-	 * Don't trust that loadEventEnd is set after one tick of readyState == 'complete'
-	 * or the document's load event. Wait for the value to be really set before calling
-	 * the callback.
-	 */
-	function waitForLoadEventEnd( callback ) {
-		var timing = window.performance && performance.timing;
-
-		if ( timing && timing.loadEventEnd > 0 ) {
-			callback();
-		} else if ( timing ) {
-			setTimeout( function () { waitForLoadEventEnd( callback ); }, 100 );
-		}
-	}
-
 	function onLoadComplete( callback ) {
 		mw.hook( 'resourceloader.loadEnd' ).add( function () {
 			setMwLoadEnd();
 
+			// Defer one tick for loadEventEnd to get set.
 			if ( document.readyState === 'complete' ) {
-				setTimeout( function () { waitForLoadEventEnd( callback ); } );
+				setTimeout( callback );
 			} else {
 				document.addEventListener( 'load', function () {
-					setTimeout( function () { waitForLoadEventEnd( callback ); } );
+					setTimeout( callback );
 				} );
 			}
 		} );
