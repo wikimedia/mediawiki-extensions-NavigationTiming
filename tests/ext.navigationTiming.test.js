@@ -461,6 +461,32 @@
 			[ 'UA:Chrome', 'geo:XX' ], 'Both reasons listed after calling ENTWO' );
 	} );
 
+	QUnit.test( 'onMwLoadEnd - plain', function ( assert ) {
+		return navigationTiming.onMwLoadEnd().then( function () {
+			assert.ok( true, 'called' );
+		} );
+	} );
+
+	QUnit.test( 'onMwLoadEnd - controlled', function ( assert ) {
+		var deferred, queue = [];
+		mw.loader.state( 'test.mwLoadEnd.ok', 'loading' );
+		mw.loader.state( 'test.mwLoadEnd.fail', 'loading' );
+
+		deferred = navigationTiming.onMwLoadEnd().then( function () {
+			queue.push( 'call' );
+		} );
+		assert.propEqual( queue, [], 'pending' );
+
+		mw.loader.state( 'test.mwLoadEnd.ok', 'ready' );
+		assert.propEqual( queue, [], 'still pending' );
+
+		mw.loader.state( 'test.mwLoadEnd.fail', 'error' );
+
+		return deferred.then( function () {
+			assert.propEqual( queue, [ 'call' ], 'resolved' );
+		} );
+	} );
+
 	QUnit.test( 'Oversample Geo integration tests', function ( assert ) {
 		var logEvent;
 

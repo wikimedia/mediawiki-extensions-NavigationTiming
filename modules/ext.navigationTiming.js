@@ -306,14 +306,47 @@
 		} );
 	}
 
+	/**
+	 * Set the local mediaWikiLoadEnd variable
+	 */
 	function setMwLoadEnd() {
 		if ( window.performance && performance.now ) {
 			// Record this now, for later use by emitNavigationTiming
 			mediaWikiLoadEnd = Math.round( performance.now() );
 		}
 	}
+
+	/**
+	 * Run a callback currently loading ResourceLoader modules have settled.
+	 * @return {jQuery.Deferred}
+	 */
+	function onMwLoadEnd() {
+		// Get a list of modules currently in loading state
+		var modules = mw.loader.getModuleNames().filter( function ( module ) {
+			return mw.loader.getState( module ) === 'loading';
+		} );
+		// Wait for them to complete loading (regardles of failures). First, try a single
+		// mw.loader.using() call. That's efficient, but has the drawback of being rejected
+		// upon first failure. Fall back to tracking each module separately. We usually avoid
+		// that because of high overhead for that internally to mw.loader.
+		return mw.loader.using( modules ).catch( function () {
+			return $.Deferred( function ( deferred ) {
+				var i, count = modules.length;
+				function decrement() {
+					count--;
+					if ( count === 0 ) {
+						deferred.resolve();
+					}
+				}
+				for ( i = 0; i < modules.length; i++ ) {
+					mw.loader.using( modules[ i ] ).always( decrement );
+				}
+			} );
+		} );
+	}
+
 	function onLoadComplete( callback ) {
-		mw.hook( 'resourceloader.loadEnd' ).add( function () {
+		onMwLoadEnd().then( function () {
 			setMwLoadEnd();
 
 			// Defer one tick for loadEventEnd to get set.
@@ -508,6 +541,7 @@
 			testGeoOversamples: testGeoOversamples,
 			testUAOversamples: testUAOversamples,
 			loadCallback: loadCallback,
+			onMwLoadEnd: onMwLoadEnd,
 			reinit: function () {
 				// Call manually because, during test execution, actual
 				// onLoadComplete will probably not have happened yet.
