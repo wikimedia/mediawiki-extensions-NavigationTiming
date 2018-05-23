@@ -182,16 +182,17 @@
 	function showPerformanceSurvey() {
 		var isMainPage = mw.config.get( 'wgIsMainPage' ),
 			isArticle = mw.config.get( 'wgIsArticle' ),
-			surveyName = mw.config.get( 'wgNavigationTimingSurveyName' );
+			surveyName = mw.config.get( 'wgNavigationTimingSurveyName' ),
+			isInSurveySample;
 
 		// QuickSurveys are only meant to be displayed on articles
 		if ( isMainPage || !isArticle || !surveyName ) {
 			return;
 		}
 
-		isInSample = inSample( mw.config.get( 'wgNavigationTimingSurveySamplingFactor', 0 ) );
+		isInSurveySample = inSample( mw.config.get( 'wgNavigationTimingSurveySamplingFactor', 0 ) );
 
-		if ( !isInSample ) {
+		if ( !isInSurveySample ) {
 			return;
 		}
 
