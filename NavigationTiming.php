@@ -9,7 +9,7 @@
  * @author Ori Livneh <ori@wikimedia.org>
  * @author Patrick Reilly <preilly@php.net>
  *
- * @license GPL v2 or later
+ * @license GPL-2.0-or-later
  * @version 1.0
  */
 
