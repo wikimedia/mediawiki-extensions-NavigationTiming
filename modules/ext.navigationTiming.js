@@ -326,7 +326,7 @@
 		var modules = mw.loader.getModuleNames().filter( function ( module ) {
 			return mw.loader.getState( module ) === 'loading';
 		} );
-		// Wait for them to complete loading (regardles of failures). First, try a single
+		// Wait for them to complete loading (regardless of failures). First, try a single
 		// mw.loader.using() call. That's efficient, but has the drawback of being rejected
 		// upon first failure. Fall back to tracking each module separately. We usually avoid
 		// that because of high overhead for that internally to mw.loader.
