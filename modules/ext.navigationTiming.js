@@ -181,12 +181,14 @@
 	 */
 	function showPerformanceSurvey() {
 		var isMainPage = mw.config.get( 'wgIsMainPage' ),
-			isArticle = mw.config.get( 'wgIsArticle' ),
+			isArticle = mw.config.get( 'wgNamespaceNumber' ) === 0,
+			isViewing = mw.config.get( 'wgAction' ) === 'view',
+			exists = mw.config.get( 'wgCurRevisionId' ) > 0,
 			surveyName = mw.config.get( 'wgNavigationTimingSurveyName' ),
 			isInSurveySample;
 
 		// QuickSurveys are only meant to be displayed on articles
-		if ( isMainPage || !isArticle || !surveyName ) {
+		if ( isMainPage || !isArticle || !isViewing || !exists || !surveyName ) {
 			return;
 		}
 
