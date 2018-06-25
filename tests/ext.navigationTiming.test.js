@@ -541,7 +541,7 @@
 			'Oversample and regular sample contain the same data' );
 	} );
 
-	QUnit.test( 'Paint Timing API', function ( assert ) {
+	QUnit.test( 'Optional APIs', function ( assert ) {
 		var stub, logEventStub;
 
 		this.sandbox.stub( window, 'performance', {
@@ -584,7 +584,8 @@
 				duration: 18544.49,
 				entryType: 'navigation',
 				name: 'http://dev.wiki.local.wmftest.net/wiki/Main_Page',
-				startTime: 0
+				startTime: 0,
+				transferSize: 1234
 			} ]
 		);
 
@@ -595,12 +596,14 @@
 		navigationTiming.reinit();
 		navigationTiming.emitNavTiming();
 
-		assert.equal( window.performance.getEntriesByType.callCount, 5,
+		assert.equal( window.performance.getEntriesByType.callCount, 7,
 			'getEntriesByType was called the expected amount of times' );
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].firstPaint,
 			990, 'firstPaint value was set using the Paint Timing API call' );
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].RSI,
 			990, 'RSI value was set using the rumSpeedIndex library firstPaint fallback' );
+		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].transferSize,
+			1234, 'transferSize value was set using the Navigtion Timing Level 2 call' );
 
 	} );
 }( mediaWiki ) );

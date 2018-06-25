@@ -48,27 +48,24 @@
 	}
 
 	/**
-	 * Get paint values
+	 * Get First Paint
 	 */
-	function getPaintTiming( navStart, timing ) {
-		var paintEntries, resourceEntries,
-			ptFirstPaint, chromeLoadTimes, rumSpeedIndex,
+	function getFirstPaint( navStart, timing ) {
+		var chromeLoadTimes, paintEntries,
 			res = {};
 
 		try {
 			// getEntriesByType has really hit or miss support:
 			// https://developer.mozilla.org/en-US/docs/Web/API/Performance/getEntriesByType
 			paintEntries = performance.getEntriesByType( 'paint' );
-			resourceEntries = performance.getEntriesByType( 'resource' );
 		} catch ( e ) {
-			resourceEntries = [];
 			paintEntries = [];
 		}
 
 		if ( paintEntries.length ) {
 			paintEntries.forEach( function ( entry ) {
 				if ( entry.name === 'first-paint' ) {
-					ptFirstPaint = res.firstPaint = Math.round( entry.startTime );
+					res.firstPaint = Math.round( entry.startTime );
 				}
 			} );
 		} else if ( timing.msFirstPaint > navStart ) {
@@ -82,13 +79,60 @@
 			}
 		}
 
+		return res;
+	}
+
+	/**
+	 * Get RumSpeedIndex
+	 */
+	function getRumSpeedIndex() {
+		var paintEntries, resourceEntries, ptFirstPaint, rumSpeedIndex,
+			res = {};
+
+		try {
+			// getEntriesByType has really hit or miss support:
+			// https://developer.mozilla.org/en-US/docs/Web/API/Performance/getEntriesByType
+			paintEntries = performance.getEntriesByType( 'paint' );
+			resourceEntries = performance.getEntriesByType( 'resource' );
+		} catch ( e ) {
+			resourceEntries = [];
+			paintEntries = [];
+		}
+
 		if ( resourceEntries.length && paintEntries.length ) {
+			paintEntries.forEach( function ( entry ) {
+				if ( entry.name === 'first-paint' ) {
+					ptFirstPaint = Math.round( entry.startTime );
+				}
+			} );
+
 			if ( ptFirstPaint === undefined || ptFirstPaint < 0 || ptFirstPaint > 120000 ) {
 				res.RSI = 0;
 			} else {
 				rumSpeedIndex = require( 'ext.navigationTiming.rumSpeedIndex' );
 				res.RSI = Math.round( rumSpeedIndex() );
 			}
+		}
+
+		return res;
+	}
+
+	/**
+	 * Get Navigation Timing Level 2 metrics
+	 */
+	function getLevel2Metrics() {
+		var navigationEntry, res = {};
+
+		try {
+			// getEntriesByType has really hit or miss support:
+			// https://developer.mozilla.org/en-US/docs/Web/API/Performance/getEntriesByType
+			navigationEntry = performance.getEntriesByType( 'navigation' )[ 0 ];
+		} catch ( e ) {
+			navigationEntry = false;
+		}
+
+		if ( navigationEntry ) {
+			res.transferSize = navigationEntry.transferSize;
 		}
 
 		return res;
@@ -158,7 +202,12 @@
 			timingData.unload = 0;
 		}
 
-		$.extend( timingData, getPaintTiming( navStart, timing ) );
+		$.extend(
+			timingData,
+			getFirstPaint( navStart, timing ),
+			getRumSpeedIndex(),
+			getLevel2Metrics()
+		);
 
 		// We probably have gaps in the navigation timing data so measure them.
 		timingData.gaps = timing.domainLookupStart - timing.fetchStart;
