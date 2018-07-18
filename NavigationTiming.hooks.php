@@ -18,7 +18,7 @@ class NavigationTimingHooks {
 		$oversampleFactor = $wgNavigationTimingOversampleFactor;
 		if ( $oversampleFactor && is_array( $oversampleFactor ) ) {
 			foreach ( $oversampleFactor as &$factor ) {
-				$factor = wfArrayFilter( $factor, function ( $val, $term ) {
+				$factor = array_filter( $factor, function ( $val, $term ) {
 					if ( !is_int( $val ) || $val < 1 ) {
 						\MediaWiki\Logger\LoggerFactory::getInstance( 'NavigationTiming' )->error(
 							'Invalid sample value for NavTiming \'{term}\': {val}', [
@@ -28,7 +28,7 @@ class NavigationTimingHooks {
 						return false;
 					}
 					return true;
-				} );
+				}, ARRAY_FILTER_USE_BOTH );
 			}
 		} else {
 			$oversampleFactor = false;
