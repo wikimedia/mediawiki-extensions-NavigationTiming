@@ -481,6 +481,10 @@
 		return userAgentSamples;
 	}
 
+	function setVisibilityChanged() {
+		visibilityChanged = true;
+	}
+
 	/**
 	 *
 	 * Main - start of what runs on load
@@ -507,11 +511,10 @@
 		visibilityEvent = 'webkitvisibilitychange';
 	}
 	if ( hiddenProp ) {
-		$( document ).one( visibilityEvent, function () {
-			visibilityChanged = true;
-		} );
 		if ( document[ hiddenProp ] ) {
 			visibilityChanged = true;
+		} else {
+			$( document ).one( visibilityEvent, setVisibilityChanged );
 		}
 	}
 
@@ -533,6 +536,9 @@
 			mw.loader.using( 'schema.SaveTiming' )
 				.done( emitSaveTiming );
 		} );
+
+		// Stop listening for 'visibilitychange' events
+		$( document ).off( visibilityEvent, setVisibilityChanged );
 
 		// Decide whether to send NavTiming beacon
 		if ( visibilityChanged ) {
