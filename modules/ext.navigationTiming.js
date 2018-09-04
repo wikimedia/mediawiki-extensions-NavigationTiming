@@ -574,10 +574,9 @@
 				setMwLoadEnd();
 
 				// For testing loadCallback()
+				visibilityChanged = false;
 				isInSample = mw.eventLog.inSample( mw.config.get( 'wgNavigationTimingSamplingFactor', 0 ) );
-				if ( !loadEL ) {
-					loadEL = mw.loader.using( preloadedModules );
-				}
+				loadEL = mw.loader.using( preloadedModules );
 			}
 		};
 	}
