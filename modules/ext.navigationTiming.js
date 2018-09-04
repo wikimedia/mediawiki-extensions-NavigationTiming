@@ -17,37 +17,6 @@
 		preloadedModules = [ 'schema.NavigationTiming', 'schema.SaveTiming', 'ext.navigationTiming.rumSpeedIndex' ];
 
 	/**
-	 * Get random number between 0 (inclusive) and 1 (exclusive).
-	 *
-	 * @return {number}
-	 */
-	function getRandom() {
-		/* global Uint32Array */
-		if ( !window.crypto || typeof Uint32Array !== 'function' ) {
-			return Math.random();
-		}
-
-		// 4294967295 == 0xffffffff == max unsigned 32-bit integer
-		return window.crypto.getRandomValues( new Uint32Array( 1 ) )[ 0 ] / 4294967295;
-	}
-
-	/**
-	 * Determine result of random sampling.
-	 *
-	 * Based on ext.eventLogging.subscriber's mw.eventLog.inSample
-	 * Duplicated here because we need it without/before dependencies.
-	 *
-	 * @param {number} factor One in how many should be included. (0=nobody, 1=all, 2=50%)
-	 * @return {boolean}
-	 */
-	function inSample( factor ) {
-		if ( typeof factor !== 'number' || factor < 1 ) {
-			return false;
-		}
-		return Math.floor( getRandom() * factor ) === 0;
-	}
-
-	/**
 	 * Get First Paint
 	 */
 	function getFirstPaint( navStart, timing ) {
@@ -241,7 +210,7 @@
 			return;
 		}
 
-		isInSurveySample = inSample( mw.config.get( 'wgNavigationTimingSurveySamplingFactor', 0 ) );
+		isInSurveySample = mw.eventLog.inSample( mw.config.get( 'wgNavigationTimingSurveySamplingFactor', 0 ) );
 
 		if ( !isInSurveySample ) {
 			return;
@@ -433,7 +402,7 @@
 		myGeo = Geo.country || Geo.country_code;
 
 		if ( myGeo in geos ) {
-			if ( inSample( geos[ myGeo ] ) ) {
+			if ( mw.eventLog.inSample( geos[ myGeo ] ) ) {
 				geoOversamples.push( myGeo );
 			}
 		}
@@ -472,7 +441,7 @@
 		//
 		for ( userAgent in userAgents ) {
 			if ( navigator.userAgent.indexOf( userAgent ) >= 0 ) {
-				if ( inSample( userAgents[ userAgent ] ) ) {
+				if ( mw.eventLog.inSample( userAgents[ userAgent ] ) ) {
 					userAgentSamples.push( userAgent );
 				}
 			}
@@ -522,7 +491,7 @@
 	// lazy-loading as early as possible.
 	// Oversampling is decided later because it depends on Geo,
 	// which may not've been set yet.
-	isInSample = inSample( mw.config.get( 'wgNavigationTimingSamplingFactor', 0 ) );
+	isInSample = mw.eventLog.inSample( mw.config.get( 'wgNavigationTimingSamplingFactor', 0 ) );
 	if ( isInSample ) {
 		loadEL = mw.loader.using( preloadedModules );
 	}
@@ -593,7 +562,6 @@
 		 * @private
 		 */
 		module.exports = {
-			inSample: inSample,
 			emitNavTiming: emitNavigationTiming,
 			emitNavigationTimingWithOversample: emitNavigationTimingWithOversample,
 			testGeoOversamples: testGeoOversamples,
@@ -606,7 +574,7 @@
 				setMwLoadEnd();
 
 				// For testing loadCallback()
-				isInSample = inSample( mw.config.get( 'wgNavigationTimingSamplingFactor', 0 ) );
+				isInSample = mw.eventLog.inSample( mw.config.get( 'wgNavigationTimingSamplingFactor', 0 ) );
 				if ( !loadEL ) {
 					loadEL = mw.loader.using( preloadedModules );
 				}

@@ -25,8 +25,6 @@
 			if ( !window.chrome ) {
 				window.chrome = {};
 			}
-			this.Uint32Array = window.Uint32Array;
-			window.Uint32Array = { };
 
 			// Can't stub window.navigator
 			this.navigator = Object.getOwnPropertyDescriptor( window, 'navigator' ) || {};
@@ -41,62 +39,10 @@
 		teardown: function () {
 			window.Geo = this.Geo;
 			window.chrome = this.chrome;
-			if ( this.Uint32Array ) {
-				window.Uint32Array = this.Uint32Array;
-			} else {
-				delete window.Uint32Array;
-			}
 			delete window.navigator;
 			Object.defineProperty( window, 'navigator', this.navigator );
 		}
 	} ) );
-
-	QUnit.test( 'inSample - Math.random()', function ( assert ) {
-		var randStub,
-			navTiming = require( 'ext.navigationTiming' );
-
-		randStub = this.sandbox.stub( Math, 'random' );
-
-		randStub.returns( 0.99 );
-		assert.strictEqual( navTiming.inSample( 0 ), false, '0 is never' );
-		assert.strictEqual( navTiming.inSample( 0.9 ), false, '0.9 is never' );
-		assert.strictEqual( navTiming.inSample( 1 ), true, '1 is always' );
-		assert.strictEqual( navTiming.inSample( '1' ), false, 'non-number is never' );
-		assert.strictEqual( navTiming.inSample( 2 ), false, '2 not this time' );
-		assert.strictEqual( randStub.callCount, 2, 'Math.random() stub method called 2 times' );
-		randStub.reset();
-
-		randStub.returns( 0.01 );
-		assert.strictEqual( navTiming.inSample( 0 ), false, '0 is never' );
-		assert.strictEqual( navTiming.inSample( 1 ), true, '1 is always' );
-		assert.strictEqual( navTiming.inSample( 2 ), true, '2 this time' );
-		assert.strictEqual( randStub.callCount, 2, 'Math.random() stub method was called 2 times' );
-	} );
-
-	QUnit.test( 'inSample - crypto', function ( assert ) {
-		var navTiming = require( 'ext.navigationTiming' ),
-			getRandomStub = this.sandbox.stub( window.crypto, 'getRandomValues' ),
-			oldUint32Array = window.Uint32Array;
-
-		window.Uint32Array = function () {};
-
-		getRandomStub.returns( [ 4294967294 ] );
-		assert.strictEqual( navTiming.inSample( 0 ), false, '0 is never' );
-		assert.strictEqual( navTiming.inSample( 0.9 ), false, '0.9 is never' );
-		assert.strictEqual( navTiming.inSample( 1 ), true, '1 is always' );
-		assert.strictEqual( navTiming.inSample( '1' ), false, 'non-number is never' );
-		assert.strictEqual( navTiming.inSample( 2 ), false, '2 not this time' );
-		assert.strictEqual( getRandomStub.callCount, 2, 'crypto.getRandomValues() was called 2 times' );
-		getRandomStub.reset();
-
-		getRandomStub.returns( [ 1 ] );
-		assert.strictEqual( navTiming.inSample( 0 ), false, '0 is never' );
-		assert.strictEqual( navTiming.inSample( 1 ), true, '1 is always' );
-		assert.strictEqual( navTiming.inSample( 2 ), true, '2 this time' );
-		assert.strictEqual( getRandomStub.callCount, 2, 'getRandomValues() was called 2 times' );
-
-		window.Uint32Array = oldUint32Array;
-	} );
 
 	// Basic test will ensure no exceptions are thrown and various
 	// of the core properties are set as expected.
@@ -406,18 +352,11 @@
 		assert.propEqual( navigationTiming.testUAOversamples( { FakeBrowser: 1 } ),
 			[], 'Non-matching user agent is not sampled' );
 
-		// Stub the random functions so that they return values that will always
-		// result in inSample() being false
-		this.sandbox.stub( Math, 'random' );
-		Math.random.returns( 1.0 );
-		this.sandbox.stub( window.crypto, 'getRandomValues' );
-		window.crypto.getRandomValues.returns( [ 4294967295 ] );
+		this.sandbox.stub( mw.eventLog, 'inSample', function () { return false; } );
 		assert.propEqual( navigationTiming.testGeoOversamples( { XX: 2 } ), [],
 			'When inSample returns false, resulting list of geo oversamples is empty' );
 		assert.propEqual( navigationTiming.testUAOversamples( { Chrome: 2 } ), [],
 			'When inSample returns false, the resulting list of oversample reasons is empty' );
-		Math.random.restore();
-		window.crypto.getRandomValues.restore();
 	} );
 
 	QUnit.test( 'emitOversampleNavigationTiming tests', function ( assert ) {
