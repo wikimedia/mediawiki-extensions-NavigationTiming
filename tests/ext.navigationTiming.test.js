@@ -347,7 +347,30 @@
 		assert.propEqual( navigationTiming.testUAOversamples( { FakeBrowser: 1 } ),
 			[], 'Non-matching user agent is not sampled' );
 
+		// Test that inPageNameOversample correctly identifies whether or not
+		// to oversample
+		mw.config.set( 'wgPageName', 'File:Foo.jpg' );
+		assert.propEqual( navigationTiming.testPageNameOversamples( { 'File:Foo.jpg': 1 } ), [ 'File:Foo.jpg' ],
+			'File page is identified and oversampled' );
+		mw.config.set( 'wgPageName', 'Something' );
+		assert.propEqual( navigationTiming.testPageNameOversamples( { Something: 1 } ),
+			[ 'Something' ],
+			'Main name space article is oversampled' );
+		assert.propEqual( navigationTiming.testPageNameOversamples( {
+			'File:Foo.jpg': 1,
+			Something: 1
+		} ), [ 'Something' ], 'Only matching page name is sampled' );
+		assert.propEqual( navigationTiming.testPageNameOversamples( { Foo: 1 } ),
+			[], 'Non-matching page name is not sampled' );
+
 		this.sandbox.stub( mw.eventLog, 'inSample', function () { return false; } );
+		// Stub the random functions so that they return values that will always
+		// result in inSample() being false
+		this.sandbox.stub( Math, 'random' );
+		Math.random.returns( 1.0 );
+		this.sandbox.stub( window.crypto, 'getRandomValues' );
+		window.crypto.getRandomValues.returns( [ 4294967295 ] );
+
 		assert.propEqual( navigationTiming.testGeoOversamples( { XX: 2 } ), [],
 			'When inSample returns false, resulting list of geo oversamples is empty' );
 		assert.propEqual( navigationTiming.testUAOversamples( { Chrome: 2 } ), [],

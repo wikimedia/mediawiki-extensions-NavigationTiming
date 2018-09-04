@@ -450,6 +450,34 @@
 		return userAgentSamples;
 	}
 
+	/**
+	 * Test whether this page name is one that we want to oversample
+	 *
+	 * @param {Object} pageNames Objects whose properties are page names
+	 *                            to be oversampled, with value equal to the
+	 *                            sample frequency
+	 * @return {Array} An array of page names that are being oversampled
+	 */
+	function testPageNameOversamples( pageNames ) {
+		var pageName,
+			pageNamesSamples = [],
+			currentPageName = mw.config.get( 'wgPageName' );
+
+		// Look at each page name that's been selected for oversampling,
+		// and check whether the current page matches.  If it does, do a random to select
+		// whether or not to oversample in this case.
+		//
+		for ( pageName in pageNames ) {
+			if ( currentPageName === pageName ) {
+				if ( mw.eventLog.inSample( pageNames[ pageName ] ) ) {
+					pageNamesSamples.push( pageName );
+				}
+			}
+		}
+
+		return pageNamesSamples;
+	}
+
 	function setVisibilityChanged() {
 		visibilityChanged = true;
 	}
@@ -529,6 +557,12 @@
 					oversampleReasons.push( 'ua:' + key );
 				} );
 			}
+
+			if ( 'pageName' in oversamples ) {
+				testPageNameOversamples( oversamples.pageName ).forEach( function ( key ) {
+					oversampleReasons.push( 'pagename:' + key );
+				} );
+			}
 		}
 
 		if ( !oversampleReasons.length && !isInSample ) {
@@ -566,6 +600,7 @@
 			emitNavigationTimingWithOversample: emitNavigationTimingWithOversample,
 			testGeoOversamples: testGeoOversamples,
 			testUAOversamples: testUAOversamples,
+			testPageNameOversamples: testPageNameOversamples,
 			loadCallback: loadCallback,
 			onMwLoadEnd: onMwLoadEnd,
 			reinit: function () {
