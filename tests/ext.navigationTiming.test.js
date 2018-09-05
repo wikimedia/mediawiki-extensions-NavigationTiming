@@ -7,13 +7,8 @@
 		TYPE_NAVIGATE = 0,
 		TYPE_RELOAD = 1;
 
-	QUnit.module( 'ext.navigationTiming', QUnit.newMwEnvironment( {
-		setup: function () {
-
-			// Ensure the starting value of these parameters, regardless of what's
-			// set in LocalSettings.php
-			mw.config.set( 'wgNavigationTimingOversampleFactor', false );
-
+	QUnit.module( 'ext.navigationTiming', {
+		beforeEach: function () {
 			// Because stubs can't work on undefined properties and the presence
 			// of window.Geo and window.chrome isn't guaranteed
 			this.Geo = window.Geo;
@@ -35,13 +30,14 @@
 				}
 			};
 		},
-		teardown: function () {
+		afterEach: function () {
 			window.Geo = this.Geo;
 			window.chrome = this.chrome;
+
 			delete window.navigator;
 			Object.defineProperty( window, 'navigator', this.navigator );
 		}
-	} ) );
+	} );
 
 	// Basic test will ensure no exceptions are thrown and various
 	// of the core properties are set as expected.
