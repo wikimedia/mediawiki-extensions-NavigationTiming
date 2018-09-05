@@ -5,7 +5,7 @@
  * @licence GNU GPL v2 or later
  * @author Ori Livneh <ori@wikimedia.org>
  */
-( function ( mw, $ ) {
+( function () {
 	'use strict';
 
 	var mediaWikiLoadEnd, hiddenProp, visibilityEvent,
@@ -581,4 +581,4 @@
 		};
 	}
 
-}( mediaWiki, jQuery ) );
+}() );

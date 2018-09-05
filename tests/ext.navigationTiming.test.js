@@ -1,6 +1,5 @@
 /* eslint-env qunit */
-
-( function ( mw ) {
+( function () {
 	'use strict';
 
 	var navigationTiming = require( 'ext.navigationTiming' ),
@@ -547,4 +546,4 @@
 			1234, 'transferSize value was set using the Navigtion Timing Level 2 call' );
 
 	} );
-}( mediaWiki ) );
+}() );
