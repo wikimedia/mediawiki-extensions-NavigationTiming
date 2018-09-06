@@ -215,7 +215,7 @@
 		timingData.gaps += timing.requestStart - timing.connectEnd;
 		timingData.gaps += timing.loadEventStart - timing.domComplete;
 
-		timingData.stickyRandomSessionId = mw.user.getPageviewToken();
+		timingData.pageviewToken = mw.user.getPageviewToken();
 
 		return timingData;
 	}
