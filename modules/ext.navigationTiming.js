@@ -14,7 +14,7 @@
 		loadEL = false,
 		visibilityChanged = false,
 		TYPE_NAVIGATE = 0,
-		preloadedModules = [ 'schema.NavigationTiming', 'schema.SaveTiming', 'ext.navigationTiming.rumSpeedIndex' ];
+		preloadedModules = [ 'schema.NavigationTiming', 'schema.SaveTiming', 'schema.ResourceTiming', 'ext.navigationTiming.rumSpeedIndex' ];
 
 	/**
 	 * Get First Paint
@@ -222,6 +222,111 @@
 	}
 
 	/**
+	 * Sends a labelled ResourceTiming entry to EventLogging
+	 *
+	 * @params {ResourceTiming|PerformanceResourceTiming} resource Resource coming from the ResourceTiming API
+	 * @params {string} label Label for the resource
+	 */
+	function emitResourceTiming( resource, label ) {
+		var event, key, value,
+			fields = [
+				'startTime',
+				'workerStart',
+				'redirectStart',
+				'redirectEnd',
+				'fetchStart',
+				'domainLookupStart',
+				'domainLookupEnd',
+				'connectStart',
+				'secureConnectionStart',
+				'connectEnd',
+				'requestStart',
+				'responseStart',
+				'responseEnd',
+				'encodedBodySize',
+				'decodedBodySize',
+				'initiatorType',
+				'duration',
+				'name',
+				'nextHopProtocol',
+				'transferSize'
+			];
+
+		event = { pageviewToken: mw.user.getPageviewToken(), label: label };
+
+		for ( key in resource ) {
+			value = resource[ key ];
+
+			if ( fields.includes( key ) ) {
+				if ( typeof value === 'number' ) {
+					event[ key ] = Math.round( value );
+				} else {
+					event[ key ] = value;
+				}
+			}
+		}
+
+		mw.eventLog.logEvent( 'ResourceTiming', event );
+	}
+
+	/**
+	 * If the current page has images, records the ResourceTiming data of the top image
+	 */
+	function emitTopImageResourceTiming() {
+		var img,
+			resources,
+			srcset,
+			urls = [],
+			promise = $.Deferred().resolve();
+
+		if ( !window.performance || !performance.getEntriesByType ) {
+			return promise;
+		}
+
+		resources = performance.getEntriesByType( 'resource' );
+
+		img = $( '.mw-parser-output img' ).filter( function ( idx, e ) {
+			return e.width * e.height > 100 * 100;
+		} )[ 0 ];
+
+		if ( !resources || !img ) {
+			return promise;
+		}
+
+		urls.push( img.src );
+		srcset = img.srcset;
+
+		srcset.split( ',' ).forEach( function ( src ) {
+			var url = src.trim().split( ' ' )[ 0 ];
+
+			if ( url ) {
+				urls.push( url );
+			}
+		} );
+
+		resources.forEach( function ( resource ) {
+			if ( resource.initiatorType !== 'img' ) {
+				return promise;
+			}
+
+			urls.forEach( function ( url ) {
+				var resourcUri, uri;
+
+				resourcUri = resource.name.substr( resource.name.indexOf( '//' ) );
+				uri = url.substr( url.indexOf( '//' ) );
+
+				if ( resourcUri === uri ) {
+					mw.loader.using( 'schema.ResourceTiming' ).then( function () {
+						promise = emitResourceTiming( resource, 'top-image' );
+					} );
+				}
+			} );
+		} );
+
+		return promise;
+	}
+
+	/**
 	 * Collect the actual event data and send the EventLogging beacon
 	 *
 	 * @params {string|boolean} oversample Either a string that indicates the reason
@@ -293,6 +398,8 @@
 
 		// Properties: Navigation Timing API
 		$.extend( event, getNavTiming() );
+
+		emitTopImageResourceTiming();
 
 		mw.eventLog.logEvent( 'NavigationTiming', event ).done( showPerformanceSurvey );
 	}
@@ -564,6 +671,8 @@
 		module.exports = {
 			emitNavTiming: emitNavigationTiming,
 			emitNavigationTimingWithOversample: emitNavigationTimingWithOversample,
+			emitResourceTiming: emitResourceTiming,
+			emitTopImageResourceTiming: emitTopImageResourceTiming,
 			testGeoOversamples: testGeoOversamples,
 			testUAOversamples: testUAOversamples,
 			loadCallback: loadCallback,

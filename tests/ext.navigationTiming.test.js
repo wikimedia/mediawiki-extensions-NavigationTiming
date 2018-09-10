@@ -532,7 +532,7 @@
 		navigationTiming.reinit();
 		navigationTiming.emitNavTiming();
 
-		assert.equal( window.performance.getEntriesByType.callCount, 7,
+		assert.equal( window.performance.getEntriesByType.callCount, 8,
 			'getEntriesByType was called the expected amount of times' );
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].firstPaint,
 			990, 'firstPaint value was set using the Paint Timing API call' );
@@ -541,5 +541,79 @@
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].transferSize,
 			1234, 'transferSize value was set using the Navigtion Timing Level 2 call' );
 
+	} );
+
+	QUnit.test( 'emitResourceTiming', function ( assert ) {
+		var logEventStub, resource;
+
+		logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
+		logEventStub.returns( $.Deferred().promise() );
+
+		resource = { name: 'foo', invalidField: 'bar', startTime: 1234.56 };
+
+		navigationTiming.reinit();
+		navigationTiming.emitResourceTiming( resource, 'test' );
+
+		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].name, 'foo', 'Fields from the resource are passed along' );
+		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].label, 'test', 'Custom label is set' );
+		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].invalidField, undefined, 'Only whitelisted fields are included' );
+		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].startTime, 1235, 'Float values are rounded' );
+	} );
+
+	QUnit.test( 'emitTopImageResourceTiming', function ( assert ) {
+		var $div, logEventStub, perfStub, done = assert.async();
+
+		logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
+		logEventStub.returns( $.Deferred().promise() );
+
+		this.sandbox.stub( window, 'performance', {
+			timing: { /* empty stub */ },
+			navigation: {
+				type: TYPE_NAVIGATE,
+				redirectCount: 0
+			},
+			getEntriesByType: function () { }
+		} );
+
+		perfStub = this.sandbox.stub( window.performance, 'getEntriesByType' );
+
+		$div = $( '<div>' ).addClass( 'mw-parser-output' ).appendTo( '#qunit-fixture' );
+		$( '<img>' ).attr( 'src', '//foo/bar.jpg' ).attr( 'width', 50 ).attr( 'height', 50 ).appendTo( $div );
+		$( '<img>' ).attr( 'src', '//foo/baz.jpg' ).appendTo( $div );
+
+		navigationTiming.reinit();
+		navigationTiming.emitTopImageResourceTiming();
+
+		assert.equal( mw.eventLog.logEvent.callCount, 0, 'No ResourceTiming emitted when there is no qualifying image in the DOM' );
+
+		$( '<img>' ).attr( 'src', '//foo/bax.jpg' ).attr( 'width', 200 ).attr( 'height', 200 ).appendTo( $div );
+
+		navigationTiming.reinit();
+		navigationTiming.emitTopImageResourceTiming();
+
+		assert.equal( mw.eventLog.logEvent.callCount, 0, 'Top image found, but no matching ResourceTiming event' );
+
+		perfStub.withArgs( 'resource' ).returns(
+			[ {
+				duration: 1902.7,
+				entryType: 'resource',
+				initiatorType: 'img',
+				name: '//foo/bax.jpg',
+				startTime: 8895.899999999983
+			} ]
+		);
+
+		// Prevent the real NavigationTiming emitNavigationTiming() from running
+		this.sandbox.stub( mw.eventLog, 'inSample', false );
+
+		navigationTiming.reinit();
+
+		navigationTiming.emitTopImageResourceTiming().then( function () {
+			assert.equal( mw.eventLog.logEvent.callCount, 1, 'Top image found and matching ResourceTiming event' );
+			assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].label, 'top-image', 'Event with correct label' );
+			assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].duration, 1903, 'Event with roundde numerical value' );
+
+			done();
+		} );
 	} );
 }() );
