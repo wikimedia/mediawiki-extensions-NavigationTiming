@@ -285,6 +285,11 @@
 
 		resources = performance.getEntriesByType( 'resource' );
 
+		/* We pick the first reasonably large image inside the article body.
+		It's commonplace for infoboxes to contain small icons that can sometimes
+		precede the first meaningful image in the DOM (eg. the portrait for a person).
+		100 x 100 is a somewhat arbitrary choice, but it should be large enough
+		to avoid small icons. */
 		img = $( '.mw-parser-output img' ).filter( function ( idx, e ) {
 			return e.width * e.height > 100 * 100;
 		} )[ 0 ];
@@ -317,6 +322,8 @@
 
 				if ( resourcUri === uri ) {
 					mw.loader.using( 'schema.ResourceTiming' ).then( function () {
+						/* We've found a ResourceTiming entry that corresponds to the top
+						article image, let's emit an EL event with the entry's data */
 						promise = emitResourceTiming( resource, 'top-image' );
 					} );
 				}
@@ -396,10 +403,10 @@
 			}
 		}
 
+		emitTopImageResourceTiming();
+
 		// Properties: Navigation Timing API
 		$.extend( event, getNavTiming() );
-
-		emitTopImageResourceTiming();
 
 		mw.eventLog.logEvent( 'NavigationTiming', event ).done( showPerformanceSurvey );
 	}
