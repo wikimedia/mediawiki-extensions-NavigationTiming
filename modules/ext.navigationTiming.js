@@ -456,34 +456,48 @@
 	 * @return {jQuery.Deferred}
 	 */
 	function onMwLoadEnd() {
-		// Get a list of modules currently in loading state
-		var modules = mw.loader.getModuleNames().filter( function ( module ) {
-			return mw.loader.getState( module ) === 'loading';
-		} );
+		var deferred = $.Deferred(),
+			// Get a list of modules currently in loading state
+			modules = mw.loader.getModuleNames().filter( function ( module ) {
+				return mw.loader.getState( module ) === 'loading';
+			} );
+
 		// Wait for them to complete loading (regardless of failures). First, try a single
 		// mw.loader.using() call. That's efficient, but has the drawback of being rejected
 		// upon first failure. Fall back to tracking each module separately. We usually avoid
 		// that because of high overhead for that internally to mw.loader.
-		return mw.loader.using( modules ).catch( function () {
-			return $.Deferred( function ( deferred ) {
-				var i, count = modules.length;
-				function decrement() {
-					count--;
-					if ( count === 0 ) {
-						deferred.resolve();
-					}
+		mw.loader.using( modules ).done( function () {
+			// Use done() and fail() instead of then() because then() is async.
+			// setMwLoadEnd() should happen in the same tick as when the modules
+			// become ready. Using then() would execute it after jQuery's setTimeout,
+			// which could skew the metric by a lot as it would be delayed until:
+			// - after the current mw.loader#doPropagate batch and execution of other
+			//   lazy-loaded modules that may now be unblocked.
+			// - after any other promise callbacks queued so far.
+			// - after the >4ms clamping of setTimeout.
+			// - after other timers queued so far with a low timeout.
+			// - after whatever other non-js tasks the browser decides to do before
+			//   its attention back to the JS event loop.
+			setMwLoadEnd();
+			deferred.resolve();
+		} ).fail( function () {
+			var i, count = modules.length;
+			function decrement() {
+				count--;
+				if ( count === 0 ) {
+					setMwLoadEnd();
+					deferred.resolve();
 				}
-				for ( i = 0; i < modules.length; i++ ) {
-					mw.loader.using( modules[ i ] ).always( decrement );
-				}
-			} );
+			}
+			for ( i = 0; i < modules.length; i++ ) {
+				mw.loader.using( modules[ i ] ).always( decrement );
+			}
 		} );
+		return deferred;
 	}
 
 	function onLoadComplete( callback ) {
 		onMwLoadEnd().then( function () {
-			setMwLoadEnd();
-
 			// Defer one tick for loadEventEnd to get set.
 			if ( document.readyState === 'complete' ) {
 				setTimeout( callback );
