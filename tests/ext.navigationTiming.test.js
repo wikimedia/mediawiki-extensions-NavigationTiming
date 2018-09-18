@@ -425,25 +425,30 @@
 	} );
 
 	QUnit.test( 'onMwLoadEnd - controlled', function ( assert ) {
-		var deferred, queue = [];
+		var log = [];
 		mw.loader.state( {
 			'test.mwLoadEnd.ok': 'loading',
 			'test.mwLoadEnd.fail': 'loading'
 		} );
-
-		deferred = navigationTiming.onMwLoadEnd().then( function () {
-			queue.push( 'call' );
+		// Mock async
+		this.sandbox.stub( mw, 'requestIdleCallback', function ( fn ) {
+			fn();
 		} );
-		assert.propEqual( queue, [], 'pending' );
+		this.sandbox.stub( window, 'setTimeout', function ( fn ) {
+			fn();
+		} );
+
+		navigationTiming.onMwLoadEnd().then( function () {
+			log.push( 'call' );
+		} );
+		assert.propEqual( log, [], 'pending initially' );
+
+		// Make sure that it doesn't stop waiting after the first error.
+		mw.loader.state( { 'test.mwLoadEnd.fail': 'error' } );
+		assert.propEqual( log, [], 'pending after fail' );
 
 		mw.loader.state( { 'test.mwLoadEnd.ok': 'ready' } );
-		assert.propEqual( queue, [], 'still pending' );
-
-		mw.loader.state( { 'test.mwLoadEnd.fail': 'error' } );
-
-		return deferred.then( function () {
-			assert.propEqual( queue, [ 'call' ], 'resolved' );
-		} );
+		assert.propEqual( log, [ 'call' ], 'resolved after fail+ok' );
 	} );
 
 	QUnit.test( 'Oversample Geo integration tests', function ( assert ) {
@@ -595,7 +600,7 @@
 				type: TYPE_NAVIGATE,
 				redirectCount: 0
 			},
-			getEntriesByType: function () { }
+			getEntriesByType: function () { return []; }
 		} );
 
 		perfStub = this.sandbox.stub( window.performance, 'getEntriesByType' );
