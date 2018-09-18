@@ -457,10 +457,15 @@
 	 */
 	function onMwLoadEnd() {
 		var deferred = $.Deferred(),
-			// Get a list of modules currently in loading state
+			modules = window.RLPAGEMODULES;
+
+		if ( !modules ) {
+			// Fallback for parser cache from 1.32.0-wmf.20 and earlier
+			mw.log.warn( 'Fallback RLPAGEMODULES' );
 			modules = mw.loader.getModuleNames().filter( function ( module ) {
 				return mw.loader.getState( module ) === 'loading';
 			} );
+		}
 
 		// Wait for them to complete loading (regardless of failures). First, try a single
 		// mw.loader.using() call. That's efficient, but has the drawback of being rejected

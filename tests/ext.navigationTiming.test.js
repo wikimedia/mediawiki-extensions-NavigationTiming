@@ -29,6 +29,8 @@
 					effectiveType: '4g'
 				}
 			};
+
+			window.RLPAGEMODULES = [];
 		},
 		afterEach: function () {
 			window.Geo = this.Geo;
@@ -419,6 +421,7 @@
 	} );
 
 	QUnit.test( 'onMwLoadEnd - plain', function ( assert ) {
+		this.sandbox.stub( window, 'RLPAGEMODULES', [ 'mediawiki.base' ] );
 		return navigationTiming.onMwLoadEnd().then( function () {
 			assert.ok( true, 'called' );
 		} );
@@ -428,8 +431,13 @@
 		var log = [];
 		mw.loader.state( {
 			'test.mwLoadEnd.ok': 'loading',
-			'test.mwLoadEnd.fail': 'loading'
+			'test.mwLoadEnd.fail': 'loading',
+			'test.mwLoadEnd.unrelated': 'loading'
 		} );
+		this.sandbox.stub( window, 'RLPAGEMODULES', [
+			'test.mwLoadEnd.ok',
+			'test.mwLoadEnd.fail'
+		] );
 		// Mock async
 		this.sandbox.stub( mw, 'requestIdleCallback', function ( fn ) {
 			fn();
