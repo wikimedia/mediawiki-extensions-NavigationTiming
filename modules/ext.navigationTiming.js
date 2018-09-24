@@ -8,7 +8,7 @@
 ( function () {
 	'use strict';
 
-	var mediaWikiLoadEnd, hiddenProp, visibilityEvent,
+	var mediaWikiLoadEnd, visibilityEvent,
 		isInSample, oversamples,
 		oversampleReasons = [],
 		loadEL = false,
@@ -611,6 +611,9 @@
 		return pageNamesSamples;
 	}
 
+	/**
+	 * Handle 'visibilitychange' event.
+	 */
 	function setVisibilityChanged() {
 		visibilityChanged = true;
 	}
@@ -628,24 +631,20 @@
 	 * See <https://phabricator.wikimedia.org/T146510#2794213> for more details.
 	 */
 	if ( typeof document.hidden !== 'undefined' ) {
-		hiddenProp = 'hidden';
+		visibilityChanged = document.hidden;
 		visibilityEvent = 'visibilitychange';
 	} else if ( typeof document.mozHidden !== 'undefined' ) {
-		hiddenProp = 'mozHidden';
+		visibilityChanged = document.mozHidden;
 		visibilityEvent = 'mozvisibilitychange';
 	} else if ( typeof document.msHidden !== 'undefined' ) {
-		hiddenProp = 'msHidden';
+		visibilityChanged = document.msHidden;
 		visibilityEvent = 'msvisibilitychange';
 	} else if ( typeof document.webkitHidden !== 'undefined' ) {
-		hiddenProp = 'webkitHidden';
+		visibilityChanged = document.webkitHidden;
 		visibilityEvent = 'webkitvisibilitychange';
 	}
-	if ( hiddenProp ) {
-		if ( document[ hiddenProp ] ) {
-			visibilityChanged = true;
-		} else {
-			$( document ).one( visibilityEvent, setVisibilityChanged );
-		}
+	if ( !visibilityChanged ) {
+		$( document ).one( visibilityEvent, setVisibilityChanged );
 	}
 
 	// Make the main isInSample decision now so that we can start
