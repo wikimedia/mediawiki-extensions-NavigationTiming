@@ -8,13 +8,9 @@
 ( function () {
 	'use strict';
 
-	var mediaWikiLoadEnd, visibilityEvent,
-		isInSample, oversamples,
-		oversampleReasons = [],
-		loadEL = false,
-		visibilityChanged = false,
-		TYPE_NAVIGATE = 0,
-		preloadedModules = [ 'schema.NavigationTiming', 'schema.SaveTiming', 'schema.ResourceTiming', 'ext.navigationTiming.rumSpeedIndex' ];
+	var visibilityEvent, visibilityChanged,
+		isInSample, preloadedModules, loadEL,
+		mediaWikiLoadEnd;
 
 	/**
 	 * Get First Paint
@@ -26,22 +22,26 @@
 
 		try {
 			// getEntriesByType has really hit or miss support:
-			// https://developer.mozilla.org/en-US/docs/Web/API/Performance/getEntriesByType
+			// - https://developer.mozilla.org/en-US/docs/Web/API/Performance/getEntriesByType
+			// - https://developer.mozilla.org/en-US/docs/Web/API/PerformancePaintTiming
 			paintEntries = performance.getEntriesByType( 'paint' );
 		} catch ( e ) {
 			paintEntries = [];
 		}
 
 		if ( paintEntries.length ) {
+			// Support: Chrome 60+, Android 5+
 			paintEntries.forEach( function ( entry ) {
 				if ( entry.name === 'first-paint' ) {
 					res.firstPaint = Math.round( entry.startTime );
 				}
 			} );
 		} else if ( timing && timing.msFirstPaint > timing.navigationStart ) {
+			// Support: IE9+, Microsoft Edge
 			res.firstPaint = timing.msFirstPaint - timing.navigationStart;
 		/* global chrome */
 		} else if ( window.chrome && chrome.loadTimes ) {
+			// Support: Chrome 64 and earlier
 			chromeLoadTimes = chrome.loadTimes();
 			if ( chromeLoadTimes.firstPaintTime > chromeLoadTimes.startLoadTime ) {
 				res.firstPaint = Math.round( 1000 *
@@ -246,7 +246,10 @@
 				'transferSize'
 			];
 
-		event = { pageviewToken: mw.user.getPageviewToken(), label: label };
+		event = {
+			pageviewToken: mw.user.getPageviewToken(),
+			label: label
+		};
 
 		for ( key in resource ) {
 			value = resource[ key ];
@@ -335,8 +338,9 @@
 	 *     false to indicate that it's not an oversample
 	 */
 	function emitNavigationTimingWithOversample( oversample ) {
-		var event = {},
-			mobileMode = mw.config.get( 'wgMFMode' );
+		var mobileMode,
+			TYPE_NAVIGATE = 0,
+			event = {};
 
 		// Minimal requirements:
 		// - W3C Navigation Timing Level 1 (performance.timing && performance.navigation)
@@ -365,6 +369,7 @@
 			// e.g. "view", "edit", "history", etc.
 			event.action = mw.config.get( 'wgAction' );
 		}
+		mobileMode = mw.config.get( 'wgMFMode' );
 		if ( typeof mobileMode === 'string' && mobileMode.indexOf( 'desktop' ) === -1 ) {
 			// e.g. "stable" or "beta"
 			event.mobileMode = mobileMode;
@@ -619,47 +624,10 @@
 	}
 
 	/**
-	 *
-	 * Main - start of what runs on load
-	 *
-	 */
-
-	/**
-	 * Don't report measurements for pages that have loaded in the background.
-	 * Browsers defer or deprioritize loading background pages, causing them to
-	 * take longer to load, which throws off our measurements.
-	 * See <https://phabricator.wikimedia.org/T146510#2794213> for more details.
-	 */
-	if ( typeof document.hidden !== 'undefined' ) {
-		visibilityChanged = document.hidden;
-		visibilityEvent = 'visibilitychange';
-	} else if ( typeof document.mozHidden !== 'undefined' ) {
-		visibilityChanged = document.mozHidden;
-		visibilityEvent = 'mozvisibilitychange';
-	} else if ( typeof document.msHidden !== 'undefined' ) {
-		visibilityChanged = document.msHidden;
-		visibilityEvent = 'msvisibilitychange';
-	} else if ( typeof document.webkitHidden !== 'undefined' ) {
-		visibilityChanged = document.webkitHidden;
-		visibilityEvent = 'webkitvisibilitychange';
-	}
-	if ( !visibilityChanged ) {
-		$( document ).one( visibilityEvent, setVisibilityChanged );
-	}
-
-	// Make the main isInSample decision now so that we can start
-	// lazy-loading as early as possible.
-	// Oversampling is decided later because it depends on Geo,
-	// which may not've been set yet.
-	isInSample = mw.eventLog.inSample( mw.config.get( 'wgNavigationTimingSamplingFactor', 0 ) );
-	if ( isInSample ) {
-		loadEL = mw.loader.using( preloadedModules );
-	}
-
-	/**
 	 * Called after loadEventEnd by onLoadComplete()
 	 */
 	function loadCallback() {
+		var oversamples, oversampleReasons;
 		// Maybe send SaveTiming beacon
 		mw.hook( 'postEdit' ).add( function () {
 			mw.loader.using( 'schema.SaveTiming' )
@@ -672,11 +640,17 @@
 		// Decide whether to send NavTiming beacon
 		if ( visibilityChanged ) {
 			// NavTiming: Ignore background tabs
+			//
+			// Don't report measurements for pages that have loaded in the background.
+			// Browsers defer or deprioritize loading background pages, causing them to
+			// take longer to load, which throws off our measurements.
+			// See <https://phabricator.wikimedia.org/T146510#2794213> for more details.
 			return;
 		}
 
 		// Get any oversamples, and see whether we match
 		oversamples = mw.config.get( 'wgNavigationTimingOversampleFactor' );
+		oversampleReasons = [];
 		if ( oversamples ) {
 			if ( 'geo' in oversamples ) {
 				testGeoOversamples( oversamples.geo ).forEach( function ( key ) {
@@ -718,8 +692,53 @@
 		}
 	}
 
-	// Ensure we run after loadEventEnd
-	onLoadComplete( loadCallback );
+	/**
+	 * Main entry point.
+	 * This is called immediately when this file is executed,
+	 * typically *before* the page has finished loading.
+	 */
+	function main() {
+		// Collect whether document was hidden at least once during the
+		// page loading process. Used by loadCallback().
+		if ( typeof document.hidden !== 'undefined' ) {
+			visibilityChanged = document.hidden;
+			visibilityEvent = 'visibilitychange';
+		} else if ( typeof document.mozHidden !== 'undefined' ) {
+			visibilityChanged = document.mozHidden;
+			visibilityEvent = 'mozvisibilitychange';
+		} else if ( typeof document.msHidden !== 'undefined' ) {
+			visibilityChanged = document.msHidden;
+			visibilityEvent = 'msvisibilitychange';
+		} else if ( typeof document.webkitHidden !== 'undefined' ) {
+			visibilityChanged = document.webkitHidden;
+			visibilityEvent = 'webkitvisibilitychange';
+		} else {
+			visibilityChanged = false;
+		}
+		if ( !visibilityChanged ) {
+			$( document ).one( visibilityEvent, setVisibilityChanged );
+		}
+
+		// Make the main isInSample decision now so that we can start
+		// lazy-loading as early as possible.
+		// Oversampling is decided later because it depends on Geo,
+		// which may not've been set yet.
+		isInSample = mw.eventLog.inSample( mw.config.get( 'wgNavigationTimingSamplingFactor', 0 ) );
+		preloadedModules = [
+			'schema.NavigationTiming',
+			'schema.SaveTiming',
+			'schema.ResourceTiming',
+			'ext.navigationTiming.rumSpeedIndex'
+		];
+		if ( isInSample ) {
+			loadEL = mw.loader.using( preloadedModules );
+		}
+
+		// Do the rest after loadEventEnd
+		onLoadComplete( loadCallback );
+	}
+
+	main();
 
 	if ( typeof QUnit !== 'undefined' ) {
 		/**
@@ -742,7 +761,8 @@
 				// onLoadComplete will probably not have happened yet.
 				setMwLoadEnd();
 
-				// For testing loadCallback()
+				// Mock a few things that main() normally does,
+				// so that we  can test loadCallback()
 				visibilityChanged = false;
 				isInSample = mw.eventLog.inSample( mw.config.get( 'wgNavigationTimingSamplingFactor', 0 ) );
 				loadEL = mw.loader.using( preloadedModules );
