@@ -19,8 +19,9 @@
 	/**
 	 * Get First Paint
 	 */
-	function getFirstPaint( navStart, timing ) {
+	function getFirstPaint() {
 		var chromeLoadTimes, paintEntries,
+			timing = window.performance && performance.timing,
 			res = {};
 
 		try {
@@ -37,8 +38,8 @@
 					res.firstPaint = Math.round( entry.startTime );
 				}
 			} );
-		} else if ( timing.msFirstPaint > navStart ) {
-			res.firstPaint = timing.msFirstPaint - navStart;
+		} else if ( timing && timing.msFirstPaint > timing.navigationStart ) {
+			res.firstPaint = timing.msFirstPaint - timing.navigationStart;
 		/* global chrome */
 		} else if ( window.chrome && chrome.loadTimes ) {
 			chromeLoadTimes = chrome.loadTimes();
@@ -170,13 +171,6 @@
 		} else {
 			timingData.unload = 0;
 		}
-
-		$.extend(
-			timingData,
-			getFirstPaint( navStart, timing ),
-			getRumSpeedIndex(),
-			getLevel2Metrics()
-		);
 
 		// We probably have gaps in the navigation timing data so measure them.
 		timingData.gaps = timing.domainLookupStart - timing.fetchStart;
@@ -405,8 +399,14 @@
 
 		emitTopImageResourceTiming();
 
-		// Properties: Navigation Timing API
-		$.extend( event, getNavTiming() );
+		$.extend( event,
+			// Properties: Navigation Timing API
+			getNavTiming(),
+			// Properties: Paint Timing API
+			getFirstPaint(),
+			getRumSpeedIndex(),
+			getLevel2Metrics()
+		);
 
 		mw.eventLog.logEvent( 'NavigationTiming', event ).done( showPerformanceSurvey );
 	}
