@@ -262,7 +262,7 @@
 			}
 		}
 
-		mw.eventLog.logEvent( 'ResourceTiming', event );
+		return mw.eventLog.logEvent( 'ResourceTiming', event );
 	}
 
 	/**
@@ -273,10 +273,11 @@
 			resources,
 			srcset,
 			urls = [],
-			promise = $.Deferred().resolve();
+			deferred = $.Deferred(),
+			matched = false;
 
 		if ( !window.performance || !performance.getEntriesByType ) {
-			return promise;
+			return deferred.resolve();
 		}
 
 		resources = performance.getEntriesByType( 'resource' );
@@ -291,7 +292,7 @@
 		} )[ 0 ];
 
 		if ( !resources || !img ) {
-			return promise;
+			return deferred.resolve();
 		}
 
 		urls.push( img.src );
@@ -307,26 +308,80 @@
 
 		resources.forEach( function ( resource ) {
 			if ( resource.initiatorType !== 'img' ) {
-				return promise;
+				return;
 			}
 
 			urls.forEach( function ( url ) {
-				var resourcUri, uri;
+				var resourceUri, uri;
 
-				resourcUri = resource.name.substr( resource.name.indexOf( '//' ) );
+				resourceUri = resource.name.substr( resource.name.indexOf( '//' ) );
 				uri = url.substr( url.indexOf( '//' ) );
 
-				if ( resourcUri === uri ) {
+				if ( resourceUri === uri ) {
+					matched = true;
 					mw.loader.using( 'schema.ResourceTiming' ).then( function () {
 						/* We've found a ResourceTiming entry that corresponds to the top
 						article image, let's emit an EL event with the entry's data */
-						promise = emitResourceTiming( resource, 'top-image' );
+						emitResourceTiming( resource, 'top-image' ).then( deferred.resolve, deferred.resolve );
 					} );
 				}
 			} );
 		} );
 
-		return promise;
+		if ( !matched ) {
+			deferred.resolve();
+		}
+
+		return deferred;
+	}
+
+	/**
+	 * If the current page displays a CentralNotice banner, records its display time
+	 */
+	function emitCentralNoticeTiming( existingObserver ) {
+		var event, mark, marks, observer, deferred = $.Deferred();
+
+		if ( !window.performance || !performance.getEntriesByName ) {
+			return deferred.resolve();
+		}
+
+		marks = performance.getEntriesByName( 'mwCentralNoticeBanner', 'mark' );
+
+		if ( !marks || !marks.length ) {
+			if ( !window.PerformanceObserver ) {
+				return deferred.resolve();
+			}
+
+			// Already observing marks
+			if ( existingObserver ) {
+				return deferred.resolve();
+			}
+
+			observer = new PerformanceObserver( function () {
+				emitCentralNoticeTiming( observer );
+			} );
+
+			observer.observe( { entryTypes: [ 'mark' ] } );
+
+			return deferred.resolve();
+		} else {
+			if ( existingObserver ) {
+				existingObserver.disconnect();
+			}
+
+			mark = marks[ 0 ];
+
+			event = {
+				pageviewToken: mw.user.getPageviewToken(),
+				time: Math.round( mark.startTime )
+			};
+
+			mw.loader.using( 'schema.CentralNoticeTiming' ).then( function () {
+				mw.eventLog.logEvent( 'CentralNoticeTiming', event ).then( deferred.resolve, deferred.resolve );
+			} );
+
+			return deferred;
+		}
 	}
 
 	/**
@@ -405,6 +460,7 @@
 			event.deviceMemory = navigator.deviceMemory;
 		}
 
+		emitCentralNoticeTiming();
 		emitTopImageResourceTiming();
 
 		$.extend( event,
@@ -754,6 +810,7 @@
 			emitNavigationTimingWithOversample: emitNavigationTimingWithOversample,
 			emitResourceTiming: emitResourceTiming,
 			emitTopImageResourceTiming: emitTopImageResourceTiming,
+			emitCentralNoticeTiming: emitCentralNoticeTiming,
 			testGeoOversamples: testGeoOversamples,
 			testUAOversamples: testUAOversamples,
 			testPageNameOversamples: testPageNameOversamples,

@@ -44,6 +44,7 @@ class NavigationTimingHooks {
 				'schema.NavigationTiming',
 				'schema.SaveTiming',
 				'schema.ResourceTiming',
+				'schema.CentralNoticeTiming',
 				'ext.navigationTiming.rumSpeedIndex',
 			],
 			'localBasePath' => __DIR__ ,

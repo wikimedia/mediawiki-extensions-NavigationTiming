@@ -69,7 +69,8 @@
 	"EventLoggingSchemas": {
 		"NavigationTiming": 18435897,
 		"SaveTiming": 15396492,
-		"ResourceTiming": 18358918
+		"ResourceTiming": 18358918,
+		"CentralNoticeTiming": 18418286
 	},
 	"config": {
 		"NavigationTimingSamplingFactor": false,

@@ -603,7 +603,7 @@
 		var $div, logEventStub, perfStub, done = assert.async();
 
 		logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
-		logEventStub.returns( $.Deferred().promise() );
+		logEventStub.returns( $.Deferred().resolve() );
 
 		this.sandbox.stub( window, 'performance', {
 			timing: { /* empty stub */ },
@@ -651,6 +651,51 @@
 			assert.equal( mw.eventLog.logEvent.callCount, 1, 'Top image found and matching ResourceTiming event' );
 			assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].label, 'top-image', 'Event with correct label' );
 			assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].duration, 1903, 'Event with roundde numerical value' );
+
+			done();
+		} );
+	} );
+
+	QUnit.test( 'emitCentralNoticeTiming', function ( assert ) {
+		var logEventStub, perfStub, done = assert.async();
+
+		logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
+		logEventStub.returns( $.Deferred().resolve() );
+
+		this.sandbox.stub( window, 'performance', {
+			timing: { /* empty stub */ },
+			navigation: {
+				type: TYPE_NAVIGATE,
+				redirectCount: 0
+			},
+			getEntriesByType: function () { return []; },
+			getEntriesByName: function () { return []; }
+		} );
+
+		perfStub = this.sandbox.stub( window.performance, 'getEntriesByName' );
+
+		navigationTiming.reinit();
+		navigationTiming.emitCentralNoticeTiming();
+
+		assert.equal( mw.eventLog.logEvent.callCount, 0, 'No mwCentralNoticeBanner performance mark' );
+
+		perfStub.withArgs( 'mwCentralNoticeBanner', 'mark' ).returns(
+			[ {
+				duration: 0,
+				entryType: 'mark',
+				name: 'mwCentralNoticeBanner',
+				startTime: 8895.899999999983
+			} ]
+		);
+
+		// Prevent the real NavigationTiming emitNavigationTiming() from running
+		this.sandbox.stub( mw.eventLog, 'inSample', false );
+
+		navigationTiming.reinit();
+
+		navigationTiming.emitCentralNoticeTiming().then( function () {
+			assert.equal( mw.eventLog.logEvent.callCount, 1, 'CentralNoticeTiming event happened' );
+			assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].time, 8896, 'Event with rounded numerical value' );
 
 			done();
 		} );
