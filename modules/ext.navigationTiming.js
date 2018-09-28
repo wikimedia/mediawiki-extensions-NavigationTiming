@@ -160,7 +160,6 @@
 		// They can be zeroes instead of timestamps.
 		// See https://www.w3.org/TR/navigation-timing-2/
 		if ( timing.redirectStart ) {
-			timingData.redirectCount = performance.navigation.redirectCount;
 			timingData.redirecting = timing.redirectEnd - timing.redirectStart;
 		} else {
 			timingData.redirecting = 0;
