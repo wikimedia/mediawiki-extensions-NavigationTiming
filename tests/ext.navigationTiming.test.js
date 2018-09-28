@@ -142,9 +142,7 @@
 				responseEnd: 400,
 				domComplete: 450,
 				loadEventStart: 570,
-				loadEventEnd: 575,
-				unload: 0,
-				redirecting: 0
+				loadEventEnd: 575
 			},
 			navigation: {
 				type: TYPE_NAVIGATE,
@@ -279,9 +277,7 @@
 				responseEnd: 400,
 				domComplete: 450,
 				loadEventStart: 570,
-				loadEventEnd: 575,
-				unload: 0,
-				redirecting: 0
+				loadEventEnd: 575
 			},
 			navigation: {
 				type: TYPE_RELOAD,
