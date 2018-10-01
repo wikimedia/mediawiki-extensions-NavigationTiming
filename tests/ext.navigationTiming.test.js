@@ -46,7 +46,8 @@
 	// of the core properties are set as expected.
 	QUnit.test( 'Basic', function ( assert ) {
 		var stub, event, expected, key,
-			yearMs = 31536000 * 1000;
+			yearMs = 31536000 * 1000,
+			clock = this.sandbox.useFakeTimers();
 
 		this.sandbox.stub( window, 'performance', {
 			timing: performance.timing,
@@ -63,6 +64,9 @@
 		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		stub.returns( $.Deferred().promise() );
 		navigationTiming.emitNavTiming();
+
+		clock.tick( 10 );
+
 		assert.ok( stub.calledOnce, 'mw.eventLog.logEvent was called' );
 		assert.equal( stub.getCall( 0 ).args[ 0 ], 'NavigationTiming', 'Schema name' );
 		event = stub.getCall( 0 ).args[ 1 ];
@@ -108,6 +112,9 @@
 		delete window.navigator.deviceMemory;
 		navigationTiming.reinit();
 		navigationTiming.emitNavTiming();
+
+		clock.tick( 10 );
+
 		event = stub.getCall( 0 ).args[ 1 ];
 		assert.strictEqual( event.hasOwnProperty( 'netinfoEffectiveConnectionType' ),
 			false, 'When the connection object is not present, things still work' );
@@ -119,6 +126,9 @@
 		mw.config.set( 'wgCanonicalSpecialPageName', 'SpecialPageNameTest' );
 		navigationTiming.reinit();
 		navigationTiming.emitNavTiming();
+
+		clock.tick( 10 );
+
 		event = stub.getCall( 0 ).args[ 1 ];
 		assert.strictEqual( event.mwSpecialPageName, 'SpecialPageNameTest',
 			'Special page name is correct in the emitted object' );
@@ -131,7 +141,8 @@
 	// Case with example values typical for a first view
 	// where DNS, TCP, SSL etc. all need to happen.
 	QUnit.test( 'First view', function ( assert ) {
-		var event, stub, expected, key, val;
+		var event, stub, expected, key, val,
+			clock = this.sandbox.useFakeTimers();
 
 		this.sandbox.stub( window, 'performance', {
 			timing: {
@@ -162,6 +173,9 @@
 		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		stub.returns( $.Deferred().promise() );
 		navigationTiming.emitNavTiming();
+
+		clock.tick( 10 );
+
 		assert.ok( stub.calledOnce, 'mw.eventLog.logEvent was called' );
 		assert.equal( stub.getCall( 0 ).args[ 0 ], 'NavigationTiming', 'Schema name' );
 		event = stub.getCall( 0 ).args[ 1 ];
@@ -199,7 +213,8 @@
 	// Case with example values typical for a repeat view
 	// where DNS, TCP, SSL etc. are cached/re-used.
 	QUnit.test( 'Repeat view', function ( assert ) {
-		var event, stub, expected, key, val;
+		var event, stub, expected, key, val,
+			clock = this.sandbox.useFakeTimers();
 
 		this.sandbox.stub( window, 'performance', {
 			timing: {
@@ -232,6 +247,9 @@
 		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		stub.returns( $.Deferred().promise() );
 		navigationTiming.emitNavTiming();
+
+		clock.tick( 10 );
+
 		assert.ok( stub.calledOnce, 'mw.eventLog.logEvent was called' );
 		assert.equal( stub.getCall( 0 ).args[ 0 ], 'NavigationTiming', 'Schema name' );
 		event = stub.getCall( 0 ).args[ 1 ];
@@ -267,7 +285,8 @@
 	} );
 
 	QUnit.test( 'Reloaded view', function ( assert ) {
-		var stub;
+		var stub,
+			clock = this.sandbox.useFakeTimers();
 
 		this.sandbox.stub( window, 'performance', {
 			timing: {
@@ -296,11 +315,15 @@
 		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		stub.returns( $.Deferred().promise() );
 		navigationTiming.emitNavTiming();
+
+		clock.tick( 10 );
+
 		assert.strictEqual( stub.args.length, 0, 'mw.eventLog.logEvent not called' );
 	} );
 
 	QUnit.test( 'Without Navigation Timing API', function ( assert ) {
-		var stub;
+		var stub,
+			clock = this.sandbox.useFakeTimers();
 
 		this.sandbox.stub( window, 'performance', undefined );
 		navigationTiming.reinit();
@@ -308,6 +331,9 @@
 		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		stub.returns( $.Deferred().promise() );
 		navigationTiming.emitNavTiming();
+
+		clock.tick( 10 );
+
 		assert.strictEqual( stub.args.length, 0, 'mw.eventLog.logEvent not called' );
 	} );
 
@@ -383,7 +409,8 @@
 	} );
 
 	QUnit.test( 'emitOversampleNavigationTiming tests', function ( assert ) {
-		var logEventStub, logFailureStub;
+		var logEventStub, logFailureStub,
+			clock = this.sandbox.useFakeTimers();
 
 		logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		logEventStub.returns( $.Deferred().promise() );
@@ -399,11 +426,17 @@
 		} );
 
 		navigationTiming.emitNavTiming();
+
+		clock.tick( 10 );
+
 		assert.equal( logEventStub.args[ 0 ][ 1 ].isOversample, false,
 			'Calling emitNavTiming emits an event with isOversample = false' );
 		logEventStub.reset();
 
 		navigationTiming.emitNavigationTimingWithOversample( [ 'UA:Chrome' ] );
+
+		clock.tick( 10 );
+
 		assert.equal( logEventStub.called, true,
 			'Calling emitOversampleNavigationTiming triggers logEvent' );
 		assert.equal( logFailureStub.called, false,
@@ -415,6 +448,9 @@
 		logEventStub.reset();
 
 		navigationTiming.emitNavigationTimingWithOversample( [ 'UA:Chrome', 'geo:XX' ] );
+
+		clock.tick( 10 );
+
 		assert.equal( logEventStub.callCount, 1,
 			'Calling eONT with mutiple oversample reasons triggers logEvent only once' );
 		assert.equal( logEventStub.args[ 0 ][ 1 ].isOversample, true,
@@ -463,7 +499,8 @@
 	} );
 
 	QUnit.test( 'Oversample Geo integration tests', function ( assert ) {
-		var logEvent;
+		var logEvent,
+			clock = this.sandbox.useFakeTimers();
 
 		// Mock PerformanceNavigation for TYPE_NAVIGATE
 		this.sandbox.stub( window, 'performance', {
@@ -495,6 +532,8 @@
 		navigationTiming.reinit();
 		navigationTiming.loadCallback();
 
+		clock.tick( 10 );
+
 		// There should be two events
 		assert.equal( logEvent.args.length, 2, 'Two events were emitted' );
 
@@ -517,7 +556,8 @@
 	} );
 
 	QUnit.test( 'Optional APIs', function ( assert ) {
-		var stub, logEventStub;
+		var stub, logEventStub,
+			clock = this.sandbox.useFakeTimers();
 
 		this.sandbox.stub( window, 'performance', {
 			timing: { /* empty stub */ },
@@ -571,6 +611,8 @@
 		navigationTiming.reinit();
 		navigationTiming.emitNavTiming();
 
+		clock.tick( 10 );
+
 		assert.equal( window.performance.getEntriesByType.callCount, 8,
 			'getEntriesByType was called the expected amount of times' );
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].firstPaint,
@@ -600,7 +642,8 @@
 	} );
 
 	QUnit.test( 'emitTopImageResourceTiming', function ( assert ) {
-		var $div, logEventStub, perfStub, done = assert.async();
+		var $div, logEventStub, perfStub,
+			clock = this.sandbox.useFakeTimers();
 
 		logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		logEventStub.returns( $.Deferred().resolve() );
@@ -646,18 +689,18 @@
 		this.sandbox.stub( mw.eventLog, 'inSample', false );
 
 		navigationTiming.reinit();
+		navigationTiming.emitTopImageResourceTiming();
 
-		navigationTiming.emitTopImageResourceTiming().then( function () {
-			assert.equal( mw.eventLog.logEvent.callCount, 1, 'Top image found and matching ResourceTiming event' );
-			assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].label, 'top-image', 'Event with correct label' );
-			assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].duration, 1903, 'Event with roundde numerical value' );
+		clock.tick( 10 );
 
-			done();
-		} );
+		assert.equal( mw.eventLog.logEvent.callCount, 1, 'Top image found and matching ResourceTiming event' );
+		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].label, 'top-image', 'Event with correct label' );
+		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].duration, 1903, 'Event with roundde numerical value' );
 	} );
 
 	QUnit.test( 'emitCentralNoticeTiming', function ( assert ) {
-		var logEventStub, perfStub, done = assert.async();
+		var logEventStub, perfStub,
+			clock = this.sandbox.useFakeTimers();
 
 		logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		logEventStub.returns( $.Deferred().resolve() );
@@ -693,11 +736,28 @@
 
 		navigationTiming.reinit();
 
-		navigationTiming.emitCentralNoticeTiming().then( function () {
-			assert.equal( mw.eventLog.logEvent.callCount, 1, 'CentralNoticeTiming event happened' );
-			assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].time, 8896, 'Event with rounded numerical value' );
+		navigationTiming.emitCentralNoticeTiming();
 
-			done();
+		clock.tick( 10 );
+
+		assert.equal( mw.eventLog.logEvent.callCount, 1, 'CentralNoticeTiming event happened' );
+		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].time, 8896, 'Event with rounded numerical value' );
+	} );
+
+	QUnit.test( 'runCpuBenchmark', function ( assert ) {
+		var logEventStub,
+			done = assert.async();
+
+		logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
+		logEventStub.returns( $.Deferred().resolve() );
+
+		navigationTiming.reinit();
+		navigationTiming.runCpuBenchmark().then( function () {
+			setTimeout( function () {
+				assert.equal( mw.eventLog.logEvent.callCount, 1, 'CpuBenchmark event happened' );
+				assert.ok( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].score > 0, 'Event with non-zero score' );
+				done();
+			} );
 		} );
 	} );
 }() );

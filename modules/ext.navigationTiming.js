@@ -182,6 +182,68 @@
 		return timingData;
 	}
 
+	/**
+	 * Runs a CPU benchmark inside a Worker, off the main thread
+	 */
+	function runCpuBenchmark() {
+		var blob, worker, work,
+			deferred = $.Deferred();
+
+		if ( !window.Blob || !window.URL || !window.URL.createObjectURL || !window.Worker || !window.performance ) {
+			return deferred.resolve();
+		}
+
+		function onMessage() {
+			var i,
+				startTime,
+				amount = 100000000;
+
+			// IE11 doesn't have window.performance exposed inside workers
+			if ( !self.performance ) {
+				postMessage( false );
+				return;
+			}
+
+			startTime = performance.now();
+
+			for ( i = amount; i > 0; i-- ) {
+				// empty
+			}
+
+			postMessage( Math.round( performance.now() - startTime ) );
+		}
+
+		work = 'onmessage = ' + String( onMessage );
+
+		blob = new Blob( [ work ], { type: 'application/javascript' } );
+		worker = new Worker( URL.createObjectURL( blob ) );
+
+		deferred.then( function ( result ) {
+			var event;
+
+			if ( !result ) {
+				return;
+			}
+
+			event = {
+				pageviewToken: mw.user.getPageviewToken(),
+				score: result
+			};
+
+			mw.loader.using( 'schema.CpuBenchmark' ).then( function () {
+				mw.eventLog.logEvent( 'CpuBenchmark', event );
+			} );
+		} );
+
+		worker.onmessage = function ( e ) {
+			deferred.resolve( e.data );
+		};
+
+		worker.postMessage( false );
+
+		return deferred;
+	}
+
 	/** Display a performance survey using the QuickSurveys extension
 	 * if the extension is present and based on a sub-sampling factor.
 	 *
@@ -212,6 +274,12 @@
 		mw.loader.using( 'ext.quicksurveys.init' ).then( function () {
 			mw.extQuickSurveys.showSurvey( surveyName );
 		} );
+
+		// If we're sampled for the survey, run a CPU microbenchmark
+		// We might end up recording that for all RUM measurements if it
+		// proves useful, but for now let's only waste CPU cycles for
+		// survey samples.
+		runCpuBenchmark();
 	}
 
 	/**
@@ -272,12 +340,10 @@
 		var img,
 			resources,
 			srcset,
-			urls = [],
-			deferred = $.Deferred(),
-			matched = false;
+			urls = [];
 
 		if ( !window.performance || !performance.getEntriesByType ) {
-			return deferred.resolve();
+			return;
 		}
 
 		resources = performance.getEntriesByType( 'resource' );
@@ -292,19 +358,22 @@
 		} )[ 0 ];
 
 		if ( !resources || !img ) {
-			return deferred.resolve();
+			return;
 		}
 
 		urls.push( img.src );
-		srcset = img.srcset;
 
-		srcset.split( ',' ).forEach( function ( src ) {
-			var url = src.trim().split( ' ' )[ 0 ];
+		if ( img.srcset ) {
+			srcset = img.srcset;
 
-			if ( url ) {
-				urls.push( url );
-			}
-		} );
+			srcset.split( ',' ).forEach( function ( src ) {
+				var url = src.trim().split( ' ' )[ 0 ];
+
+				if ( url ) {
+					urls.push( url );
+				}
+			} );
+		}
 
 		resources.forEach( function ( resource ) {
 			if ( resource.initiatorType !== 'img' ) {
@@ -318,43 +387,36 @@
 				uri = url.substr( url.indexOf( '//' ) );
 
 				if ( resourceUri === uri ) {
-					matched = true;
 					mw.loader.using( 'schema.ResourceTiming' ).then( function () {
 						/* We've found a ResourceTiming entry that corresponds to the top
 						article image, let's emit an EL event with the entry's data */
-						emitResourceTiming( resource, 'top-image' ).then( deferred.resolve, deferred.resolve );
+						emitResourceTiming( resource, 'top-image' );
 					} );
 				}
 			} );
 		} );
-
-		if ( !matched ) {
-			deferred.resolve();
-		}
-
-		return deferred;
 	}
 
 	/**
 	 * If the current page displays a CentralNotice banner, records its display time
 	 */
 	function emitCentralNoticeTiming( existingObserver ) {
-		var event, mark, marks, observer, deferred = $.Deferred();
+		var event, mark, marks, observer;
 
 		if ( !window.performance || !performance.getEntriesByName ) {
-			return deferred.resolve();
+			return;
 		}
 
 		marks = performance.getEntriesByName( 'mwCentralNoticeBanner', 'mark' );
 
 		if ( !marks || !marks.length ) {
 			if ( !window.PerformanceObserver ) {
-				return deferred.resolve();
+				return;
 			}
 
 			// Already observing marks
 			if ( existingObserver ) {
-				return deferred.resolve();
+				return;
 			}
 
 			observer = new PerformanceObserver( function () {
@@ -363,7 +425,7 @@
 
 			observer.observe( { entryTypes: [ 'mark' ] } );
 
-			return deferred.resolve();
+			return;
 		} else {
 			if ( existingObserver ) {
 				existingObserver.disconnect();
@@ -377,10 +439,8 @@
 			};
 
 			mw.loader.using( 'schema.CentralNoticeTiming' ).then( function () {
-				mw.eventLog.logEvent( 'CentralNoticeTiming', event ).then( deferred.resolve, deferred.resolve );
+				mw.eventLog.logEvent( 'CentralNoticeTiming', event );
 			} );
-
-			return deferred;
 		}
 	}
 
@@ -407,6 +467,9 @@
 			// Don't send a beacon.
 			return;
 		}
+
+		// No need to wait for the RUM metrics to be recorded before showing the survey
+		showPerformanceSurvey();
 
 		// Properties: MediaWiki
 		//
@@ -472,7 +535,7 @@
 			getLevel2Metrics()
 		);
 
-		mw.eventLog.logEvent( 'NavigationTiming', event ).done( showPerformanceSurvey );
+		mw.eventLog.logEvent( 'NavigationTiming', event );
 	}
 
 	/**
@@ -816,6 +879,7 @@
 			testPageNameOversamples: testPageNameOversamples,
 			loadCallback: loadCallback,
 			onMwLoadEnd: onMwLoadEnd,
+			runCpuBenchmark: runCpuBenchmark,
 			reinit: function () {
 				// Call manually because, during test execution, actual
 				// onLoadComplete will probably not have happened yet.
