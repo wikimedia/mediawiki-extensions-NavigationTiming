@@ -401,6 +401,10 @@
 			}
 		}
 
+		if ( navigator.deviceMemory ) {
+			event.deviceMemory = navigator.deviceMemory;
+		}
+
 		emitTopImageResourceTiming();
 
 		$.extend( event,

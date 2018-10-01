@@ -27,7 +27,8 @@
 				userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.12345.94 Safari/537.36',
 				connection: {
 					effectiveType: '4g'
-				}
+				},
+				deviceMemory: 8
 			};
 
 			window.RLPAGEMODULES = [];
@@ -76,6 +77,9 @@
 			// NetworkInfo API
 			netinfoEffectiveConnectionType: 'string',
 
+			// Device Memory API
+			deviceMemory: 'number',
+
 			// Navigation Timing API
 			responseStart: 'number',
 			domComplete: 'number',
@@ -101,11 +105,14 @@
 		// Make sure things still work when the connection object isn't present
 		stub.reset();
 		delete window.navigator.connection;
+		delete window.navigator.deviceMemory;
 		navigationTiming.reinit();
 		navigationTiming.emitNavTiming();
 		event = stub.getCall( 0 ).args[ 1 ];
 		assert.strictEqual( event.hasOwnProperty( 'netinfoEffectiveConnectionType' ),
 			false, 'When the connection object is not present, things still work' );
+		assert.strictEqual( event.hasOwnProperty( 'deviceMemory' ),
+			false, 'When the deviceMemory property is not present, things still work' );
 
 		// Make sure things are correct if the page is a special page
 		stub.reset();
