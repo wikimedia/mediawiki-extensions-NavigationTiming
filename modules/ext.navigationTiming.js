@@ -237,6 +237,7 @@
 
 		worker.onmessage = function ( e ) {
 			deferred.resolve( e.data );
+			worker.terminate();
 		};
 
 		worker.postMessage( false );
