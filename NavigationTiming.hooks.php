@@ -41,11 +41,6 @@ class NavigationTimingHooks {
 			'scripts' => [ 'tests/ext.navigationTiming.test.js' ],
 			'dependencies' => [
 				'ext.navigationTiming',
-				'schema.NavigationTiming',
-				'schema.SaveTiming',
-				'schema.ResourceTiming',
-				'schema.CentralNoticeTiming',
-				'schema.CpuBenchmark',
 				'ext.navigationTiming.rumSpeedIndex',
 			],
 			'localBasePath' => __DIR__ ,

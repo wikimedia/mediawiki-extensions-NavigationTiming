@@ -230,7 +230,7 @@
 				score: result
 			};
 
-			mw.loader.using( 'schema.CpuBenchmark' ).then( function () {
+			mw.loader.using( 'ext.eventLogging' ).then( function () {
 				mw.eventLog.logEvent( 'CpuBenchmark', event );
 			} );
 		} );
@@ -390,7 +390,7 @@
 				uri = url.substr( url.indexOf( '//' ) );
 
 				if ( resourceUri === uri ) {
-					mw.loader.using( 'schema.ResourceTiming' ).then( function () {
+					mw.loader.using( 'ext.eventLogging' ).then( function () {
 						/* We've found a ResourceTiming entry that corresponds to the top
 						article image, let's emit an EL event with the entry's data */
 						emitResourceTiming( resource, 'top-image' );
@@ -441,7 +441,7 @@
 				time: Math.round( mark.startTime )
 			};
 
-			mw.loader.using( 'schema.CentralNoticeTiming' ).then( function () {
+			mw.loader.using( 'ext.eventLogging' ).then( function () {
 				mw.eventLog.logEvent( 'CentralNoticeTiming', event );
 			} );
 		}
@@ -759,7 +759,7 @@
 		var oversamples, oversampleReasons;
 		// Maybe send SaveTiming beacon
 		mw.hook( 'postEdit' ).add( function () {
-			mw.loader.using( 'schema.SaveTiming' )
+			mw.loader.using( 'ext.eventLogging' )
 				.done( emitSaveTiming );
 		} );
 
@@ -854,9 +854,7 @@
 		// which may not've been set yet.
 		isInSample = mw.eventLog.inSample( mw.config.get( 'wgNavigationTimingSamplingFactor', 0 ) );
 		preloadedModules = [
-			'schema.NavigationTiming',
-			'schema.SaveTiming',
-			'schema.ResourceTiming',
+			'ext.eventLogging',
 			'ext.navigationTiming.rumSpeedIndex'
 		];
 		if ( isInSample ) {
