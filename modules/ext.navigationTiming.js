@@ -266,7 +266,7 @@
 			return;
 		}
 
-		isInSurveySample = mw.eventLog.inSample( mw.config.get( 'wgNavigationTimingSurveySamplingFactor', 0 ) );
+		isInSurveySample = mw.eventLog.randomTokenMatch( mw.config.get( 'wgNavigationTimingSurveySamplingFactor', 0 ) );
 
 		if ( !isInSurveySample ) {
 			return;
@@ -663,7 +663,7 @@
 		myGeo = Geo.country || Geo.country_code;
 
 		if ( myGeo in geos ) {
-			if ( mw.eventLog.inSample( geos[ myGeo ] ) ) {
+			if ( mw.eventLog.randomTokenMatch( geos[ myGeo ] ) ) {
 				geoOversamples.push( myGeo );
 			}
 		}
@@ -702,7 +702,7 @@
 		//
 		for ( userAgent in userAgents ) {
 			if ( navigator.userAgent.indexOf( userAgent ) >= 0 ) {
-				if ( mw.eventLog.inSample( userAgents[ userAgent ] ) ) {
+				if ( mw.eventLog.randomTokenMatch( userAgents[ userAgent ] ) ) {
 					userAgentSamples.push( userAgent );
 				}
 			}
@@ -730,7 +730,7 @@
 		//
 		for ( pageName in pageNames ) {
 			if ( currentPageName === pageName ) {
-				if ( mw.eventLog.inSample( pageNames[ pageName ] ) ) {
+				if ( mw.eventLog.randomTokenMatch( pageNames[ pageName ] ) ) {
 					pageNamesSamples.push( pageName );
 				}
 			}

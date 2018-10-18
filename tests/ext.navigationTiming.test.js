@@ -394,7 +394,7 @@
 		assert.propEqual( navigationTiming.testPageNameOversamples( { Foo: 1 } ),
 			[], 'Non-matching page name is not sampled' );
 
-		this.sandbox.stub( mw.eventLog, 'inSample', function () { return false; } );
+		this.sandbox.stub( mw.eventLog, 'randomTokenMatch', function () { return false; } );
 		// Stub the random functions so that they return values that will always
 		// result in inSample() being false
 		this.sandbox.stub( Math, 'random' );
@@ -403,9 +403,9 @@
 		window.crypto.getRandomValues.returns( [ 4294967295 ] );
 
 		assert.propEqual( navigationTiming.testGeoOversamples( { XX: 2 } ), [],
-			'When inSample returns false, resulting list of geo oversamples is empty' );
+			'When randomTokenMatch returns false, resulting list of geo oversamples is empty' );
 		assert.propEqual( navigationTiming.testUAOversamples( { Chrome: 2 } ), [],
-			'When inSample returns false, the resulting list of oversample reasons is empty' );
+			'When randomTokenMatch returns false, the resulting list of oversample reasons is empty' );
 	} );
 
 	QUnit.test( 'emitOversampleNavigationTiming tests', function ( assert ) {
