@@ -10,7 +10,7 @@
 
 	var visibilityEvent, visibilityChanged,
 		isInSample, preloadedModules, loadEL,
-		mediaWikiLoadEnd;
+		mediaWikiLoadEnd, surveyDisplayed;
 
 	/**
 	 * Get First Paint
@@ -262,9 +262,11 @@
 			isInSurveySample;
 
 		// QuickSurveys are only meant to be displayed on articles
-		if ( isMainPage || !isArticle || !isViewing || !exists || !surveyName ) {
+		if ( isMainPage || !isArticle || !isViewing || !exists || !surveyName || surveyDisplayed ) {
 			return;
 		}
+
+		surveyDisplayed = true;
 
 		isInSurveySample = mw.eventLog.randomTokenMatch( mw.config.get( 'wgNavigationTimingSurveySamplingFactor', 0 ) );
 
