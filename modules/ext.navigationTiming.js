@@ -88,6 +88,20 @@
 	}
 
 	/**
+	 * Emit Server Timing data coming from the performance timeline
+	 *
+	 * @params {Array} serverTimingEntries Array of PerformanceServerTiming objects
+	 */
+	function emitServerTiming( serverTimingEntries ) {
+		serverTimingEntries.forEach( function ( entry ) {
+			mw.loader.using( 'ext.eventLogging' ).then( function () {
+				entry.pageviewToken = mw.user.getPageviewToken();
+				mw.eventLog.logEvent( 'ServerTiming', entry );
+			} );
+		} );
+	}
+
+	/**
 	 * Get Navigation Timing Level 2 metrics
 	 */
 	function getLevel2Metrics() {
@@ -103,6 +117,10 @@
 
 		if ( navigationEntry ) {
 			res.transferSize = navigationEntry.transferSize;
+
+			if ( navigationEntry.serverTiming ) {
+				emitServerTiming( navigationEntry.serverTiming );
+			}
 		}
 
 		return res;

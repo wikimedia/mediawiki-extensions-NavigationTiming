@@ -71,7 +71,8 @@
 		"SaveTiming": 15396492,
 		"ResourceTiming": 18358918,
 		"CentralNoticeTiming": 18418286,
-		"CpuBenchmark": 18436118
+		"CpuBenchmark": 18436118,
+		"ServerTiming": 18622171
 	},
 	"config": {
 		"NavigationTimingSamplingFactor": false,
