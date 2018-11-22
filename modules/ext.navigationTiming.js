@@ -520,6 +520,10 @@
 			if ( typeof navigator.connection.effectiveType === 'string' ) {
 				event.netinfoEffectiveConnectionType = navigator.connection.effectiveType;
 			}
+
+			if ( typeof navigator.connection.type === 'string' ) {
+				event.netinfoConnectionType = navigator.connection.type;
+			}
 		}
 
 		if ( navigator.deviceMemory ) {

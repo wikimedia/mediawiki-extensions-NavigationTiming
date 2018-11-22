@@ -26,7 +26,8 @@
 			window.navigator = {
 				userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.12345.94 Safari/537.36',
 				connection: {
-					effectiveType: '4g'
+					effectiveType: '4g',
+					type: 'cellular'
 				},
 				deviceMemory: 8
 			};
@@ -80,6 +81,7 @@
 
 			// NetworkInfo API
 			netinfoEffectiveConnectionType: 'string',
+			netinfoConnectionType: 'string',
 
 			// Device Memory API
 			deviceMemory: 'number',
@@ -117,6 +119,8 @@
 
 		event = stub.getCall( 0 ).args[ 1 ];
 		assert.strictEqual( event.hasOwnProperty( 'netinfoEffectiveConnectionType' ),
+			false, 'When the connection object is not present, things still work' );
+		assert.strictEqual( event.hasOwnProperty( 'netinfoConnectionType' ),
 			false, 'When the connection object is not present, things still work' );
 		assert.strictEqual( event.hasOwnProperty( 'deviceMemory' ),
 			false, 'When the deviceMemory property is not present, things still work' );
