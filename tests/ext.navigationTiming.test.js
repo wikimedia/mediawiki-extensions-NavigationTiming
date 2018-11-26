@@ -764,4 +764,39 @@
 			} );
 		} );
 	} );
+
+	QUnit.test( 'emitServerTiming', function ( assert ) {
+		var logEventStub, perfStub,
+			clock = this.sandbox.useFakeTimers();
+
+		logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
+		logEventStub.returns( $.Deferred().promise() );
+
+		perfStub = this.sandbox.stub( window.performance, 'getEntriesByType' );
+		perfStub.withArgs( 'paint' ).returns( [] );
+		perfStub.withArgs( 'resource' ).returns( [] );
+		perfStub.withArgs( 'navigation' ).returns(
+			[ {
+				duration: 1902.7,
+				entryType: 'navigation',
+				initiatorType: 'navigation',
+				name: 'http://127.0.0.1:6081/wiki/Main_Page',
+				startTime: 0,
+				serverTiming: [ {
+					name: 'cache',
+					description: 'miss (0)',
+					duration: 0.0578
+				} ]
+			} ]
+		);
+
+		navigationTiming.reinit();
+		navigationTiming.emitNavTiming();
+
+		clock.tick( 10 );
+
+		assert.equal( mw.eventLog.logEvent.getCall( 1 ).args[ 1 ].name, 'cache', 'Name field from the performance timing entry is passed along' );
+		assert.equal( mw.eventLog.logEvent.getCall( 1 ).args[ 1 ].description, 'miss (0)', 'Description field from the performance timing entry is passed along' );
+		assert.equal( mw.eventLog.logEvent.getCall( 1 ).args[ 1 ].duration, 0.0578, 'Duration field from the performance timing entry is passed along' );
+	} );
 }() );
