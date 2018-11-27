@@ -10,7 +10,8 @@
 
 	var visibilityEvent, visibilityChanged,
 		isInSample, preloadedModules, loadEL,
-		mediaWikiLoadEnd, surveyDisplayed;
+		mediaWikiLoadEnd, surveyDisplayed,
+		cpuBenchmarkDone;
 
 	/**
 	 * Get First Paint
@@ -207,9 +208,11 @@
 		var blob, worker, work,
 			deferred = $.Deferred();
 
-		if ( !window.Blob || !window.URL || !window.URL.createObjectURL || !window.Worker || !window.performance ) {
+		if ( cpuBenchmarkDone || !window.Blob || !window.URL || !window.URL.createObjectURL || !window.Worker || !window.performance ) {
 			return deferred.resolve();
 		}
+
+		cpuBenchmarkDone = true;
 
 		function onMessage() {
 			var i,
@@ -296,10 +299,8 @@
 			mw.extQuickSurveys.showSurvey( surveyName );
 		} );
 
-		// If we're sampled for the survey, run a CPU microbenchmark
-		// We might end up recording that for all RUM measurements if it
-		// proves useful, but for now let's only waste CPU cycles for
-		// survey samples.
+		// If we're sampled for the survey, run the CPU microbenchmark
+		// unconditionally, we we might need it for machine learning models.
 		runCpuBenchmark();
 	}
 
@@ -561,6 +562,11 @@
 		);
 
 		mw.eventLog.logEvent( 'NavigationTiming', event );
+
+		// Run a CPU microbenchmark for a portion of measurements
+		if ( mw.eventLog.randomTokenMatch( mw.config.get( 'wgNavigationTimingCpuBenchmarkSamplingFactor', 0 ) ) ) {
+			runCpuBenchmark();
+		}
 	}
 
 	/**

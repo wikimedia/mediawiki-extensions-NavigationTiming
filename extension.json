@@ -79,7 +79,8 @@
 		"NavigationTimingFirstPaintAsiaSamplingFactor": false,
 		"NavigationTimingOversampleFactor": false,
 		"NavigationTimingSurveySamplingFactor": false,
-		"NavigationTimingSurveyName": false
+		"NavigationTimingSurveyName": false,
+		"NavigationTimingCpuBenchmarkSamplingFactor": false
 	},
 	"manifest_version": 1
 }
