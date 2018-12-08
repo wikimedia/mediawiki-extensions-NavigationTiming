@@ -94,10 +94,16 @@
 	 * @params {Array} serverTimingEntries Array of PerformanceServerTiming objects
 	 */
 	function emitServerTiming( serverTimingEntries ) {
-		serverTimingEntries.forEach( function ( entry ) {
+		serverTimingEntries.forEach( function ( serverTimingEntry ) {
 			mw.loader.using( 'ext.eventLogging' ).then( function () {
-				entry.pageviewToken = mw.user.getPageviewToken();
-				mw.eventLog.logEvent( 'ServerTiming', entry );
+				var event = {
+					pageviewToken: mw.user.getPageviewToken(),
+					description: serverTimingEntry.description,
+					name: serverTimingEntry.name,
+					duration: serverTimingEntry.duration
+				};
+
+				mw.eventLog.logEvent( 'ServerTiming', event );
 			} );
 		} );
 	}
