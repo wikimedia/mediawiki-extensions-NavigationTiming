@@ -76,7 +76,6 @@
 	},
 	"config": {
 		"NavigationTimingSamplingFactor": false,
-		"NavigationTimingFirstPaintAsiaSamplingFactor": false,
 		"NavigationTimingOversampleFactor": false,
 		"NavigationTimingSurveySamplingFactor": false,
 		"NavigationTimingSurveyName": false,
