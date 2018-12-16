@@ -95,16 +95,14 @@
 	 */
 	function emitServerTiming( serverTimingEntries ) {
 		serverTimingEntries.forEach( function ( serverTimingEntry ) {
-			mw.loader.using( 'ext.eventLogging' ).then( function () {
-				var event = {
-					pageviewToken: mw.user.getPageviewToken(),
-					description: serverTimingEntry.description,
-					name: serverTimingEntry.name,
-					duration: serverTimingEntry.duration
-				};
+			var event = {
+				pageviewToken: mw.user.getPageviewToken(),
+				description: serverTimingEntry.description,
+				name: serverTimingEntry.name,
+				duration: serverTimingEntry.duration
+			};
 
-				mw.eventLog.logEvent( 'ServerTiming', event );
-			} );
+			mw.eventLog.logEvent( 'ServerTiming', event );
 		} );
 	}
 
@@ -257,9 +255,7 @@
 				score: result
 			};
 
-			mw.loader.using( 'ext.eventLogging' ).then( function () {
-				mw.eventLog.logEvent( 'CpuBenchmark', event );
-			} );
+			mw.eventLog.logEvent( 'CpuBenchmark', event );
 		} );
 
 		worker.onmessage = function ( e ) {
@@ -415,11 +411,9 @@
 				uri = url.substr( url.indexOf( '//' ) );
 
 				if ( resourceUri === uri ) {
-					mw.loader.using( 'ext.eventLogging' ).then( function () {
-						/* We've found a ResourceTiming entry that corresponds to the top
-						article image, let's emit an EL event with the entry's data */
-						emitResourceTiming( resource, 'top-image' );
-					} );
+					// We've found a ResourceTiming entry that corresponds to the top
+					// article image, let's emit an EL event with the entry's data
+					emitResourceTiming( resource, 'top-image' );
 				}
 			} );
 		} );
@@ -466,9 +460,7 @@
 				time: Math.round( mark.startTime )
 			};
 
-			mw.loader.using( 'ext.eventLogging' ).then( function () {
-				mw.eventLog.logEvent( 'CentralNoticeTiming', event );
-			} );
+			mw.eventLog.logEvent( 'CentralNoticeTiming', event );
 		}
 	}
 
@@ -788,10 +780,7 @@
 	function loadCallback() {
 		var oversamples, oversampleReasons;
 		// Maybe send SaveTiming beacon
-		mw.hook( 'postEdit' ).add( function () {
-			mw.loader.using( 'ext.eventLogging' )
-				.done( emitSaveTiming );
-		} );
+		mw.hook( 'postEdit' ).add( emitSaveTiming );
 
 		// Stop listening for 'visibilitychange' events
 		$( document ).off( visibilityEvent, setVisibilityChanged );
@@ -884,7 +873,6 @@
 		// which may not've been set yet.
 		isInSample = mw.eventLog.inSample( mw.config.get( 'wgNavigationTimingSamplingFactor', 0 ) );
 		preloadedModules = [
-			'ext.eventLogging',
 			'ext.navigationTiming.rumSpeedIndex'
 		];
 		if ( isInSample ) {
