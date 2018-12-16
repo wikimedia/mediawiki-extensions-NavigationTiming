@@ -314,11 +314,12 @@
 				redirectCount: 0
 			}
 		} );
+		mw.config.set( 'wgNavigationTimingSamplingFactor', 1 );
 		navigationTiming.reinit();
 
 		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		stub.returns( $.Deferred().promise() );
-		navigationTiming.emitNavTiming();
+		navigationTiming.loadCallback();
 
 		clock.tick( 10 );
 
@@ -330,11 +331,12 @@
 			clock = this.sandbox.useFakeTimers();
 
 		this.sandbox.stub( window, 'performance', undefined );
+		mw.config.set( 'wgNavigationTimingSamplingFactor', 1 );
 		navigationTiming.reinit();
 
 		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		stub.returns( $.Deferred().promise() );
-		navigationTiming.emitNavTiming();
+		navigationTiming.loadCallback();
 
 		clock.tick( 10 );
 
@@ -617,7 +619,7 @@
 
 		clock.tick( 10 );
 
-		assert.equal( window.performance.getEntriesByType.callCount, 8,
+		assert.equal( window.performance.getEntriesByType.callCount, 7,
 			'getEntriesByType was called the expected amount of times' );
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].firstPaint,
 			990, 'firstPaint value was set using the Paint Timing API call' );
@@ -628,21 +630,18 @@
 
 	} );
 
-	QUnit.test( 'emitResourceTiming', function ( assert ) {
-		var logEventStub, resource;
-
-		logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
-		logEventStub.returns( $.Deferred().promise() );
+	QUnit.test( 'makeResourceTimingEvent', function ( assert ) {
+		var event, resource;
 
 		resource = { name: 'foo', invalidField: 'bar', startTime: 1234.56 };
 
 		navigationTiming.reinit();
-		navigationTiming.emitResourceTiming( resource, 'test' );
+		event = navigationTiming.makeResourceTimingEvent( resource, 'test' );
 
-		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].name, 'foo', 'Fields from the resource are passed along' );
-		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].label, 'test', 'Custom label is set' );
-		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].invalidField, undefined, 'Only whitelisted fields are included' );
-		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].startTime, 1235, 'Float values are rounded' );
+		assert.equal( event.name, 'foo', 'Fields from the resource are passed along' );
+		assert.equal( event.label, 'test', 'Custom label is set' );
+		assert.equal( event.invalidField, undefined, 'Only whitelisted fields are included' );
+		assert.equal( event.startTime, 1235, 'Float values are rounded' );
 	} );
 
 	QUnit.test( 'emitTopImageResourceTiming', function ( assert ) {
@@ -748,7 +747,7 @@
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].time, 8896, 'Event with rounded numerical value' );
 	} );
 
-	QUnit.test( 'runCpuBenchmark', function ( assert ) {
+	QUnit.test( 'emitCpuBenchmark', function ( assert ) {
 		var logEventStub,
 			done = assert.async();
 
@@ -756,7 +755,7 @@
 		logEventStub.returns( $.Deferred().resolve() );
 
 		navigationTiming.reinit();
-		navigationTiming.runCpuBenchmark().then( function () {
+		navigationTiming.emitCpuBenchmark().then( function () {
 			setTimeout( function () {
 				assert.equal( mw.eventLog.logEvent.callCount, 1, 'CpuBenchmark event happened' );
 				assert.ok( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].score > 0, 'Event with non-zero score' );
@@ -790,7 +789,7 @@
 		);
 
 		navigationTiming.reinit();
-		navigationTiming.emitNavTiming();
+		navigationTiming.emitServerTiming();
 
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].name, 'cache', 'Name field from the performance timing entry is passed along' );
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].description, 'miss (0)', 'Description field from the performance timing entry is passed along' );

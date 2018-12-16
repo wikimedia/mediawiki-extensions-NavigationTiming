@@ -9,24 +9,27 @@
 	'use strict';
 
 	var visibilityEvent, visibilityChanged,
-		isInSample, preloadedModules, loadEL,
+		isInSample, preloadedModules, navtimingDeps,
 		mediaWikiLoadEnd, surveyDisplayed,
 		cpuBenchmarkDone;
 
 	/**
-	 * Get First Paint
+	 * Get Paint Timing metrics for Schema:NavigationTiming.
+	 *
+	 * - https://developer.mozilla.org/en-US/docs/Web/API/Performance/getEntriesByType
+	 * - https://developer.mozilla.org/en-US/docs/Web/API/PerformancePaintTiming
+	 *
+	 * @return {Object}
 	 */
-	function getFirstPaint() {
+	function getPaintTiming() {
 		var chromeLoadTimes, paintEntries,
 			timing = window.performance && performance.timing,
 			res = {};
 
 		try {
-			// getEntriesByType has really hit or miss support:
-			// - https://developer.mozilla.org/en-US/docs/Web/API/Performance/getEntriesByType
-			// - https://developer.mozilla.org/en-US/docs/Web/API/PerformancePaintTiming
 			paintEntries = performance.getEntriesByType( 'paint' );
 		} catch ( e ) {
+			// Support: Safari < 11 (getEntriesByType missing)
 			paintEntries = [];
 		}
 
@@ -54,18 +57,19 @@
 	}
 
 	/**
-	 * Get RumSpeedIndex
+	 * Get RumSpeedIndex for Schema:NavigationTiming.
+	 *
+	 * @return {Object}
 	 */
 	function getRumSpeedIndex() {
 		var paintEntries, resourceEntries, ptFirstPaint, rumSpeedIndex,
 			res = {};
 
 		try {
-			// getEntriesByType has really hit or miss support:
-			// https://developer.mozilla.org/en-US/docs/Web/API/Performance/getEntriesByType
 			paintEntries = performance.getEntriesByType( 'paint' );
 			resourceEntries = performance.getEntriesByType( 'resource' );
 		} catch ( e ) {
+			// Support: Safari < 11 (getEntriesByType missing)
 			resourceEntries = [];
 			paintEntries = [];
 		}
@@ -89,54 +93,74 @@
 	}
 
 	/**
-	 * Emit Server Timing data coming from the performance timeline
+	 * Emit ServerTiming events for Server Timing data from the performance timeline
 	 *
-	 * @params {Array} serverTimingEntries Array of PerformanceServerTiming objects
+	 * - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Server-Timing
+	 * - https://developer.mozilla.org/en-US/docs/Web/API/PerformanceServerTiming
+	 *
+	 * @see https://meta.wikimedia.org/wiki/Schema:ServerTiming
 	 */
-	function emitServerTiming( serverTimingEntries ) {
-		serverTimingEntries.forEach( function ( serverTimingEntry ) {
-			var event = {
-				pageviewToken: mw.user.getPageviewToken(),
-				description: serverTimingEntry.description,
-				name: serverTimingEntry.name,
-				duration: serverTimingEntry.duration
-			};
+	function emitServerTiming() {
+		var navigationEntry;
+		try {
+			navigationEntry = performance.getEntriesByType( 'navigation' )[ 0 ];
+		} catch ( e ) {
+			// Support: Safari < 11 (getEntriesByType missing)
+			navigationEntry = false;
+		}
 
-			mw.eventLog.logEvent( 'ServerTiming', event );
-		} );
+		if ( navigationEntry && navigationEntry.serverTiming ) {
+			navigationEntry.serverTiming.forEach( function ( serverTimingEntry ) {
+				var event = {
+					pageviewToken: mw.user.getPageviewToken(),
+					description: serverTimingEntry.description,
+					name: serverTimingEntry.name,
+					duration: serverTimingEntry.duration
+				};
+
+				mw.eventLog.logEvent( 'ServerTiming', event );
+			} );
+		}
 	}
 
 	/**
-	 * Get Navigation Timing Level 2 metrics
+	 * Get Navigation Timing Level 2 metrics for Schema:NavigationTiming.
+	 *
+	 * As of Navigation Timing Level 2, navigation timing information is also
+	 * exposed via the Peformance Timeline, where PerformanceNavigationTiming
+	 * extends PerformanceResourceTiming.
+	 *
+	 * We currently only use this for Resource Timing information about the main
+	 * document resource. For the bulk of the Navigation Timing metrics, we use
+	 * the Level 1 API, see #getNavTiming().
+	 *
+	 * - https://www.w3.org/TR/navigation-timing-2/#sec-PerformanceNavigationTiming
+	 * - https://www.w3.org/TR/resource-timing-2/#dom-performanceresourcetiming
+	 *
+	 * @return {Object}
 	 */
-	function getLevel2Metrics() {
+	function getNavTimingLevel2() {
 		var navigationEntry, res = {};
-
 		try {
-			// getEntriesByType has really hit or miss support:
-			// https://developer.mozilla.org/en-US/docs/Web/API/Performance/getEntriesByType
 			navigationEntry = performance.getEntriesByType( 'navigation' )[ 0 ];
 		} catch ( e ) {
+			// Support: Safari < 11 (getEntriesByType missing)
 			navigationEntry = false;
 		}
 
 		if ( navigationEntry ) {
 			res.transferSize = navigationEntry.transferSize;
-
-			if ( navigationEntry.serverTiming ) {
-				emitServerTiming( navigationEntry.serverTiming );
-			}
 		}
 
 		return res;
 	}
 
 	/**
-	 * Get Navigation Timing data from the browser
+	 * Get Navigation Timing Level 1 metrics for Schema:NavigationTiming.
 	 *
-	 * @return {Object} timingData with normalized fields
+	 * @return {Object}
 	 */
-	function getNavTiming() {
+	function getNavTimingLevel1() {
 		var timing = window.performance && performance.timing,
 			navStart = timing && timing.navigationStart,
 			timingData = {};
@@ -200,15 +224,19 @@
 		timingData.gaps += timing.requestStart - timing.connectEnd;
 		timingData.gaps += timing.loadEventStart - timing.domComplete;
 
-		timingData.pageviewToken = mw.user.getPageviewToken();
-
 		return timingData;
 	}
 
 	/**
-	 * Runs a CPU benchmark inside a Worker, off the main thread
+	 * Run a CPU benchmark inside a Worker (off the main thread) and
+	 * emit the CpuBenchmark event afterward.
+	 *
+	 * This can be called from both showPerformanceSurvey() and onLoadComplete(),
+	 * but it will only run the benchmark and emit the event once.
+	 *
+	 * @see https://meta.wikimedia.org/wiki/Schema:CpuBenchmark
 	 */
-	function runCpuBenchmark() {
+	function emitCpuBenchmark() {
 		var blob, worker, work,
 			deferred = $.Deferred();
 
@@ -223,7 +251,8 @@
 				startTime,
 				amount = 100000000;
 
-			// IE11 doesn't have window.performance exposed inside workers
+			// Global `performance` was originally window-only, and later added to workers.
+			// Support: Edge, IE 11, Safari < 11, Mobile Safari < 10.
 			if ( !self.performance ) {
 				postMessage( false );
 				return;
@@ -268,7 +297,8 @@
 		return deferred;
 	}
 
-	/** Display a performance survey using the QuickSurveys extension
+	/**
+	 * Display a performance survey using the QuickSurveys extension
 	 * if the extension is present and based on a sub-sampling factor.
 	 *
 	 * The wgNavigationTimingSurveySamplingFactor sampling ratio is
@@ -302,17 +332,17 @@
 		} );
 
 		// If we're sampled for the survey, run the CPU microbenchmark
-		// unconditionally, we we might need it for machine learning models.
-		runCpuBenchmark();
+		// unconditionally, we might need it for machine learning models.
+		emitCpuBenchmark();
 	}
 
 	/**
-	 * Sends a labelled ResourceTiming entry to EventLogging
+	 * Turn a labelled ResourceTiming entry into a Schema:ResourceTiming event.
 	 *
 	 * @params {ResourceTiming|PerformanceResourceTiming} resource Resource coming from the ResourceTiming API
 	 * @params {string} label Label for the resource
 	 */
-	function emitResourceTiming( resource, label ) {
+	function makeResourceTimingEvent( resource, label ) {
 		var event, key, value,
 			fields = [
 				'startTime',
@@ -354,11 +384,13 @@
 			}
 		}
 
-		return mw.eventLog.logEvent( 'ResourceTiming', event );
+		return event;
 	}
 
 	/**
 	 * If the current page has images, records the ResourceTiming data of the top image
+	 *
+	 * @see https://meta.wikimedia.org/wiki/Schema:ResourceTiming
 	 */
 	function emitTopImageResourceTiming() {
 		var img,
@@ -367,6 +399,7 @@
 			urls = [];
 
 		if ( !window.performance || !performance.getEntriesByType ) {
+			// Support: Safari < 11 (getEntriesByType missing)
 			return;
 		}
 
@@ -413,7 +446,7 @@
 				if ( resourceUri === uri ) {
 					// We've found a ResourceTiming entry that corresponds to the top
 					// article image, let's emit an EL event with the entry's data
-					emitResourceTiming( resource, 'top-image' );
+					mw.eventLog.logEvent( 'ResourceTiming', makeResourceTimingEvent( resource, 'top-image' ) );
 				}
 			} );
 		} );
@@ -421,6 +454,8 @@
 
 	/**
 	 * If the current page displays a CentralNotice banner, records its display time
+	 *
+	 * @see https://meta.wikimedia.org/wiki/Schema:CentralNoticeTiming
 	 */
 	function emitCentralNoticeTiming( existingObserver ) {
 		var event, mark, marks, observer;
@@ -464,29 +499,35 @@
 		}
 	}
 
+	/** @return {boolean} */
+	function isRegularNavigation() {
+		var TYPE_NAVIGATE = 0;
+
+		// Current navigation is TYPE_NAVIGATE (e.g. not TYPE_RELOAD)
+		// https://developer.mozilla.org/en-US/docs/Web/API/Performance/navigation
+		// performance.navigation is part of Navigation Timing Level 1.
+		// Under Navigation Timing Level 2, it is available as a string
+		// under PerformanceNavigationTiming#type.
+		return window.performance &&
+			performance.timing &&
+			performance.navigation &&
+			performance.navigation.type === TYPE_NAVIGATE;
+	}
+
 	/**
-	 * Collect the actual event data and send the EventLogging beacon
+	 * Collect the page load performance data and send the NavigationTiming beacon.
 	 *
+	 * Should not be called unless at least the Navigation Timing Level 1 API is
+	 * available and isRegularNavigation() returns true.
+	 *
+	 * @see https://meta.wikimedia.org/wiki/Schema:NavigationTiming
 	 * @params {string|boolean} oversample Either a string that indicates the reason
 	 *     that an oversample was collected, or boolean
 	 *     false to indicate that it's not an oversample
 	 */
 	function emitNavigationTimingWithOversample( oversample ) {
 		var mobileMode,
-			TYPE_NAVIGATE = 0,
 			event = {};
-
-		// Minimal requirements:
-		// - W3C Navigation Timing Level 1 (performance.timing && performance.navigation)
-		// - Current navigation is TYPE_NAVIGATE (e.g. not TYPE_RELOAD)
-		if ( !window.performance ||
-			!performance.timing ||
-			!performance.navigation ||
-			performance.navigation.type !== TYPE_NAVIGATE
-		) {
-			// Don't send a beacon.
-			return;
-		}
 
 		// No need to wait for the RUM metrics to be recorded before showing the survey
 		showPerformanceSurvey();
@@ -522,6 +563,7 @@
 		}
 
 		// Properties: meta
+		event.pageviewToken = mw.user.getPageviewToken();
 		event.isOversample = oversample !== false;
 		if ( oversample ) {
 			event.oversampleReason = JSON.stringify( oversample );
@@ -547,24 +589,14 @@
 			event.deviceMemory = navigator.deviceMemory;
 		}
 
-		emitCentralNoticeTiming();
-		emitTopImageResourceTiming();
-
 		$.extend( event,
-			// Properties: Navigation Timing API
-			getNavTiming(),
-			// Properties: Paint Timing API
-			getFirstPaint(),
+			getNavTimingLevel1(),
+			getPaintTiming(),
 			getRumSpeedIndex(),
-			getLevel2Metrics()
+			getNavTimingLevel2()
 		);
 
 		mw.eventLog.logEvent( 'NavigationTiming', event );
-
-		// Run a CPU microbenchmark for a portion of measurements
-		if ( mw.eventLog.randomTokenMatch( mw.config.get( 'wgNavigationTimingCpuBenchmarkSamplingFactor', 0 ) ) ) {
-			runCpuBenchmark();
-		}
 	}
 
 	/**
@@ -575,7 +607,9 @@
 	}
 
 	/**
-	 * Emits an event with the time required to save an edit
+	 * Emit a SaveTiming event if this was the page load following an edit submission.
+	 *
+	 * @see https://meta.wikimedia.org/wiki/Schema:SaveTiming
 	 */
 	function emitSaveTiming() {
 		var timing = window.performance && performance.timing,
@@ -824,19 +858,34 @@
 			return;
 		}
 
-		if ( !loadEL ) {
+		if ( !navtimingDeps ) {
 			// Start lazy-loading modules if we haven't already.
-			loadEL = mw.loader.using( preloadedModules );
+			// (e.g. in case of oversampling)
+			navtimingDeps = mw.loader.using( preloadedModules );
 		}
 
-		if ( isInSample ) {
-			loadEL.done( emitNavigationTiming );
-		}
+		if ( isRegularNavigation() ) {
+			// These are events separate from NavigationTiming that emit under the
+			// same circumstances as navigation timing sampling and oversampling.
+			emitCentralNoticeTiming();
+			emitTopImageResourceTiming();
 
-		if ( oversampleReasons.length ) {
-			loadEL.done( function () {
-				emitNavigationTimingWithOversample( oversampleReasons );
-			} );
+			emitServerTiming();
+
+			// Run a CPU microbenchmark for a portion of measurements
+			if ( mw.eventLog.randomTokenMatch( mw.config.get( 'wgNavigationTimingCpuBenchmarkSamplingFactor', 0 ) ) ) {
+				emitCpuBenchmark();
+			}
+
+			if ( isInSample ) {
+				navtimingDeps.done( emitNavigationTiming );
+			}
+
+			if ( oversampleReasons.length ) {
+				navtimingDeps.done( function () {
+					emitNavigationTimingWithOversample( oversampleReasons );
+				} );
+			}
 		}
 	}
 
@@ -876,7 +925,7 @@
 			'ext.navigationTiming.rumSpeedIndex'
 		];
 		if ( isInSample ) {
-			loadEL = mw.loader.using( preloadedModules );
+			navtimingDeps = mw.loader.using( preloadedModules );
 		}
 
 		// Do the rest after loadEventEnd
@@ -894,7 +943,8 @@
 		module.exports = {
 			emitNavTiming: emitNavigationTiming,
 			emitNavigationTimingWithOversample: emitNavigationTimingWithOversample,
-			emitResourceTiming: emitResourceTiming,
+			makeResourceTimingEvent: makeResourceTimingEvent,
+			emitServerTiming: emitServerTiming,
 			emitTopImageResourceTiming: emitTopImageResourceTiming,
 			emitCentralNoticeTiming: emitCentralNoticeTiming,
 			testGeoOversamples: testGeoOversamples,
@@ -902,7 +952,7 @@
 			testPageNameOversamples: testPageNameOversamples,
 			loadCallback: loadCallback,
 			onMwLoadEnd: onMwLoadEnd,
-			runCpuBenchmark: runCpuBenchmark,
+			emitCpuBenchmark: emitCpuBenchmark,
 			reinit: function () {
 				// Call manually because, during test execution, actual
 				// onLoadComplete will probably not have happened yet.
@@ -912,7 +962,7 @@
 				// so that we  can test loadCallback()
 				visibilityChanged = false;
 				isInSample = mw.eventLog.inSample( mw.config.get( 'wgNavigationTimingSamplingFactor', 0 ) );
-				loadEL = mw.loader.using( preloadedModules );
+				navtimingDeps = mw.loader.using( preloadedModules );
 			}
 		};
 	}
