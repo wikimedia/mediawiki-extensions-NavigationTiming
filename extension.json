@@ -33,7 +33,7 @@
 			],
 			"dependencies": [
 				"jquery.cookie",
-				"ext.eventLogging.subscriber",
+				"ext.eventLogging",
 				"mediawiki.user"
 			],
 			"targets": [
