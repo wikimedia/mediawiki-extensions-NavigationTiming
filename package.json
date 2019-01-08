@@ -1,13 +1,13 @@
 {
   "private": true,
   "scripts": {
-    "test": "grunt test"
+    "test": "grunt test && eslint ."
   },
   "devDependencies": {
     "eslint-config-wikimedia": "0.5.0",
     "grunt": "1.0.3",
     "grunt-banana-checker": "0.6.0",
-    "grunt-eslint": "20.1.0",
+    "eslint": "4.19.1",
     "grunt-jsonlint": "1.1.0"
   },
   "eslintIgnore": [
