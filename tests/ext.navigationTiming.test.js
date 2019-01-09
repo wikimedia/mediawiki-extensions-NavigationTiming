@@ -3,6 +3,7 @@
 	'use strict';
 
 	var navigationTiming = require( 'ext.navigationTiming' ),
+		hasOwn = Object.hasOwnProperty,
 		// https://www.w3.org/TR/navigation-timing-2/#the-performancenavigation-interface
 		TYPE_NAVIGATE = 0,
 		TYPE_RELOAD = 1;
@@ -118,11 +119,11 @@
 		clock.tick( 10 );
 
 		event = stub.getCall( 0 ).args[ 1 ];
-		assert.strictEqual( event.hasOwnProperty( 'netinfoEffectiveConnectionType' ),
+		assert.strictEqual( hasOwn.call( event, 'netinfoEffectiveConnectionType' ),
 			false, 'When the connection object is not present, things still work' );
-		assert.strictEqual( event.hasOwnProperty( 'netinfoConnectionType' ),
+		assert.strictEqual( hasOwn.call( event, 'netinfoConnectionType' ),
 			false, 'When the connection object is not present, things still work' );
-		assert.strictEqual( event.hasOwnProperty( 'deviceMemory' ),
+		assert.strictEqual( hasOwn.call( event, 'deviceMemory' ),
 			false, 'When the deviceMemory property is not present, things still work' );
 
 		// Make sure things are correct if the page is a special page
@@ -136,9 +137,9 @@
 		event = stub.getCall( 0 ).args[ 1 ];
 		assert.strictEqual( event.mwSpecialPageName, 'SpecialPageNameTest',
 			'Special page name is correct in the emitted object' );
-		assert.strictEqual( event.hasOwnProperty( 'namespaceId' ), false,
+		assert.strictEqual( hasOwn.call( event, 'namespaceId' ), false,
 			'namespaceId is not included for Special Pages' );
-		assert.strictEqual( event.hasOwnProperty( 'revId' ), false,
+		assert.strictEqual( hasOwn.call( event, 'revId' ), false,
 			'revId is not included for Special pages' );
 	} );
 
@@ -400,7 +401,9 @@
 		assert.propEqual( navigationTiming.testPageNameOversamples( { Foo: 1 } ),
 			[], 'Non-matching page name is not sampled' );
 
-		this.sandbox.stub( mw.eventLog, 'randomTokenMatch', function () { return false; } );
+		this.sandbox.stub( mw.eventLog, 'randomTokenMatch', function () {
+			return false;
+		} );
 		// Stub the random functions so that they return values that will always
 		// result in inSample() being false
 		this.sandbox.stub( Math, 'random' );

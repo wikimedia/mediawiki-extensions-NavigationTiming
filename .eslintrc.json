@@ -1,8 +1,7 @@
 {
 	"root": true,
-	"extends": "wikimedia",
+	"extends": "wikimedia/client",
 	"env": {
-		"browser": true,
 		"commonjs": true
 	},
 	"globals": {

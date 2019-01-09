@@ -240,7 +240,13 @@
 		var blob, worker, work,
 			deferred = $.Deferred();
 
-		if ( cpuBenchmarkDone || !window.Blob || !window.URL || !window.URL.createObjectURL || !window.Worker || !window.performance ) {
+		if ( cpuBenchmarkDone ||
+			!window.Blob ||
+			!window.URL ||
+			!window.URL.createObjectURL ||
+			!window.Worker ||
+			!window.performance
+		) {
 			return deferred.resolve();
 		}
 
@@ -339,7 +345,7 @@
 	/**
 	 * Turn a labelled ResourceTiming entry into a Schema:ResourceTiming event.
 	 *
-	 * @params {ResourceTiming|PerformanceResourceTiming} resource Resource coming from the ResourceTiming API
+	 * @params {ResourceTiming|PerformanceResourceTiming} resource From the ResourceTiming API
 	 * @params {string} label Label for the resource
 	 */
 	function makeResourceTimingEvent( resource, label ) {
@@ -375,7 +381,7 @@
 		for ( key in resource ) {
 			value = resource[ key ];
 
-			if ( fields.includes( key ) ) {
+			if ( fields.indexOf( key ) !== -1 ) {
 				if ( typeof value === 'number' ) {
 					event[ key ] = Math.round( value );
 				} else {
