@@ -66,20 +66,34 @@
 			"NavigationTimingHooks::onResourceLoaderGetConfigVars"
 		]
 	},
-	"EventLoggingSchemas": {
-		"NavigationTiming": 18636169,
-		"SaveTiming": 15396492,
-		"ResourceTiming": 18358918,
-		"CentralNoticeTiming": 18418286,
-		"CpuBenchmark": 18436118,
-		"ServerTiming": 18622171
+	"attributes": {
+		"EventLogging": {
+			"Schemas": {
+				"NavigationTiming": 18636169,
+				"SaveTiming": 15396492,
+				"ResourceTiming": 18358918,
+				"CentralNoticeTiming": 18418286,
+				"CpuBenchmark": 18436118,
+				"ServerTiming": 18622171
+			}
+		}
 	},
 	"config": {
-		"NavigationTimingSamplingFactor": false,
-		"NavigationTimingOversampleFactor": false,
-		"NavigationTimingSurveySamplingFactor": false,
-		"NavigationTimingSurveyName": false,
-		"NavigationTimingCpuBenchmarkSamplingFactor": false
+		"NavigationTimingSamplingFactor": {
+			"value": false
+		},
+		"NavigationTimingOversampleFactor": {
+			"value": false
+		},
+		"NavigationTimingSurveySamplingFactor": {
+			"value": false
+		},
+		"NavigationTimingSurveyName": {
+			"value": false
+		},
+		"NavigationTimingCpuBenchmarkSamplingFactor": {
+			"value": false
+		}
 	},
-	"manifest_version": 1
+	"manifest_version": 2
 }
