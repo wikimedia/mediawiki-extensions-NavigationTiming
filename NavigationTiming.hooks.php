@@ -38,16 +38,4 @@ class NavigationTimingHooks {
 		}
 		$vars[ 'wgNavigationTimingOversampleFactor' ] = $oversampleFactor;
 	}
-
-	public static function onResourceLoaderTestModules( array &$modules, ResourceLoader &$rl ) {
-		$modules['qunit']['ext.navigationTiming.test'] = [
-			'scripts' => [ 'tests/ext.navigationTiming.test.js' ],
-			'dependencies' => [
-				'ext.navigationTiming',
-				'ext.navigationTiming.rumSpeedIndex',
-			],
-			'localBasePath' => __DIR__ ,
-			'remoteExtPath' => 'NavigationTiming',
-		];
-	}
 }

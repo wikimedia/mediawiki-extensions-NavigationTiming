@@ -26,6 +26,10 @@
 	"AutoloadClasses": {
 		"NavigationTimingHooks": "NavigationTiming.hooks.php"
 	},
+	"ResourceFileModulePaths": {
+		"localBasePath": "modules",
+		"remoteExtPath": "NavigationTiming/modules"
+	},
 	"ResourceModules": {
 		"ext.navigationTiming": {
 			"scripts": [
@@ -51,16 +55,20 @@
 			]
 		}
 	},
-	"ResourceFileModulePaths": {
-		"localBasePath": "modules",
-		"remoteExtPath": "NavigationTiming/modules"
+	"QUnitTestModule": {
+		"localBasePath": "",
+		"remoteExtPath": "NavigationTiming",
+		"scripts": [
+			"tests/ext.navigationTiming.test.js"
+		],
+		"dependencies": [
+			"ext.navigationTiming",
+			"ext.navigationTiming.rumSpeedIndex"
+		]
 	},
 	"Hooks": {
 		"BeforePageDisplay": [
 			"NavigationTimingHooks::onBeforePageDisplay"
-		],
-		"ResourceLoaderTestModules": [
-			"NavigationTimingHooks::onResourceLoaderTestModules"
 		],
 		"ResourceLoaderGetConfigVars": [
 			"NavigationTimingHooks::onResourceLoaderGetConfigVars"
