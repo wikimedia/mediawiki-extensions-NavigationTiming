@@ -579,27 +579,12 @@
 
 		stub = this.sandbox.stub( window.performance, 'getEntriesByType' );
 
-		stub.withArgs( 'resource' ).returns(
-			[ {
-				duration: 1902.7,
-				entryType: 'resource',
-				name: 'http://dev.wiki.local.wmftest.net/w/resources/assets/poweredby_mediawiki_88x31.png',
-				startTime: 8895.899999999983
-			} ]
-		);
-
 		stub.withArgs( 'paint' ).returns(
 			[ {
 				duration: 0,
 				entryType: 'paint',
 				name: 'first-paint',
 				startTime: 990.3000454
-			},
-			{
-				duration: 0,
-				entryType: 'paint',
-				name: 'first-contentful-paint',
-				startTime: 1000.10101
 			} ]
 		);
 
@@ -622,12 +607,10 @@
 
 		clock.tick( 10 );
 
-		assert.equal( window.performance.getEntriesByType.callCount, 7,
+		assert.equal( window.performance.getEntriesByType.callCount, 2,
 			'getEntriesByType was called the expected amount of times' );
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].firstPaint,
 			990, 'firstPaint value was set using the Paint Timing API call' );
-		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].RSI,
-			990, 'RSI value was set using the rumSpeedIndex library firstPaint fallback' );
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].transferSize,
 			1234, 'transferSize value was set using the Navigtion Timing Level 2 call' );
 
@@ -797,5 +780,67 @@
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].name, 'cache', 'Name field from the performance timing entry is passed along' );
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].description, 'miss (0)', 'Description field from the performance timing entry is passed along' );
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].duration, 0.0578, 'Duration field from the performance timing entry is passed along' );
+	} );
+
+	QUnit.test( 'emitRUMSpeedIndex', function ( assert ) {
+		var stub, logEventStub,
+			done = assert.async();
+
+		logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
+		logEventStub.returns( $.Deferred().resolve() );
+
+		this.sandbox.stub( window, 'performance', {
+			timing: { /* empty stub */ },
+			navigation: {
+				type: TYPE_NAVIGATE,
+				redirectCount: 0
+			},
+			getEntriesByType: function () { }
+		} );
+
+		stub = this.sandbox.stub( window.performance, 'getEntriesByType' );
+
+		stub.withArgs( 'resource' ).returns(
+			[ {
+				duration: 1902.7,
+				entryType: 'resource',
+				name: 'http://dev.wiki.local.wmftest.net/w/resources/assets/poweredby_mediawiki_88x31.png',
+				startTime: 8895.899999999983
+			} ]
+		);
+
+		stub.withArgs( 'paint' ).returns(
+			[ {
+				duration: 0,
+				entryType: 'paint',
+				name: 'first-paint',
+				startTime: 990.3000454
+			},
+			{
+				duration: 0,
+				entryType: 'paint',
+				name: 'first-contentful-paint',
+				startTime: 1000.10101
+			} ]
+		);
+
+		stub.withArgs( 'navigation' ).returns(
+			[ {
+				duration: 18544.49,
+				entryType: 'navigation',
+				name: 'http://dev.wiki.local.wmftest.net/wiki/Main_Page',
+				startTime: 0,
+				transferSize: 1234
+			} ]
+		);
+
+		navigationTiming.reinit();
+		navigationTiming.emitRUMSpeedIndex().then( function () {
+			setTimeout( function () {
+				assert.equal( mw.eventLog.logEvent.callCount, 1, 'RUMSpeedIndex event happened' );
+				assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].RSI, 990, 'Event with expected RUMSpeedIndex' );
+				done();
+			} );
+		} );
 	} );
 }() );

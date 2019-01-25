@@ -9,7 +9,6 @@
 	'use strict';
 
 	var visibilityEvent, visibilityChanged,
-		isInSample, preloadedModules, navtimingDeps,
 		mediaWikiLoadEnd, surveyDisplayed,
 		cpuBenchmarkDone;
 
@@ -57,13 +56,13 @@
 	}
 
 	/**
-	 * Get RumSpeedIndex for Schema:NavigationTiming.
+	 * Emit RumSpeedIndex for Schema:RUMSpeedIndex.
 	 *
-	 * @return {Object}
+	 * @return {jQuery.Promise}
 	 */
-	function getRumSpeedIndex() {
-		var paintEntries, resourceEntries, ptFirstPaint, rumSpeedIndex,
-			res = {};
+	function emitRUMSpeedIndex() {
+		var paintEntries, resourceEntries, ptFirstPaint,
+			event = {};
 
 		try {
 			paintEntries = performance.getEntriesByType( 'paint' );
@@ -81,15 +80,19 @@
 				}
 			} );
 
-			if ( ptFirstPaint === undefined || ptFirstPaint < 0 || ptFirstPaint > 120000 ) {
-				res.RSI = 0;
-			} else {
-				rumSpeedIndex = require( 'ext.navigationTiming.rumSpeedIndex' );
-				res.RSI = Math.round( rumSpeedIndex() );
+			if ( ptFirstPaint !== undefined && ptFirstPaint > 0 && ptFirstPaint < 120000 ) {
+				event.pageviewToken = mw.user.getPageviewToken();
+
+				return mw.loader.using( 'ext.navigationTiming.rumSpeedIndex' ).then( function () {
+					var rumSpeedIndex = require( 'ext.navigationTiming.rumSpeedIndex' );
+
+					event.RSI = Math.round( rumSpeedIndex() );
+					mw.eventLog.logEvent( 'RUMSpeedIndex', event );
+				} );
 			}
 		}
 
-		return res;
+		return $.Deferred().resolve();
 	}
 
 	/**
@@ -598,7 +601,6 @@
 		$.extend( event,
 			getNavTimingLevel1(),
 			getPaintTiming(),
-			getRumSpeedIndex(),
 			getNavTimingLevel2()
 		);
 
@@ -818,7 +820,8 @@
 	 * Called after loadEventEnd by onLoadComplete()
 	 */
 	function loadCallback() {
-		var oversamples, oversampleReasons;
+		var oversamples, oversampleReasons, isInSample;
+
 		// Maybe send SaveTiming beacon
 		mw.hook( 'postEdit' ).add( emitSaveTiming );
 
@@ -859,15 +862,11 @@
 			}
 		}
 
+		isInSample = mw.eventLog.inSample( mw.config.get( 'wgNavigationTimingSamplingFactor', 0 ) );
+
 		if ( !oversampleReasons.length && !isInSample ) {
 			// NavTiming: Not sampled
 			return;
-		}
-
-		if ( !navtimingDeps ) {
-			// Start lazy-loading modules if we haven't already.
-			// (e.g. in case of oversampling)
-			navtimingDeps = mw.loader.using( preloadedModules );
 		}
 
 		if ( isRegularNavigation() ) {
@@ -875,8 +874,8 @@
 			// same circumstances as navigation timing sampling and oversampling.
 			emitCentralNoticeTiming();
 			emitTopImageResourceTiming();
-
 			emitServerTiming();
+			emitRUMSpeedIndex();
 
 			// Run a CPU microbenchmark for a portion of measurements
 			if ( mw.eventLog.randomTokenMatch( mw.config.get( 'wgNavigationTimingCpuBenchmarkSamplingFactor', 0 ) ) ) {
@@ -884,13 +883,11 @@
 			}
 
 			if ( isInSample ) {
-				navtimingDeps.done( emitNavigationTiming );
+				emitNavigationTiming();
 			}
 
 			if ( oversampleReasons.length ) {
-				navtimingDeps.done( function () {
-					emitNavigationTimingWithOversample( oversampleReasons );
-				} );
+				emitNavigationTimingWithOversample( oversampleReasons );
 			}
 		}
 	}
@@ -922,18 +919,6 @@
 			$( document ).one( visibilityEvent, setVisibilityChanged );
 		}
 
-		// Make the main isInSample decision now so that we can start
-		// lazy-loading as early as possible.
-		// Oversampling is decided later because it depends on Geo,
-		// which may not've been set yet.
-		isInSample = mw.eventLog.inSample( mw.config.get( 'wgNavigationTimingSamplingFactor', 0 ) );
-		preloadedModules = [
-			'ext.navigationTiming.rumSpeedIndex'
-		];
-		if ( isInSample ) {
-			navtimingDeps = mw.loader.using( preloadedModules );
-		}
-
 		// Do the rest after loadEventEnd
 		onLoadComplete( loadCallback );
 	}
@@ -959,6 +944,7 @@
 			loadCallback: loadCallback,
 			onMwLoadEnd: onMwLoadEnd,
 			emitCpuBenchmark: emitCpuBenchmark,
+			emitRUMSpeedIndex: emitRUMSpeedIndex,
 			reinit: function () {
 				// Call manually because, during test execution, actual
 				// onLoadComplete will probably not have happened yet.
@@ -967,8 +953,6 @@
 				// Mock a few things that main() normally does,
 				// so that we  can test loadCallback()
 				visibilityChanged = false;
-				isInSample = mw.eventLog.inSample( mw.config.get( 'wgNavigationTimingSamplingFactor', 0 ) );
-				navtimingDeps = mw.loader.using( preloadedModules );
 			}
 		};
 	}
