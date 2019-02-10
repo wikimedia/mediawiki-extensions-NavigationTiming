@@ -733,7 +733,7 @@
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].time, 8896, 'Event with rounded numerical value' );
 	} );
 
-	QUnit.test( 'emitCpuBenchmark', function ( assert ) {
+	QUnit.skip( 'emitCpuBenchmark', function ( assert ) {
 		var logEventStub,
 			done = assert.async();
 
