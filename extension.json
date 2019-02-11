@@ -24,7 +24,8 @@
 		]
 	},
 	"AutoloadClasses": {
-		"NavigationTimingHooks": "NavigationTiming.hooks.php"
+		"NavigationTimingHooks": "NavigationTiming.hooks.php",
+		"NavigationTimingConfig": "NavigationTiming.config.php"
 	},
 	"ResourceFileModulePaths": {
 		"localBasePath": "modules",
@@ -32,9 +33,10 @@
 	},
 	"ResourceModules": {
 		"ext.navigationTiming": {
-			"scripts": [
-				"ext.navigationTiming.js"
-			],
+			"packageFiles": {
+				"ext.navigationTiming.js": { "main": "true" },
+				"config.json": { "type": "data", "callback": "NavigationTimingConfig::getNavigationTimingConfigVars" }
+			},
 			"dependencies": [
 				"jquery.cookie",
 				"ext.eventLogging",
@@ -69,9 +71,6 @@
 	"Hooks": {
 		"BeforePageDisplay": [
 			"NavigationTimingHooks::onBeforePageDisplay"
-		],
-		"ResourceLoaderGetConfigVars": [
-			"NavigationTimingHooks::onResourceLoaderGetConfigVars"
 		]
 	},
 	"attributes": {

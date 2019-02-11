@@ -10,7 +10,7 @@
 
 	var visibilityEvent, visibilityChanged,
 		mediaWikiLoadEnd, surveyDisplayed,
-		cpuBenchmarkDone;
+		cpuBenchmarkDone, config = require( './config.json' );
 
 	/**
 	 * Get Paint Timing metrics for Schema:NavigationTiming.
@@ -310,22 +310,21 @@
 	 * Display a performance survey using the QuickSurveys extension
 	 * if the extension is present and based on a sub-sampling factor.
 	 *
-	 * The wgNavigationTimingSurveySamplingFactor sampling ratio is
+	 * The surveySamplingFactor sampling ratio is
 	 * applied after the general NavigationTiming sampling ratio has
 	 * been acted on. Meaning it's a percentage of the percentage of
 	 * pageviews NavigationTiming is sampled for.
 	 *
-	 * wgNavigationTimingSurveyAuthenticatedSamplingFactor is the same for
-	 * logged-in users.
+	 * surveyAuthenticatedSamplingFactor is the same for logged-in users.
 	 */
 	function showPerformanceSurvey() {
 		var isMainPage = mw.config.get( 'wgIsMainPage' ),
 			isArticle = mw.config.get( 'wgNamespaceNumber' ) === 0,
 			isViewing = mw.config.get( 'wgAction' ) === 'view',
 			exists = mw.config.get( 'wgCurRevisionId' ) > 0,
-			surveyName = mw.config.get( 'wgNavigationTimingSurveyName' ),
-			loggedOutSamplingFactor = mw.config.get( 'wgNavigationTimingSurveySamplingFactor', 0 ),
-			loggedInSamplingFactor = mw.config.get( 'wgNavigationTimingSurveyAuthenticatedSamplingFactor', 0 ),
+			surveyName = config.surveyName,
+			loggedOutSamplingFactor = config.surveySampling || 0,
+			loggedInSamplingFactor = config.surveyAuthenticatedSamplingFactor || 0,
 			isInSurveySample;
 
 		// QuickSurveys are only meant to be displayed on articles
@@ -849,7 +848,8 @@
 		}
 
 		// Get any oversamples, and see whether we match
-		oversamples = mw.config.get( 'wgNavigationTimingOversampleFactor' );
+		oversamples = config.oversampleFactor;
+
 		oversampleReasons = [];
 		if ( oversamples ) {
 			if ( 'geo' in oversamples ) {
@@ -871,7 +871,7 @@
 			}
 		}
 
-		isInSample = mw.eventLog.inSample( mw.config.get( 'wgNavigationTimingSamplingFactor', 0 ) );
+		isInSample = mw.eventLog.inSample( config.samplingFactor || 0 );
 
 		if ( !oversampleReasons.length && !isInSample ) {
 			// NavTiming: Not sampled
@@ -887,7 +887,7 @@
 			emitRUMSpeedIndex();
 
 			// Run a CPU microbenchmark for a portion of measurements
-			if ( mw.eventLog.randomTokenMatch( mw.config.get( 'wgNavigationTimingCpuBenchmarkSamplingFactor', 0 ) ) ) {
+			if ( mw.eventLog.randomTokenMatch( config.cpuBenchmarkSamplingFactor || 0 ) ) {
 				emitCpuBenchmark();
 			}
 
@@ -962,6 +962,15 @@
 				// Mock a few things that main() normally does,
 				// so that we  can test loadCallback()
 				visibilityChanged = false;
+			}
+		};
+
+		config = {
+			samplingFactor: 1,
+			oversampleFactor: {
+				geo: {
+					XX: 1
+				}
 			}
 		};
 	}
