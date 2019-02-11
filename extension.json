@@ -97,6 +97,9 @@
 		"NavigationTimingSurveySamplingFactor": {
 			"value": false
 		},
+		"NavigationTimingSurveyAuthenticatedSamplingFactor": {
+			"value": false
+		},
 		"NavigationTimingSurveyName": {
 			"value": false
 		},

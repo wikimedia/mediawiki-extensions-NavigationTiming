@@ -7,11 +7,16 @@ class NavigationTimingHooks {
 
 	public static function onResourceLoaderGetConfigVars( &$vars ) {
 		global $wgNavigationTimingSamplingFactor, $wgNavigationTimingOversampleFactor,
-			$wgNavigationTimingSurveySamplingFactor, $wgNavigationTimingSurveyName,
+			$wgNavigationTimingSurveySamplingFactor,
+			$wgNavigationTimingSurveyAuthenticatedSamplingFactor,
+			$wgNavigationTimingSurveyName,
 			$wgNavigationTimingCpuBenchmarkSamplingFactor;
 
 		$vars[ 'wgNavigationTimingSamplingFactor' ] = $wgNavigationTimingSamplingFactor;
-		$vars[ 'wgNavigationTimingSurveySamplingFactor' ] = $wgNavigationTimingSurveySamplingFactor;
+		$vars[ 'wgNavigationTimingSurveySamplingFactor' ] =
+			$wgNavigationTimingSurveySamplingFactor;
+		$vars[ 'wgNavigationTimingSurveyAuthenticatedSamplingFactor' ] =
+			$wgNavigationTimingSurveyAuthenticatedSamplingFactor;
 		$vars[ 'wgNavigationTimingSurveyName' ] = $wgNavigationTimingSurveyName;
 		$vars[ 'wgNavigationTimingCpuBenchmarkSamplingFactor' ] =
 			$wgNavigationTimingCpuBenchmarkSamplingFactor;

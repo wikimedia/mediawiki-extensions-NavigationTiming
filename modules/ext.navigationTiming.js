@@ -314,6 +314,9 @@
 	 * applied after the general NavigationTiming sampling ratio has
 	 * been acted on. Meaning it's a percentage of the percentage of
 	 * pageviews NavigationTiming is sampled for.
+	 *
+	 * wgNavigationTimingSurveyAuthenticatedSamplingFactor is the same for
+	 * logged-in users.
 	 */
 	function showPerformanceSurvey() {
 		var isMainPage = mw.config.get( 'wgIsMainPage' ),
@@ -321,6 +324,8 @@
 			isViewing = mw.config.get( 'wgAction' ) === 'view',
 			exists = mw.config.get( 'wgCurRevisionId' ) > 0,
 			surveyName = mw.config.get( 'wgNavigationTimingSurveyName' ),
+			loggedOutSamplingFactor = mw.config.get( 'wgNavigationTimingSurveySamplingFactor', 0 ),
+			loggedInSamplingFactor = mw.config.get( 'wgNavigationTimingSurveyAuthenticatedSamplingFactor', 0 ),
 			isInSurveySample;
 
 		// QuickSurveys are only meant to be displayed on articles
@@ -330,7 +335,11 @@
 
 		surveyDisplayed = true;
 
-		isInSurveySample = mw.eventLog.randomTokenMatch( mw.config.get( 'wgNavigationTimingSurveySamplingFactor', 0 ) );
+		if ( mw.config.get( 'wgUserId' ) !== null ) {
+			isInSurveySample = mw.eventLog.randomTokenMatch( loggedInSamplingFactor || loggedOutSamplingFactor );
+		} else {
+			isInSurveySample = mw.eventLog.randomTokenMatch( loggedOutSamplingFactor );
+		}
 
 		if ( !isInSurveySample ) {
 			return;
