@@ -315,7 +315,7 @@
 				redirectCount: 0
 			}
 		} );
-		mw.config.set( 'wgNavigationTimingSamplingFactor', 1 );
+
 		navigationTiming.reinit();
 
 		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
@@ -332,7 +332,7 @@
 			clock = this.sandbox.useFakeTimers();
 
 		this.sandbox.stub( window, 'performance', undefined );
-		mw.config.set( 'wgNavigationTimingSamplingFactor', 1 );
+
 		navigationTiming.reinit();
 
 		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
@@ -365,7 +365,7 @@
 		// Test that the inGeoOversample correctly identifies whether or not
 		// to oversample
 		assert.propEqual( navigationTiming.testGeoOversamples( { XX: 1 } ), [ 'XX' ],
-			'Geo oversample occurs when window.Geo.country is present in wgNavigationTimingOversampleFactor' );
+			'Geo oversample occurs when window.Geo.country is present in oversampleFactor' );
 		assert.propEqual( navigationTiming.testGeoOversamples( { US: 1 } ), [],
 			'Geo oversample does not occur when country is not in config' );
 		assert.propEqual( navigationTiming.testGeoOversamples( {} ), [],
@@ -523,13 +523,7 @@
 		this.sandbox.stub( window, 'Geo', {
 			country: 'XX'
 		} );
-		// Mock config for oversampling country=XX
-		mw.config.set( 'wgNavigationTimingSamplingFactor', 1 );
-		mw.config.set( 'wgNavigationTimingOversampleFactor', {
-			geo: {
-				XX: 1
-			}
-		} );
+
 		// Stub EventLogging
 		logEvent = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		logEvent.returns( $.Deferred().promise() );
