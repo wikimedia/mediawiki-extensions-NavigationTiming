@@ -10,7 +10,8 @@
 
 	var visibilityEvent, visibilityChanged,
 		mediaWikiLoadEnd, surveyDisplayed,
-		cpuBenchmarkDone, config = require( './config.json' );
+		cpuBenchmarkDone, config = require( './config.json' ),
+		collectedPaintEntries = [];
 
 	/**
 	 * Get Paint Timing metrics for Schema:NavigationTiming.
@@ -38,6 +39,8 @@
 				if ( entry.name === 'first-paint' ) {
 					res.firstPaint = Math.round( entry.startTime );
 				}
+
+				collectedPaintEntries[ entry.name ] = true;
 			} );
 		} else if ( timing && timing.msFirstPaint > timing.navigationStart ) {
 			// Support: IE9+, Microsoft Edge
@@ -56,7 +59,49 @@
 	}
 
 	/**
-	 * Emit RumSpeedIndex for Schema:RUMSpeedIndex.
+	 * PerformanceObserver callback for Paint entries, sending them to EventLogging.
+	 */
+	function observePaintTiming( list, observer ) {
+		var event, entry, entries = list.getEntries();
+
+		for ( entry in entries ) {
+			event = {
+				pageviewToken: mw.user.getPageviewToken(),
+				name: entry.name,
+				startTime: Math.round( entry.startTime )
+			};
+			mw.eventLog.logEvent( 'PaintTiming', event );
+
+			collectedPaintEntries[ entry.name ] = true;
+		}
+
+		// We've collected all paint entries, stop observing
+		if ( collectedPaintEntries[ 'first-paint' ] && collectedPaintEntries[ 'first-contentful-paint' ] ) {
+			observer.disconnect();
+		}
+	}
+
+	/**
+	 * Set up PerformanceObserver that will listen to Paint performance events.
+	 */
+	function setupPaintTimingObserver() {
+		var observer;
+
+		if ( !window.PerformanceObserver ) {
+			return;
+		}
+
+		// No need to observe, both paint events have happened
+		if ( collectedPaintEntries[ 'first-paint' ] && collectedPaintEntries[ 'first-contentful-paint' ] ) {
+			return;
+		}
+
+		observer = new PerformanceObserver( observePaintTiming );
+		observer.observe( { entryTypes: [ 'paint' ] } );
+	}
+
+	/**
+	 * Get RumSpeedIndex for Schema:NavigationTiming.
 	 *
 	 * @return {jQuery.Promise}
 	 */
@@ -611,6 +656,10 @@
 			getPaintTiming(),
 			getNavTimingLevel2()
 		);
+
+		// T214977 Deliberatly after getPaintTiming() to ensure that we will only capture
+		// paint events that getPaintTiming() did not
+		setupPaintTimingObserver();
 
 		mw.eventLog.logEvent( 'NavigationTiming', event );
 	}

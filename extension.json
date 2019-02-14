@@ -82,7 +82,8 @@
 				"CentralNoticeTiming": 18418286,
 				"CpuBenchmark": 18436118,
 				"ServerTiming": 18622171,
-				"RUMSpeedIndex": 18813781
+				"RUMSpeedIndex": 18813781,
+				"PaintTiming": 18849693
 			}
 		}
 	},
