@@ -368,7 +368,7 @@
 			isViewing = mw.config.get( 'wgAction' ) === 'view',
 			exists = mw.config.get( 'wgCurRevisionId' ) > 0,
 			surveyName = config.surveyName,
-			loggedOutSamplingFactor = config.surveySampling || 0,
+			loggedOutSamplingFactor = config.surveySamplingFactor || 0,
 			loggedInSamplingFactor = config.surveyAuthenticatedSamplingFactor || 0,
 			isInSurveySample;
 
