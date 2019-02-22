@@ -33,10 +33,13 @@
 	},
 	"ResourceModules": {
 		"ext.navigationTiming": {
-			"packageFiles": {
-				"ext.navigationTiming.js": { "main": "true" },
-				"config.json": { "type": "data", "callback": "NavigationTimingConfig::getNavigationTimingConfigVars" }
-			},
+			"packageFiles": [
+				"ext.navigationTiming.js",
+				{
+					"name": "config.json",
+					"callback": "NavigationTimingConfig::getNavigationTimingConfigVars"
+				}
+			],
 			"dependencies": [
 				"jquery.cookie",
 				"ext.eventLogging",
