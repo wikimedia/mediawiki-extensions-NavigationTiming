@@ -62,18 +62,19 @@
 	 * PerformanceObserver callback for Paint entries, sending them to EventLogging.
 	 */
 	function observePaintTiming( list, observer ) {
-		var event, entry, entries = list.getEntries();
+		var event;
 
-		for ( entry in entries ) {
+		list.getEntries().forEach( function ( entry ) {
 			event = {
 				pageviewToken: mw.user.getPageviewToken(),
 				name: entry.name,
 				startTime: Math.round( entry.startTime )
 			};
+
 			mw.eventLog.logEvent( 'PaintTiming', event );
 
 			collectedPaintEntries[ entry.name ] = true;
-		}
+		} );
 
 		// We've collected all paint entries, stop observing
 		if ( collectedPaintEntries[ 'first-paint' ] && collectedPaintEntries[ 'first-contentful-paint' ] ) {
