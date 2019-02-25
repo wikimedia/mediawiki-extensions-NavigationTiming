@@ -847,23 +847,45 @@
 	 * @return {Array} An array of page names that are being oversampled
 	 */
 	function testPageNameOversamples( pageNames ) {
-		var pageName,
-			pageNamesSamples = [],
-			currentPageName = mw.config.get( 'wgPageName' );
+		var pageNamesSamples = [],
+			pageName = mw.config.get( 'wgPageName' );
 
 		// Look at each page name that's been selected for oversampling,
 		// and check whether the current page matches.  If it does, do a random to select
 		// whether or not to oversample in this case.
 		//
-		for ( pageName in pageNames ) {
-			if ( currentPageName === pageName ) {
-				if ( mw.eventLog.randomTokenMatch( pageNames[ pageName ] ) ) {
-					pageNamesSamples.push( pageName );
-				}
+		if ( pageName in pageNames ) {
+			if ( mw.eventLog.randomTokenMatch( pageNames[ pageName ] ) ) {
+				pageNamesSamples.push( pageName );
 			}
 		}
 
 		return pageNamesSamples;
+	}
+
+	/**
+	 * Test whether this wiki is one that we want to oversample
+	 *
+	 * @param {Object} wikis Objects whose properties are wikis
+	 *                            to be oversampled, with value equal to the
+	 *                            sample frequency
+	 * @return {Array} An array of wikis that are being oversampled
+	 */
+	function testWikiOversamples( wikis ) {
+		var wikiSamples = [],
+			wiki = mw.config.get( 'wgDBname' );
+
+		// Look at each wiki that's been selected for oversampling,
+		// and check whether the current wiki matches.  If it does, do a random to select
+		// whether or not to oversample in this case.
+		//
+		if ( wiki in wikis ) {
+			if ( mw.eventLog.randomTokenMatch( wikis[ wiki ] ) ) {
+				wikiSamples.push( wiki );
+			}
+		}
+
+		return wikiSamples;
 	}
 
 	/**
@@ -916,6 +938,12 @@
 			if ( 'pageName' in oversamples ) {
 				testPageNameOversamples( oversamples.pageName ).forEach( function ( key ) {
 					oversampleReasons.push( 'pagename:' + key );
+				} );
+			}
+
+			if ( 'wiki' in oversamples ) {
+				testWikiOversamples( oversamples.wiki ).forEach( function ( key ) {
+					oversampleReasons.push( 'wiki:' + key );
 				} );
 			}
 		}
@@ -999,6 +1027,7 @@
 			testGeoOversamples: testGeoOversamples,
 			testUAOversamples: testUAOversamples,
 			testPageNameOversamples: testPageNameOversamples,
+			testWikiOversamples: testWikiOversamples,
 			loadCallback: loadCallback,
 			onMwLoadEnd: onMwLoadEnd,
 			emitCpuBenchmark: emitCpuBenchmark,

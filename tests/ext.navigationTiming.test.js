@@ -401,6 +401,19 @@
 		assert.propEqual( navigationTiming.testPageNameOversamples( { Foo: 1 } ),
 			[], 'Non-matching page name is not sampled' );
 
+		// Test that inWikiOversample correctly identifies whether or not
+		// to oversample
+		mw.config.set( 'wgDBname', 'enwiki' );
+		assert.propEqual( navigationTiming.testWikiOversamples( { enwiki: 1 } ), [ 'enwiki' ],
+			'Wiki is identified and oversampled' );
+		mw.config.set( 'wgDBname', 'frwiki' );
+		assert.propEqual( navigationTiming.testWikiOversamples( {
+			enwiki: 1,
+			frwiki: 1
+		} ), [ 'frwiki' ], 'Only matching wiki is sampled' );
+		assert.propEqual( navigationTiming.testWikiOversamples( { enwiki: 1 } ),
+			[], 'Non-matching wiki is not sampled' );
+
 		this.sandbox.stub( mw.eventLog, 'randomTokenMatch', function () {
 			return false;
 		} );
