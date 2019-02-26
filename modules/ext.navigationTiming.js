@@ -13,7 +13,8 @@
 		cpuBenchmarkDone,
 		layoutJankEmitted = 0,
 		config = require( './config.json' ),
-		collectedPaintEntries = [];
+		collectedPaintEntries = [],
+		collectedEventEntries = 0;
 
 	/**
 	 * Emit Paint Timing event to Schema:PaintTiming
@@ -120,6 +121,55 @@
 		}
 
 		processExistingPaintTiming( oversample, observer );
+	}
+
+	/**
+	 * PerformanceObserver callback for Event entries, sending them to EventLogging.
+	 */
+	function observeEventTiming( list, observer ) {
+		var event;
+
+		list.getEntries().forEach( function ( entry ) {
+			event = {
+				pageviewToken: mw.user.getPageviewToken(),
+				name: entry.name,
+				startTime: Math.round( entry.startTime ),
+				processingStart: Math.round( entry.processingStart ),
+				processingEnd: Math.round( entry.processingEnd ),
+				duration: Math.round( entry.duration ),
+				cancelable: entry.cancelable
+			};
+
+			mw.eventLog.logEvent( 'EventTiming', event );
+
+			collectedEventEntries++;
+
+			// We don't want a misbehaving client to flood us indefinitely with reports
+			if ( collectedEventEntries > 10 ) {
+				observer.disconnect();
+			}
+		} );
+	}
+
+	/**
+	 * Set up PerformanceObserver that will listen to Event performance events.
+	 *
+	 * https://github.com/WICG/event-timing
+	 */
+	function setupEventTimingObserver() {
+		var observer;
+
+		if ( !window.PerformanceObserver ) {
+			return;
+		}
+
+		observer = new PerformanceObserver( observeEventTiming );
+
+		try {
+			observer.observe( { entryTypes: [ 'event' ], buffered: true } );
+		} catch ( e ) {
+			// If EventTiming isn't available, this errors because we try subscribing to an invalid entryType
+		}
 	}
 
 	/**
@@ -1061,6 +1111,7 @@
 			emitServerTiming();
 			emitRUMSpeedIndex();
 			emitElementTiming();
+			setupEventTimingObserver();
 
 			// Run a CPU microbenchmark for a portion of measurements
 			if ( mw.eventLog.randomTokenMatch( config.cpuBenchmarkSamplingFactor || 0 ) ) {
