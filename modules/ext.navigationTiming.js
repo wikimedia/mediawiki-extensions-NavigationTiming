@@ -865,31 +865,6 @@
 	}
 
 	/**
-	 * Test whether this wiki is one that we want to oversample
-	 *
-	 * @param {Object} wikis Objects whose properties are wikis
-	 *                            to be oversampled, with value equal to the
-	 *                            sample frequency
-	 * @return {Array} An array of wikis that are being oversampled
-	 */
-	function testWikiOversamples( wikis ) {
-		var wikiSamples = [],
-			wiki = mw.config.get( 'wgDBname' );
-
-		// Look at each wiki that's been selected for oversampling,
-		// and check whether the current wiki matches.  If it does, do a random to select
-		// whether or not to oversample in this case.
-		//
-		if ( wiki in wikis ) {
-			if ( mw.eventLog.randomTokenMatch( wikis[ wiki ] ) ) {
-				wikiSamples.push( wiki );
-			}
-		}
-
-		return wikiSamples;
-	}
-
-	/**
 	 * Handle 'visibilitychange' event.
 	 */
 	function setVisibilityChanged() {
@@ -943,9 +918,9 @@
 			}
 
 			if ( 'wiki' in oversamples ) {
-				testWikiOversamples( oversamples.wiki ).forEach( function ( key ) {
-					oversampleReasons.push( 'wiki:' + key );
-				} );
+				if ( mw.eventLog.randomTokenMatch( oversamples.wiki ) ) {
+					oversampleReasons.push( 'wiki:' + mw.config.get( 'wgDBname' ) );
+				}
 			}
 		}
 
@@ -1028,7 +1003,6 @@
 			testGeoOversamples: testGeoOversamples,
 			testUAOversamples: testUAOversamples,
 			testPageNameOversamples: testPageNameOversamples,
-			testWikiOversamples: testWikiOversamples,
 			loadCallback: loadCallback,
 			onMwLoadEnd: onMwLoadEnd,
 			emitCpuBenchmark: emitCpuBenchmark,
@@ -1049,7 +1023,8 @@
 			oversampleFactor: {
 				geo: {
 					XX: 1
-				}
+				},
+				wiki: 1
 			}
 		};
 	}
