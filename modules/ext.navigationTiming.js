@@ -98,7 +98,12 @@
 		}
 
 		observer = new PerformanceObserver( observePaintTiming );
-		observer.observe( { entryTypes: [ 'paint' ] } );
+
+		try {
+			observer.observe( { entryTypes: [ 'paint' ] } );
+		} catch ( e ) {
+			// T217210 Some browsers don't support the "paint" entry type
+		}
 	}
 
 	/**
