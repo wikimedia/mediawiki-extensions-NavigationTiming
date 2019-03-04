@@ -169,7 +169,7 @@
 					pageviewToken: mw.user.getPageviewToken(),
 					description: serverTimingEntry.description,
 					name: serverTimingEntry.name,
-					duration: serverTimingEntry.duration
+					duration: Math.round( 1000 * serverTimingEntry.duration )
 				};
 
 				mw.eventLog.logEvent( 'ServerTiming', event );
