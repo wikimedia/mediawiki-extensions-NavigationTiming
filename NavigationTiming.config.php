@@ -27,7 +27,12 @@ class NavigationTimingConfig {
 		// not filter on the client side
 		$oversampleFactor = $contextConfig->get( 'NavigationTimingOversampleFactor' );
 		if ( $oversampleFactor && is_array( $oversampleFactor ) ) {
-			foreach ( $oversampleFactor as &$factor ) {
+			foreach ( $oversampleFactor as $key => &$factor ) {
+				// wiki oversampling is just an integer
+				if ( $key == 'wiki' && is_int( $factor ) ) {
+					continue;
+				}
+
 				$factor = array_filter( $factor, function ( $val, $term ) {
 					if ( !is_int( $val ) || $val < 1 ) {
 						\MediaWiki\Logger\LoggerFactory::getInstance( 'NavigationTiming' )->error(
