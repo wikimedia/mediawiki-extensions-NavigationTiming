@@ -61,15 +61,20 @@
 	/**
 	 * PerformanceObserver callback for Paint entries, sending them to EventLogging.
 	 */
-	function observePaintTiming( list, observer ) {
+	function observePaintTiming( oversample, list, observer ) {
 		var event;
 
 		list.getEntries().forEach( function ( entry ) {
 			event = {
 				pageviewToken: mw.user.getPageviewToken(),
 				name: entry.name,
-				startTime: Math.round( entry.startTime )
+				startTime: Math.round( entry.startTime ),
+				isOversample: oversample !== false
 			};
+
+			if ( oversample ) {
+				event.oversampleReason = JSON.stringify( oversample );
+			}
 
 			mw.eventLog.logEvent( 'PaintTiming', event );
 
@@ -85,7 +90,7 @@
 	/**
 	 * Set up PerformanceObserver that will listen to Paint performance events.
 	 */
-	function setupPaintTimingObserver() {
+	function setupPaintTimingObserver( oversample ) {
 		var observer;
 
 		if ( !window.PerformanceObserver ) {
@@ -97,7 +102,7 @@
 			return;
 		}
 
-		observer = new PerformanceObserver( observePaintTiming );
+		observer = new PerformanceObserver( observePaintTiming.bind( null, oversample ) );
 
 		try {
 			observer.observe( { entryTypes: [ 'paint' ] } );
@@ -665,7 +670,7 @@
 
 		// T214977 Deliberatly after getPaintTiming() to ensure that we will only capture
 		// paint events that getPaintTiming() did not
-		setupPaintTimingObserver();
+		setupPaintTimingObserver( oversample );
 
 		mw.eventLog.logEvent( 'NavigationTiming', event );
 	}
