@@ -183,6 +183,45 @@
 	}
 
 	/**
+	 * Emit ElementTiming events for Element TIming data from the performance timeline
+	 *
+	 * https://github.com/WICG/element-timing
+	 *
+	 * @see https://meta.wikimedia.org/wiki/Schema:ElementTiming
+	 */
+	function emitElementTiming() {
+		var entries;
+
+		try {
+			entries = performance.getEntriesByType( 'element' );
+		} catch ( e ) {
+			// Support: Safari < 11 (getEntriesByType missing)
+			entries = [];
+		}
+
+		if ( entries.length ) {
+			entries.forEach( function ( entry ) {
+				var event = {
+					pageviewToken: mw.user.getPageviewToken(),
+					name: entry.name,
+					startTime: Math.round( entry.startTime ),
+					responseEnd: Math.round( entry.responseEnd || 0 ), // Added in Chrome 74
+					bottom: entry.intersectionRect.bottom,
+					height: entry.intersectionRect.height,
+					left: entry.intersectionRect.left,
+					right: entry.intersectionRect.right,
+					top: entry.intersectionRect.top,
+					width: entry.intersectionRect.width,
+					x: entry.intersectionRect.x,
+					y: entry.intersectionRect.y
+				};
+
+				mw.eventLog.logEvent( 'ElementTiming', event );
+			} );
+		}
+	}
+
+	/**
 	 * Get Navigation Timing Level 2 metrics for Schema:NavigationTiming.
 	 *
 	 * As of Navigation Timing Level 2, navigation timing information is also
@@ -948,6 +987,7 @@
 			emitTopImageResourceTiming();
 			emitServerTiming();
 			emitRUMSpeedIndex();
+			emitElementTiming();
 
 			// Run a CPU microbenchmark for a portion of measurements
 			if ( mw.eventLog.randomTokenMatch( config.cpuBenchmarkSamplingFactor || 0 ) ) {
