@@ -16,17 +16,42 @@
 		collectedPaintEntries = [];
 
 	/**
-	 * Get Paint Timing metrics for Schema:NavigationTiming.
+	 * Emit Paint Timing event to Schema:PaintTiming
+	 */
+	function emitPaintTiming( entry, oversample, observer ) {
+		var event = {
+			pageviewToken: mw.user.getPageviewToken(),
+			name: entry.name,
+			startTime: Math.round( entry.startTime ),
+			isOversample: oversample !== false
+		};
+
+		if ( oversample ) {
+			event.oversampleReason = JSON.stringify( oversample );
+		}
+
+		mw.eventLog.logEvent( 'PaintTiming', event );
+
+		collectedPaintEntries[ entry.name ] = true;
+
+		// We've collected all paint entries, stop observing
+		if ( observer && collectedPaintEntries[ 'first-paint' ] && collectedPaintEntries[ 'first-contentful-paint' ] ) {
+			observer.disconnect();
+		}
+	}
+
+	/**
+	 * Process Paint Timing metrics that happened before the load event.
 	 *
 	 * - https://developer.mozilla.org/en-US/docs/Web/API/Performance/getEntriesByType
 	 * - https://developer.mozilla.org/en-US/docs/Web/API/PerformancePaintTiming
 	 *
 	 * @return {Object}
 	 */
-	function getPaintTiming() {
+	function processExistingPaintTiming( oversample, observer ) {
 		var chromeLoadTimes, paintEntries,
 			timing = window.performance && performance.timing,
-			res = {};
+			entry = {};
 
 		try {
 			paintEntries = performance.getEntriesByType( 'paint' );
@@ -37,78 +62,50 @@
 
 		if ( paintEntries.length ) {
 			// Support: Chrome 60+, Android 5+
-			paintEntries.forEach( function ( entry ) {
-				if ( entry.name === 'first-paint' ) {
-					res.firstPaint = Math.round( entry.startTime );
+			paintEntries.forEach( function ( paintEntry ) {
+				if ( paintEntry.name === 'first-paint' || paintEntry.name === 'first-contentful-paint' ) {
+					emitPaintTiming( paintEntry, oversample, observer );
 				}
-
-				collectedPaintEntries[ entry.name ] = true;
 			} );
 		} else if ( timing && timing.msFirstPaint > timing.navigationStart ) {
 			// Support: IE9+, Microsoft Edge
-			res.firstPaint = timing.msFirstPaint - timing.navigationStart;
+			entry.name = 'first-paint';
+			entry.startTime = timing.msFirstPaint - timing.navigationStart;
+			emitPaintTiming( entry, oversample, observer );
 		/* global chrome */
 		} else if ( window.chrome && chrome.loadTimes ) {
 			// Support: Chrome 64 and earlier
 			chromeLoadTimes = chrome.loadTimes();
 			if ( chromeLoadTimes.firstPaintTime > chromeLoadTimes.startLoadTime ) {
-				res.firstPaint = Math.round( 1000 *
-					( chromeLoadTimes.firstPaintTime - chromeLoadTimes.startLoadTime ) );
+				entry.name = 'first-paint';
+				entry.startTime = 1000 *
+					( chromeLoadTimes.firstPaintTime - chromeLoadTimes.startLoadTime );
+				emitPaintTiming( entry, oversample, observer );
 			}
-		}
-
-		return res;
-	}
-
-	/**
-	 * PerformanceObserver callback for Paint entries, sending them to EventLogging.
-	 */
-	function observePaintTiming( oversample, list, observer ) {
-		list.getEntries().forEach( function ( entry ) {
-			var event = {
-				pageviewToken: mw.user.getPageviewToken(),
-				name: entry.name,
-				startTime: Math.round( entry.startTime ),
-				isOversample: oversample !== false
-			};
-
-			if ( oversample ) {
-				event.oversampleReason = JSON.stringify( oversample );
-			}
-
-			mw.eventLog.logEvent( 'PaintTiming', event );
-
-			collectedPaintEntries[ entry.name ] = true;
-		} );
-
-		// We've collected all paint entries, stop observing
-		if ( collectedPaintEntries[ 'first-paint' ] && collectedPaintEntries[ 'first-contentful-paint' ] ) {
-			observer.disconnect();
 		}
 	}
 
 	/**
 	 * Set up PerformanceObserver that will listen to Paint performance events.
 	 */
-	function setupPaintTimingObserver( oversample ) {
+	function emitAndObservePaintTiming( oversample ) {
 		var observer;
 
-		if ( !window.PerformanceObserver ) {
-			return;
+		if ( window.PerformanceObserver ) {
+			observer = new PerformanceObserver( function ( list, observer ) {
+				list.getEntries().forEach( function ( entry ) {
+					emitPaintTiming( entry, oversample, observer );
+				} );
+			} );
+
+			try {
+				observer.observe( { entryTypes: [ 'paint' ] } );
+			} catch ( e ) {
+				// T217210 Some browsers don't support the "paint" entry type
+			}
 		}
 
-		// No need to observe, both paint events have happened
-		if ( collectedPaintEntries[ 'first-paint' ] && collectedPaintEntries[ 'first-contentful-paint' ] ) {
-			return;
-		}
-
-		observer = new PerformanceObserver( observePaintTiming.bind( null, oversample ) );
-
-		try {
-			observer.observe( { entryTypes: [ 'paint' ] } );
-		} catch ( e ) {
-			// T217210 Some browsers don't support the "paint" entry type
-		}
+		processExistingPaintTiming( oversample, observer );
 	}
 
 	/**
@@ -430,7 +427,9 @@
 		surveyDisplayed = true;
 
 		if ( mw.config.get( 'wgUserId' ) !== null ) {
-			isInSurveySample = mw.eventLog.randomTokenMatch( loggedInSamplingFactor || loggedOutSamplingFactor );
+			isInSurveySample = mw.eventLog.randomTokenMatch(
+				loggedInSamplingFactor || loggedOutSamplingFactor
+			);
 		} else {
 			isInSurveySample = mw.eventLog.randomTokenMatch( loggedOutSamplingFactor );
 		}
@@ -703,15 +702,12 @@
 
 		$.extend( event,
 			getNavTimingLevel1(),
-			getPaintTiming(),
 			getNavTimingLevel2()
 		);
 
-		// T214977 Deliberatly after getPaintTiming() to ensure that we will only capture
-		// paint events that getPaintTiming() did not
-		setupPaintTimingObserver( oversample );
-
 		mw.eventLog.logEvent( 'NavigationTiming', event );
+
+		emitAndObservePaintTiming( oversample );
 	}
 
 	/**
