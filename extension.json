@@ -87,7 +87,8 @@
 				"ServerTiming": 18622171,
 				"RUMSpeedIndex": 18813781,
 				"PaintTiming": 18917958,
-				"ElementTiming": 18951358
+				"ElementTiming": 18951358,
+				"LayoutJank": 18935150
 			}
 		}
 	},

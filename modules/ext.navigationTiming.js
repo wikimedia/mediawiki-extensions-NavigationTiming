@@ -10,7 +10,9 @@
 
 	var visibilityEvent, visibilityChanged,
 		mediaWikiLoadEnd, surveyDisplayed,
-		cpuBenchmarkDone, config = require( './config.json' ),
+		cpuBenchmarkDone,
+		layoutJankEmitted = 0,
+		config = require( './config.json' ),
 		collectedPaintEntries = [];
 
 	/**
@@ -62,10 +64,8 @@
 	 * PerformanceObserver callback for Paint entries, sending them to EventLogging.
 	 */
 	function observePaintTiming( oversample, list, observer ) {
-		var event;
-
 		list.getEntries().forEach( function ( entry ) {
-			event = {
+			var event = {
 				pageviewToken: mw.user.getPageviewToken(),
 				name: entry.name,
 				startTime: Math.round( entry.startTime ),
@@ -921,6 +921,60 @@
 	}
 
 	/**
+	 * Emit LayoutJank entries
+	 *
+	 * @param {Array} An array of PerformanceEntry objects
+	 * @param {PerformanceObserver} The performance observer watching layoutJank
+	 *
+	 */
+	function emitLayoutJank( entries, observer ) {
+		entries.forEach( function ( entry ) {
+			var event = {
+				pageviewToken: mw.user.getPageviewToken(),
+				fraction: entry.fraction
+			};
+			mw.eventLog.logEvent( 'LayoutJank', event );
+			layoutJankEmitted++;
+		} );
+
+		if ( layoutJankEmitted > 20 ) {
+			observer.disconnect();
+		}
+	}
+
+	/**
+	 * Emit existing LayoutJank entries and watch for new ones
+	 */
+	function emitAndObserveLayoutJank() {
+		var observer, layoutJankEntries;
+
+		if ( !window.PerformanceObserver || !window.performance ) {
+			return;
+		}
+
+		observer = new PerformanceObserver( function ( list, observer ) {
+			emitLayoutJank( list.getEntries(), observer );
+		} );
+
+		try {
+			observer.observe( { entryTypes: [ 'layoutJank' ] } );
+		} catch ( e ) {
+			// layoutJank is experimental (origin trial)
+		}
+
+		try {
+			layoutJankEntries = performance.getEntriesByType( 'layoutJank' );
+		} catch ( e ) {
+			// Support: Safari < 11 (getEntriesByType missing)
+			layoutJankEntries = [];
+		}
+
+		if ( layoutJankEntries.length ) {
+			emitLayoutJank( layoutJankEntries, observer );
+		}
+	}
+
+	/**
 	 * Called after loadEventEnd by onLoadComplete()
 	 */
 	function loadCallback() {
@@ -1001,6 +1055,8 @@
 			if ( oversampleReasons.length ) {
 				emitNavigationTimingWithOversample( oversampleReasons );
 			}
+
+			emitAndObserveLayoutJank();
 		}
 	}
 
