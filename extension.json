@@ -24,8 +24,8 @@
 		]
 	},
 	"AutoloadClasses": {
-		"NavigationTimingHooks": "NavigationTiming.hooks.php",
-		"NavigationTimingConfig": "NavigationTiming.config.php"
+		"NavigationTimingHooks": "includes/NavigationTimingHooks.php",
+		"NavigationTimingConfig": "includes/NavigationTimingConfig.php"
 	},
 	"ResourceFileModulePaths": {
 		"localBasePath": "modules",
