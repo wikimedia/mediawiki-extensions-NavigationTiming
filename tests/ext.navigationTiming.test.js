@@ -51,6 +51,9 @@
 			yearMs = 31536000 * 1000,
 			clock = this.sandbox.useFakeTimers();
 
+		// Hide native oldschool firstPaint
+		this.sandbox.stub( window, 'chrome', false );
+
 		this.sandbox.stub( window, 'performance', {
 			timing: performance.timing,
 			navigation: {
@@ -69,7 +72,7 @@
 
 		clock.tick( 10 );
 
-		assert.ok( stub.calledOnce, 'mw.eventLog.logEvent was called' );
+		assert.ok( stub.calledOnce, 'mw.eventLog.logEvent was called once' );
 		assert.equal( stub.getCall( 0 ).args[ 0 ], 'NavigationTiming', 'Schema name' );
 		event = stub.getCall( 0 ).args[ 1 ];
 
@@ -173,6 +176,9 @@
 			}
 		} );
 
+		// Hide native oldschool firstPaint
+		this.sandbox.stub( window, 'chrome', false );
+
 		navigationTiming.reinit();
 
 		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
@@ -181,7 +187,7 @@
 
 		clock.tick( 10 );
 
-		assert.ok( stub.calledOnce, 'mw.eventLog.logEvent was called' );
+		assert.ok( stub.calledOnce, 'mw.eventLog.logEvent was called once' );
 		assert.equal( stub.getCall( 0 ).args[ 0 ], 'NavigationTiming', 'Schema name' );
 		event = stub.getCall( 0 ).args[ 1 ];
 
@@ -247,6 +253,9 @@
 			}
 		} );
 
+		// Hide native oldschool firstPaint
+		this.sandbox.stub( window, 'chrome', false );
+
 		navigationTiming.reinit();
 
 		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
@@ -255,7 +264,7 @@
 
 		clock.tick( 10 );
 
-		assert.ok( stub.calledOnce, 'mw.eventLog.logEvent was called' );
+		assert.ok( stub.calledOnce, 'mw.eventLog.logEvent was called once' );
 		assert.equal( stub.getCall( 0 ).args[ 0 ], 'NavigationTiming', 'Schema name' );
 		event = stub.getCall( 0 ).args[ 1 ];
 
@@ -434,6 +443,9 @@
 			}
 		} );
 
+		// Hide native oldschool firstPaint
+		this.sandbox.stub( window, 'chrome', false );
+
 		navigationTiming.emitNavTiming();
 
 		clock.tick( 10 );
@@ -460,7 +472,7 @@
 
 		clock.tick( 10 );
 
-		assert.equal( logEventStub.callCount, 1,
+		assert.ok( logEventStub.calledOnce,
 			'Calling eONT with mutiple oversample reasons triggers logEvent only once' );
 		assert.equal( logEventStub.args[ 0 ][ 1 ].isOversample, true,
 			'Calling eONT with multiple reasons results in isOversample set to true' );
@@ -509,6 +521,7 @@
 
 	QUnit.test( 'Oversample Geo integration tests', function ( assert ) {
 		var logEvent,
+			navigationTimingEvents,
 			clock = this.sandbox.useFakeTimers();
 
 		// Mock PerformanceNavigation for TYPE_NAVIGATE
@@ -524,6 +537,9 @@
 			country: 'XX'
 		} );
 
+		// Hide native oldschool firstPaint
+		this.sandbox.stub( window, 'chrome', false );
+
 		// Stub EventLogging
 		logEvent = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		logEvent.returns( $.Deferred().promise() );
@@ -538,23 +554,29 @@
 		clock.tick( 10 );
 
 		// There should be two events
-		assert.equal( logEvent.args.length, 2, 'Two events were emitted' );
+		assert.equal( logEvent.args.length, 2, '2 events were emitted' );
 
-		// There should be one event with isOversample == false
+		// There should be one NavigationTiming event with isOversample == false
 		assert.equal( logEvent.args.filter( function ( event ) {
-			return event[ 1 ].isOversample === false;
-		} ).length, 1, 'Exactly one event has isOversample === false' );
-		// There should be one event with isOversample == true
+			return event[ 1 ].isOversample === false && event[ 0 ] === 'NavigationTiming';
+		} ).length, 1, 'Exactly one NavigationTiming event has isOversample === false' );
+
+		// There should be one NavigationTiming event with isOversample == true
 		assert.equal( logEvent.args.filter( function ( event ) {
-			return event[ 1 ].isOversample === true;
-		} ).length, 1, 'Exactly one event has isOversample === true' );
+			return event[ 1 ].isOversample === true && event[ 0 ] === 'NavigationTiming';
+		} ).length, 1, 'Exactly one NavigationTiming event has isOversample === true' );
 
 		// Delete properties that are expected to be different and check remainder
-		[ logEvent.args[ 0 ], logEvent.args[ 1 ] ].forEach( function ( event ) {
+		logEvent.args.forEach( function ( event ) {
 			delete event[ 1 ].isOversample;
 			delete event[ 1 ].oversampleReason;
 		} );
-		assert.deepEqual( logEvent.args[ 0 ][ 1 ], logEvent.args[ 1 ][ 1 ],
+
+		navigationTimingEvents = logEvent.args.filter( function ( event ) {
+			return event[ 0 ] === 'NavigationTiming';
+		} );
+
+		assert.deepEqual( navigationTimingEvents[ 0 ][ 1 ], navigationTimingEvents[ 1 ][ 1 ],
 			'Oversample and regular sample contain the same data' );
 	} );
 
@@ -603,10 +625,16 @@
 
 		assert.equal( window.performance.getEntriesByType.callCount, 2,
 			'getEntriesByType was called the expected amount of times' );
-		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].firstPaint,
-			990, 'firstPaint value was set using the Paint Timing API call' );
+
+		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 0 ], 'NavigationTiming', 'Schema name' );
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].transferSize,
 			1234, 'transferSize value was set using the Navigtion Timing Level 2 call' );
+
+		assert.equal( mw.eventLog.logEvent.getCall( 1 ).args[ 0 ], 'PaintTiming', 'Schema name' );
+		assert.equal( mw.eventLog.logEvent.getCall( 1 ).args[ 1 ].name,
+			'first-paint', 'firstPaint value was set using the Paint Timing API call' );
+		assert.equal( mw.eventLog.logEvent.getCall( 1 ).args[ 1 ].startTime,
+			990, 'firstPaint value was set using the Paint Timing API call' );
 
 	} );
 
@@ -839,7 +867,7 @@
 	} );
 
 	QUnit.test( 'Wiki oversampling', function ( assert ) {
-		var logEventStub,
+		var logEvent,
 			clock = this.sandbox.useFakeTimers();
 
 		mw.config.set( 'wgDBname', 'foowiki' );
@@ -848,17 +876,31 @@
 			return true;
 		} );
 
+		// Hide native oldschool firstPaint
+		this.sandbox.stub( window, 'chrome', false );
+
+		this.sandbox.stub( window, 'performance', {
+			timing: performance.timing,
+			navigation: {
+				type: TYPE_NAVIGATE,
+				redirectCount: 0
+			}
+		} );
+
 		navigationTiming.reinit();
 
-		logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
+		logEvent = this.sandbox.stub( mw.eventLog, 'logEvent' );
 
 		navigationTiming.loadCallback();
 
 		clock.tick( 10 );
 
-		assert.equal( logEventStub.args[ 1 ][ 1 ].isOversample, true, 'Oversample call' );
+		assert.equal( logEvent.args.filter( function ( event ) {
+			return event[ 1 ].isOversample === true;
+		} ).length, 1, '1 event with oversample == true' );
 
-		assert.propEqual( JSON.parse( logEventStub.args[ 1 ][ 1 ].oversampleReason ),
-			[ 'wiki:foowiki' ], 'Reason includes wiki with its name' );
+		assert.equal( logEvent.args.filter( function ( event ) {
+			return event[ 1 ].oversampleReason === '["wiki:foowiki"]';
+		} ).length, 1, '1 event with oversampleReason == wiki:foowiki' );
 	} );
 }() );
