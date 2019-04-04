@@ -413,6 +413,7 @@
 		var isMainPage = mw.config.get( 'wgIsMainPage' ),
 			isArticle = mw.config.get( 'wgNamespaceNumber' ) === 0,
 			isViewing = mw.config.get( 'wgAction' ) === 'view',
+			isVE = mw.util.getParamValue( 'veaction' ),
 			exists = mw.config.get( 'wgCurRevisionId' ) > 0,
 			surveyName = config.surveyName,
 			loggedOutSamplingFactor = config.surveySamplingFactor || 0,
@@ -420,7 +421,7 @@
 			isInSurveySample;
 
 		// QuickSurveys are only meant to be displayed on articles
-		if ( isMainPage || !isArticle || !isViewing || !exists || !surveyName || surveyDisplayed ) {
+		if ( isMainPage || !isArticle || !isViewing || isVE || !exists || !surveyName || surveyDisplayed ) {
 			return;
 		}
 
