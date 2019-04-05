@@ -658,6 +658,7 @@
 			event.revId = mw.config.get( 'wgCurRevisionId' );
 			// e.g. "view", "edit", "history", etc.
 			event.action = mw.config.get( 'wgAction' );
+			event.veaction = mw.util.getParamValue( 'veaction' );
 		}
 		mobileMode = mw.config.get( 'wgMFMode' );
 		if ( typeof mobileMode === 'string' && mobileMode.indexOf( 'desktop' ) === -1 ) {
