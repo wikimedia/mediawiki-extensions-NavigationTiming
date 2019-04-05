@@ -19,12 +19,19 @@
 	 * Emit Paint Timing event to Schema:PaintTiming
 	 */
 	function emitPaintTiming( entry, oversample, observer ) {
-		var event = {
+		var mobileMode, event = {
 			pageviewToken: mw.user.getPageviewToken(),
 			name: entry.name,
 			startTime: Math.round( entry.startTime ),
-			isOversample: oversample !== false
+			isOversample: oversample !== false,
+			isAnon: mw.config.get( 'wgUserId' ) === null
 		};
+
+		mobileMode = mw.config.get( 'wgMFMode' );
+		if ( typeof mobileMode === 'string' && mobileMode.indexOf( 'desktop' ) === -1 ) {
+			// e.g. "stable" or "beta"
+			event.mobileMode = mobileMode;
+		}
 
 		if ( oversample ) {
 			event.oversampleReason = JSON.stringify( oversample );
