@@ -37,6 +37,13 @@
 			event.oversampleReason = JSON.stringify( oversample );
 		}
 
+		if ( window.Geo ) {
+			/* global Geo */
+			if ( typeof Geo.country === 'string' ) {
+				event.originCountry = Geo.country;
+			}
+		}
+
 		mw.eventLog.logEvent( 'PaintTiming', event );
 
 		collectedPaintEntries[ entry.name ] = true;
