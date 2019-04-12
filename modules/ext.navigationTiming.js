@@ -653,6 +653,7 @@
 	 */
 	function emitNavigationTimingWithOversample( oversample ) {
 		var mobileMode,
+			veaction,
 			event = {};
 
 		// No need to wait for the RUM metrics to be recorded before showing the survey
@@ -672,8 +673,14 @@
 			event.revId = mw.config.get( 'wgCurRevisionId' );
 			// e.g. "view", "edit", "history", etc.
 			event.action = mw.config.get( 'wgAction' );
-			event.veaction = mw.util.getParamValue( 'veaction' );
 		}
+
+		veaction = mw.util.getParamValue( 'veaction' );
+
+		if ( veaction !== null ) {
+			event.veaction = veaction;
+		}
+
 		mobileMode = mw.config.get( 'wgMFMode' );
 		if ( typeof mobileMode === 'string' && mobileMode.indexOf( 'desktop' ) === -1 ) {
 			// e.g. "stable" or "beta"
