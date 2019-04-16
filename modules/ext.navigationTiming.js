@@ -13,7 +13,7 @@
 		cpuBenchmarkDone,
 		layoutJankEmitted = 0,
 		config = require( './config.json' ),
-		collectedPaintEntries = [],
+		collectedPaintEntries = {},
 		collectedEventEntries = 0;
 
 	/**
