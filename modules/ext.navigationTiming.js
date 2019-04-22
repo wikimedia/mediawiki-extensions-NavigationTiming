@@ -14,7 +14,8 @@
 		layoutJankEmitted = 0,
 		config = require( './config.json' ),
 		collectedPaintEntries = {},
-		collectedEventEntries = 0;
+		collectedEventEntries = 0,
+		collectedClicks = 0;
 
 	/**
 	 * Emit Paint Timing event to Schema:PaintTiming
@@ -170,6 +171,58 @@
 		} catch ( e ) {
 			// If EventTiming isn't available, this errors because we try subscribing to an invalid entryType
 		}
+	}
+
+	/**
+	 * Converts an element to its path in the DOM. Elements are described by their tag name and attributes.
+	 */
+	function elementToPath( element ) {
+		var output = '';
+
+		if ( element.parentElement ) {
+			output += elementToPath( element.parentElement ) + ' ';
+		}
+
+		output += String( element.tagName ).toLowerCase();
+
+		if ( element.id ) {
+			output += '#' + element.id;
+		}
+
+		if ( element.className ) {
+			output += '.' + element.className.replace( / /g, '.' );
+		}
+
+		return output;
+	}
+
+	/**
+	 * Set up event listener that will listen to clicks and send ClickTiming events.
+	 */
+	function setupClickTimingObserver() {
+		// Record future clicks, to correlate times with EventTiming
+		if ( !window.performance || !performance.now ) {
+			return;
+		}
+
+		$( document ).on( 'click', function listener( e ) {
+			var event;
+
+			collectedClicks++;
+
+			if ( collectedClicks > 20 ) {
+				$( document ).off( 'click', listener );
+				return;
+			}
+
+			event = {
+				pageviewToken: mw.user.getPageviewToken(),
+				target: elementToPath( e.target ),
+				timeStamp: Math.round( e.timeStamp )
+			};
+
+			mw.eventLog.logEvent( 'ClickTiming', event );
+		} );
 	}
 
 	/**
@@ -1112,6 +1165,7 @@
 			emitRUMSpeedIndex();
 			emitElementTiming();
 			setupEventTimingObserver();
+			setupClickTimingObserver();
 
 			// Run a CPU microbenchmark for a portion of measurements
 			if ( mw.eventLog.randomTokenMatch( config.cpuBenchmarkSamplingFactor || 0 ) ) {

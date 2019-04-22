@@ -903,4 +903,35 @@
 			return event[ 1 ].oversampleReason === '["wiki:foowiki"]';
 		} ).length, 1, '1 event with oversampleReason == wiki:foowiki' );
 	} );
+
+	QUnit.test( 'ClickTiming', function ( assert ) {
+		var logEvent,
+			hadVEClass = $( 'html' ).hasClass( 've-not-available' ),
+			clock = this.sandbox.useFakeTimers();
+
+		this.sandbox.stub( mw.eventLog, 'randomTokenMatch', function () {
+			return true;
+		} );
+
+		navigationTiming.reinit();
+		navigationTiming.loadCallback();
+
+		clock.tick( 10 );
+
+		logEvent = this.sandbox.stub( mw.eventLog, 'logEvent' );
+
+		$( 'html' ).removeAttr( 'class' );
+		$( 'body' ).attr( 'id', 'baz' ).addClass( 'foodefafa bar' ).click();
+
+		clock.tick( 10 );
+
+		$( 'body' ).removeClass( 'foodefafa bar' ).removeAttr( 'id' );
+
+		if ( hadVEClass ) {
+			$( 'html' ).addClass( 've-not-available' );
+		}
+
+		assert.equal( logEvent.getCall( 0 ).args[ 0 ], 'ClickTiming', 'Schema name' );
+		assert.equal( logEvent.getCall( 0 ).args[ 1 ].target, 'html body#baz.foodefafa.bar', 'Target path' );
+	} );
 }() );
