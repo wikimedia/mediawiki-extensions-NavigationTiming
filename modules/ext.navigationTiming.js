@@ -15,7 +15,8 @@
 		config = require( './config.json' ),
 		collectedPaintEntries = {},
 		collectedEventEntries = 0,
-		collectedClicks = 0;
+		collectedClicks = 0,
+		policyViolationEmitted = 0;
 
 	/**
 	 * Emit Paint Timing event to Schema:PaintTiming
@@ -1098,6 +1099,57 @@
 	}
 
 	/**
+	 * Emit FeaturePolicyViolation entries
+	 *
+	 * @param {Array} An array of Report objects
+	 * @param {ReportingObserver} The reporting observer watching feature-policy-violation
+	 *
+	 */
+	function emitFeaturePolicyViolation( reports, observer ) {
+		reports.forEach( function ( report ) {
+			var event = {
+				pageviewToken: mw.user.getPageviewToken(),
+				url: report.url,
+				featureId: report.body.featureId
+			};
+
+			if ( report.body.sourceFile ) {
+				event.sourceFile = report.body.sourceFile;
+			}
+
+			if ( report.body.lineNumber ) {
+				event.lineNumber = report.body.lineNumber;
+			}
+
+			if ( report.body.columnNumber ) {
+				event.columnNumber = report.body.columnNumber;
+			}
+
+			mw.eventLog.logEvent( 'FeaturePolicyViolation', event );
+			policyViolationEmitted++;
+		} );
+
+		if ( policyViolationEmitted > 20 ) {
+			observer.disconnect();
+		}
+	}
+
+	/**
+	 * Observe Feature Policy Violation reports: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Feature-Policy
+	 */
+	function setupFeaturePolicyViolationObserver() {
+		var observer;
+
+		if ( !window.ReportingObserver ) {
+			return;
+		}
+
+		/* global ReportingObserver */
+		observer = new ReportingObserver( emitFeaturePolicyViolation, { buffered: true, types: [ 'feature-policy-violation' ] } );
+		observer.observe();
+	}
+
+	/**
 	 * Called after loadEventEnd by onLoadComplete()
 	 */
 	function loadCallback() {
@@ -1167,6 +1219,7 @@
 			emitElementTiming();
 			setupEventTimingObserver();
 			setupClickTimingObserver();
+			setupFeaturePolicyViolationObserver();
 
 			// Run a CPU microbenchmark for a portion of measurements
 			if ( mw.eventLog.randomTokenMatch( config.cpuBenchmarkSamplingFactor || 0 ) ) {
@@ -1238,6 +1291,7 @@
 			onMwLoadEnd: onMwLoadEnd,
 			emitCpuBenchmark: emitCpuBenchmark,
 			emitRUMSpeedIndex: emitRUMSpeedIndex,
+			emitFeaturePolicyViolation: emitFeaturePolicyViolation,
 			reinit: function () {
 				// Call manually because, during test execution, actual
 				// onLoadComplete will probably not have happened yet.
@@ -1246,6 +1300,7 @@
 				// Mock a few things that main() normally does,
 				// so that we  can test loadCallback()
 				visibilityChanged = false;
+				policyViolationEmitted = 0;
 			}
 		};
 

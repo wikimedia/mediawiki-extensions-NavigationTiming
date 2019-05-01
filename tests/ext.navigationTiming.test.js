@@ -934,4 +934,39 @@
 		assert.equal( logEvent.getCall( 0 ).args[ 0 ], 'ClickTiming', 'Schema name' );
 		assert.equal( logEvent.getCall( 0 ).args[ 1 ].target, 'html body#baz.foodefafa.bar', 'Target path' );
 	} );
+
+	QUnit.test( 'emitFeaturePolicyViolation', function ( assert ) {
+		var i,
+			fakeObserver = { disconnect: function () {} },
+			stubObserver = this.sandbox.stub( fakeObserver, 'disconnect' ),
+			logEvent = this.sandbox.stub( mw.eventLog, 'logEvent' );
+
+		navigationTiming.emitFeaturePolicyViolation( [ { url: 'foo', body: { featureId: 123 } } ], fakeObserver );
+
+		assert.equal( logEvent.getCall( 0 ).args[ 0 ], 'FeaturePolicyViolation', 'Schema name' );
+		assert.equal( logEvent.getCall( 0 ).args[ 1 ].url, 'foo', 'Reported URL' );
+		assert.equal( logEvent.getCall( 0 ).args[ 1 ].featureId, 123, 'Reported featureId' );
+		assert.equal( logEvent.getCall( 0 ).args[ 1 ].sourceFile, undefined, 'Skiped sourceFile' );
+		assert.equal( logEvent.getCall( 0 ).args[ 1 ].lineNumber, undefined, 'Skipped lineNumber' );
+		assert.equal( logEvent.getCall( 0 ).args[ 1 ].columnNumber, undefined, 'Skipped columnNumber' );
+
+		navigationTiming.emitFeaturePolicyViolation( [ {
+			url: 'foo', body: { featureId: 123, sourceFile: 'baz', lineNumber: 4, columnNumber: 5 }
+		} ], fakeObserver );
+
+		assert.equal( logEvent.getCall( 1 ).args[ 0 ], 'FeaturePolicyViolation', 'Schema name' );
+		assert.equal( logEvent.getCall( 1 ).args[ 1 ].url, 'foo', 'Reported URL' );
+		assert.equal( logEvent.getCall( 1 ).args[ 1 ].featureId, 123, 'Reported featureId' );
+		assert.equal( logEvent.getCall( 1 ).args[ 1 ].sourceFile, 'baz', 'Reported sourceFile' );
+		assert.equal( logEvent.getCall( 1 ).args[ 1 ].lineNumber, 4, 'Reported lineNumber' );
+		assert.equal( logEvent.getCall( 1 ).args[ 1 ].columnNumber, 5, 'Reported columnNumber' );
+
+		navigationTiming.reinit();
+
+		for ( i = 0; i < 50; i++ ) {
+			navigationTiming.emitFeaturePolicyViolation( [ { url: 'foo', body: { featureId: 123 } } ], fakeObserver );
+		}
+
+		assert.ok( stubObserver.called, 'Observer diconnected when too many events collected' );
+	} );
 }() );
