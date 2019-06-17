@@ -822,6 +822,14 @@
 			if ( typeof navigator.connection.type === 'string' ) {
 				event.netinfoConnectionType = navigator.connection.type;
 			}
+
+			if ( navigator.connection.rtt !== undefined ) {
+				event.netinfoRtt = navigator.connection.rtt;
+			}
+
+			if ( navigator.connection.downlink !== undefined ) {
+				event.netinfoDownlink = navigator.connection.downlink;
+			}
 		}
 
 		if ( navigator.deviceMemory ) {

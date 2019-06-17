@@ -28,7 +28,9 @@
 				userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.12345.94 Safari/537.36',
 				connection: {
 					effectiveType: '4g',
-					type: 'cellular'
+					type: 'cellular',
+					rtt: 900,
+					downlink: 1.4
 				},
 				deviceMemory: 8
 			};
@@ -86,6 +88,8 @@
 			// NetworkInfo API
 			netinfoEffectiveConnectionType: 'string',
 			netinfoConnectionType: 'string',
+			netinfoRtt: 'number',
+			netinfoDownlink: 'number',
 
 			// Device Memory API
 			deviceMemory: 'number',
