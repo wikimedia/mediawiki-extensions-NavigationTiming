@@ -5,27 +5,29 @@ class NavigationTimingConfig {
 	 * Get config vars to export with the ext.navigationTiming module.
 	 *
 	 * @param ResourceLoaderContext $context
+	 * @param Config $config
 	 * @return array
 	 */
-	public static function getNavigationTimingConfigVars( ResourceLoaderContext $context ) {
-		$contextConfig = $context->getConfig();
-
-		$config = [
+	public static function getNavigationTimingConfigVars(
+		ResourceLoaderContext $context,
+		Config $config
+	) {
+		$configVars = [
 			'samplingFactor' =>
-				$contextConfig->get( 'NavigationTimingSamplingFactor' ),
+				$config->get( 'NavigationTimingSamplingFactor' ),
 			'surveySamplingFactor' =>
-				$contextConfig->get( 'NavigationTimingSurveySamplingFactor' ),
+				$config->get( 'NavigationTimingSurveySamplingFactor' ),
 			'surveyAuthenticatedSamplingFactor' =>
-				$contextConfig->get( 'NavigationTimingSurveyAuthenticatedSamplingFactor' ),
+				$config->get( 'NavigationTimingSurveyAuthenticatedSamplingFactor' ),
 			'surveyName' =>
-				$contextConfig->get( 'NavigationTimingSurveyName' ),
+				$config->get( 'NavigationTimingSurveyName' ),
 			'cpuBenchmarkSamplingFactor' =>
-				$contextConfig->get( 'NavigationTimingCpuBenchmarkSamplingFactor' ),
+				$config->get( 'NavigationTimingCpuBenchmarkSamplingFactor' ),
 		];
 
 		// Filter to ensure that all values are reasonable.  This allows us to
 		// not filter on the client side
-		$oversampleFactor = $contextConfig->get( 'NavigationTimingOversampleFactor' );
+		$oversampleFactor = $config->get( 'NavigationTimingOversampleFactor' );
 		if ( $oversampleFactor && is_array( $oversampleFactor ) ) {
 			foreach ( $oversampleFactor as $key => &$factor ) {
 				// wiki oversampling is just an integer
@@ -49,8 +51,7 @@ class NavigationTimingConfig {
 			$oversampleFactor = false;
 		}
 
-		$config[ 'oversampleFactor' ] = $oversampleFactor;
-
-		return $config;
+		$configVars[ 'oversampleFactor' ] = $oversampleFactor;
+		return $configVars;
 	}
 }
