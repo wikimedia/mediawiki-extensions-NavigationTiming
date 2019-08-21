@@ -1089,13 +1089,13 @@
 		} );
 
 		try {
-			observer.observe( { entryTypes: [ 'layoutJank' ] } );
+			observer.observe( { entryTypes: [ 'layoutShift' ] } );
 		} catch ( e ) {
 			// layoutJank is experimental (origin trial)
 		}
 
 		try {
-			layoutJankEntries = performance.getEntriesByType( 'layoutJank' );
+			layoutJankEntries = performance.getEntriesByType( 'layoutShift' );
 		} catch ( e ) {
 			// Support: Safari < 11 (getEntriesByType missing)
 			layoutJankEntries = [];
