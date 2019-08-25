@@ -14,8 +14,7 @@
 		layoutJankEmitted = 0,
 		config = require( './config.json' ),
 		collectedPaintEntries = {},
-		collectedEventEntries = 0,
-		collectedClicks = 0,
+		collectedElementEntries = 0,
 		policyViolationEmitted = 0;
 
 	/**
@@ -126,107 +125,6 @@
 	}
 
 	/**
-	 * PerformanceObserver callback for Event entries, sending them to EventLogging.
-	 */
-	function observeEventTiming( list, observer ) {
-		var event;
-
-		list.getEntries().forEach( function ( entry ) {
-			event = {
-				pageviewToken: mw.user.getPageviewToken(),
-				name: entry.name,
-				startTime: Math.round( entry.startTime ),
-				processingStart: Math.round( entry.processingStart ),
-				processingEnd: Math.round( entry.processingEnd ),
-				duration: Math.round( entry.duration ),
-				cancelable: entry.cancelable
-			};
-
-			mw.eventLog.logEvent( 'EventTiming', event );
-
-			collectedEventEntries++;
-
-			// We don't want a misbehaving client to flood us indefinitely with reports
-			if ( collectedEventEntries > 10 ) {
-				observer.disconnect();
-			}
-		} );
-	}
-
-	/**
-	 * Set up PerformanceObserver that will listen to Event performance events.
-	 *
-	 * https://github.com/WICG/event-timing
-	 */
-	function setupEventTimingObserver() {
-		var observer;
-
-		if ( !window.PerformanceObserver ) {
-			return;
-		}
-
-		observer = new PerformanceObserver( observeEventTiming );
-
-		try {
-			observer.observe( { entryTypes: [ 'event' ], buffered: true } );
-		} catch ( e ) {
-			// If EventTiming isn't available, this errors because we try subscribing to an invalid entryType
-		}
-	}
-
-	/**
-	 * Converts an element to its path in the DOM. Elements are described by their tag name and attributes.
-	 */
-	function elementToPath( element ) {
-		var output = '';
-
-		if ( element.parentElement ) {
-			output += elementToPath( element.parentElement ) + ' ';
-		}
-
-		output += String( element.tagName ).toLowerCase();
-
-		if ( element.id ) {
-			output += '#' + element.id;
-		}
-
-		if ( element.className ) {
-			output += '.' + element.className.replace( / /g, '.' );
-		}
-
-		return output;
-	}
-
-	/**
-	 * Set up event listener that will listen to clicks and send ClickTiming events.
-	 */
-	function setupClickTimingObserver() {
-		// Record future clicks, to correlate times with EventTiming
-		if ( !window.performance || !performance.now ) {
-			return;
-		}
-
-		$( document ).on( 'click', function listener( e ) {
-			var event;
-
-			collectedClicks++;
-
-			if ( collectedClicks > 20 ) {
-				$( document ).off( 'click', listener );
-				return;
-			}
-
-			event = {
-				pageviewToken: mw.user.getPageviewToken(),
-				target: elementToPath( e.target ),
-				timeStamp: Math.round( e.timeStamp )
-			};
-
-			mw.eventLog.logEvent( 'ClickTiming', event );
-		} );
-	}
-
-	/**
 	 * Get RumSpeedIndex for Schema:NavigationTiming.
 	 *
 	 * @return {jQuery.Promise}
@@ -298,41 +196,59 @@
 	}
 
 	/**
-	 * Emit ElementTiming events for Element TIming data from the performance timeline
+	 * PerformanceObserver callback for Element entries, sending them to EventLogging.
+	 */
+	function observeElementTiming( list, observer ) {
+		var event;
+
+		list.getEntries().forEach( function ( entry ) {
+			event = {
+				pageviewToken: mw.user.getPageviewToken(),
+				identifier: entry.identifier,
+				name: entry.name,
+				url: entry.url,
+				loadTime: Math.round( entry.loadTime ),
+				startTime: Math.round( entry.startTime ),
+				renderTime: Math.round( entry.renderTime ),
+				bottom: entry.intersectionRect.bottom,
+				height: entry.intersectionRect.height,
+				left: entry.intersectionRect.left,
+				right: entry.intersectionRect.right,
+				top: entry.intersectionRect.top,
+				width: entry.intersectionRect.width,
+				x: entry.intersectionRect.x,
+				y: entry.intersectionRect.y
+			};
+
+			mw.eventLog.logEvent( 'ElementTiming', event );
+
+			collectedElementEntries++;
+
+			// We don't want a misbehaving client to flood us indefinitely with reports
+			if ( collectedElementEntries > 20 ) {
+				observer.disconnect();
+			}
+		} );
+	}
+
+	/**
+	 * Set up PerformanceObserver that will listen to Element performance events.
 	 *
 	 * https://github.com/WICG/element-timing
-	 *
-	 * @see https://meta.wikimedia.org/wiki/Schema:ElementTiming
 	 */
-	function emitElementTiming() {
-		var entries;
+	function setupElementTimingObserver() {
+		var observer;
 
-		try {
-			entries = performance.getEntriesByType( 'element' );
-		} catch ( e ) {
-			// Support: Safari < 11 (getEntriesByType missing)
-			entries = [];
+		if ( !window.PerformanceObserver ) {
+			return;
 		}
 
-		if ( entries.length ) {
-			entries.forEach( function ( entry ) {
-				var event = {
-					pageviewToken: mw.user.getPageviewToken(),
-					name: entry.name,
-					startTime: Math.round( entry.startTime ),
-					responseEnd: Math.round( entry.responseEnd || 0 ), // Added in Chrome 74
-					bottom: entry.intersectionRect.bottom,
-					height: entry.intersectionRect.height,
-					left: entry.intersectionRect.left,
-					right: entry.intersectionRect.right,
-					top: entry.intersectionRect.top,
-					width: entry.intersectionRect.width,
-					x: entry.intersectionRect.x,
-					y: entry.intersectionRect.y
-				};
+		observer = new PerformanceObserver( observeElementTiming );
 
-				mw.eventLog.logEvent( 'ElementTiming', event );
-			} );
+		try {
+			observer.observe( { type: 'element', buffered: true } );
+		} catch ( e ) {
+			// If ElementTiming isn't available, this errors because we try subscribing to an invalid entryType
 		}
 	}
 
@@ -1224,9 +1140,7 @@
 			emitTopImageResourceTiming();
 			emitServerTiming();
 			emitRUMSpeedIndex();
-			emitElementTiming();
-			setupEventTimingObserver();
-			setupClickTimingObserver();
+			setupElementTimingObserver();
 			setupFeaturePolicyViolationObserver();
 
 			// Run a CPU microbenchmark for a portion of measurements
