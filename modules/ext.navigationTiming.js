@@ -683,7 +683,6 @@
 		//
 		// Custom properties from MediaWiki.
 		event.mediaWikiVersion = mw.config.get( 'wgVersion' );
-		event.phpEngine = mw.config.get( 'wgPoweredByHHVM' ) ? 'hhvm' : 'zend';
 		event.isAnon = mw.config.get( 'wgUserId' ) === null;
 		if ( mw.config.get( 'wgCanonicalSpecialPageName' ) ) {
 			// Omit page information for special pages,
