@@ -794,6 +794,10 @@
 			event.deviceMemory = navigator.deviceMemory;
 		}
 
+		if ( navigator.hardwareConcurrency ) {
+			event.hardwareConcurrency = navigator.hardwareConcurrency;
+		}
+
 		$.extend( event,
 			getNavTimingLevel1(),
 			getNavTimingLevel2()

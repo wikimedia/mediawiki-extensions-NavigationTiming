@@ -77,7 +77,7 @@
 	"attributes": {
 		"EventLogging": {
 			"Schemas": {
-				"NavigationTiming": 19468016,
+				"NavigationTiming": 19604530,
 				"SaveTiming": 15396492,
 				"ResourceTiming": 18358918,
 				"CentralNoticeTiming": 18418286,

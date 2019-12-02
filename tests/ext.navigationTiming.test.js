@@ -32,7 +32,8 @@
 					rtt: 900,
 					downlink: 1.4
 				},
-				deviceMemory: 8
+				deviceMemory: 8,
+				hardwareConcurrency: 4
 			};
 
 			window.RLPAGEMODULES = [];
@@ -94,6 +95,9 @@
 			// Device Memory API
 			deviceMemory: 'number',
 
+			// HTML Living Standard
+			hardwareConcurrency: 'number',
+
 			// Navigation Timing API
 			responseStart: 'number',
 			domComplete: 'number',
@@ -120,6 +124,7 @@
 		stub.reset();
 		delete window.navigator.connection;
 		delete window.navigator.deviceMemory;
+		delete window.navigator.hardwareConcurrency;
 		navigationTiming.reinit();
 		navigationTiming.emitNavTiming();
 
@@ -132,6 +137,8 @@
 			false, 'When the connection object is not present, things still work' );
 		assert.strictEqual( hasOwn.call( event, 'deviceMemory' ),
 			false, 'When the deviceMemory property is not present, things still work' );
+		assert.strictEqual( hasOwn.call( event, 'hardwareConcurrency' ),
+			false, 'When the hardwareConcurrency property is not present, things still work' );
 
 		// Make sure things are correct if the page is a special page
 		stub.reset();
