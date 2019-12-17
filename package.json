@@ -6,7 +6,7 @@
 	"devDependencies": {
 		"eslint-config-wikimedia": "0.11.0",
 		"grunt": "1.0.4",
-		"grunt-banana-checker": "0.6.0"
+		"grunt-banana-checker": "0.8.1"
 	},
 	"eslintIgnore": [
 		"vendor/**",
