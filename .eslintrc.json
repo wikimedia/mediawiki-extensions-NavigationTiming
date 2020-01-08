@@ -9,8 +9,6 @@
 		"$": false
 	},
 	"rules": {
-		"valid-jsdoc": 0,
-		"max-len": "warn",
-		"no-redeclare": "warn"
+		"valid-jsdoc": 0
 	}
 }

@@ -710,7 +710,6 @@
 			event.mediaWikiLoadEnd = mediaWikiLoadEnd;
 		}
 		if ( window.Geo ) {
-			/* global Geo */
 			if ( typeof Geo.country === 'string' ) {
 				event.originCountry = Geo.country;
 			}
