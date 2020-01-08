@@ -4,7 +4,7 @@
 		"test": "grunt test && eslint --report-unused-disable-directives --cache ."
 	},
 	"devDependencies": {
-		"eslint-config-wikimedia": "0.11.0",
+		"eslint-config-wikimedia": "0.15.0",
 		"grunt": "1.0.4",
 		"grunt-banana-checker": "0.8.1"
 	},
