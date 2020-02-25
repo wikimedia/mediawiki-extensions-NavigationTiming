@@ -253,6 +253,50 @@
 	}
 
 	/**
+	 * PerformanceObserver callback for FirstInputTiming entries, sending them to EventLogging.
+	 */
+	function observeFirstInputTiming( list, observer ) {
+		list.getEntries().forEach( function ( entry ) {
+			var event = {
+				pageviewToken: mw.user.getPageviewToken(),
+				processingStart: Math.round( entry.processingStart ),
+				processingEnd: Math.round( entry.processingEnd ),
+				name: entry.name,
+				startTime: Math.round( entry.startTime ),
+				duration: Math.round( entry.duration ),
+				FID: Math.round( entry.processingStart - entry.startTime )
+			};
+
+			mw.eventLog.logEvent( 'FirstInputTiming', event );
+		} );
+
+		// There should be only one entry
+		observer.disconnect();
+	}
+
+	/**
+	 * Set up PerformanceObserver that will listen to first-input performance events.
+	 *
+	 * https://github.com/WICG/event-timing
+	 */
+	function setupFirstInputTimingObserver() {
+		var observer;
+
+		if ( !window.PerformanceObserver ) {
+			return;
+		}
+
+		observer = new PerformanceObserver( observeFirstInputTiming );
+
+		try {
+			observer.observe( { type: 'first-input', buffered: true } );
+		} catch ( e ) {
+			// If FirstInputTiming isn't available,
+			// then this fails because we tried subscribing to an invalid entryType
+		}
+	}
+
+	/**
 	 * Get Navigation Timing Level 2 metrics for Schema:NavigationTiming.
 	 *
 	 * As of Navigation Timing Level 2, navigation timing information is also
@@ -1140,6 +1184,7 @@
 			emitRUMSpeedIndex();
 			setupElementTimingObserver();
 			setupFeaturePolicyViolationObserver();
+			setupFirstInputTimingObserver();
 
 			// Run a CPU microbenchmark for a portion of measurements
 			if ( mw.eventLog.randomTokenMatch( config.cpuBenchmarkSamplingFactor || 0 ) ) {
