@@ -72,9 +72,7 @@
 		]
 	},
 	"Hooks": {
-		"BeforePageDisplay": [
-			"NavigationTimingHooks::onBeforePageDisplay"
-		]
+		"BeforePageDisplay": "NavigationTimingHooks::onBeforePageDisplay"
 	},
 	"attributes": {
 		"EventLogging": {
