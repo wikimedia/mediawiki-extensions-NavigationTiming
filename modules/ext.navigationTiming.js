@@ -11,7 +11,7 @@
 	var visibilityEvent, visibilityChanged,
 		mediaWikiLoadEnd, surveyDisplayed,
 		cpuBenchmarkDone,
-		layoutJankEmitted = 0,
+		layoutShiftEmitted = 0,
 		config = require( './config.json' ),
 		collectedPaintEntries = {},
 		collectedElementEntries = 0,
@@ -1015,56 +1015,56 @@
 	}
 
 	/**
-	 * Emit LayoutJank entries
+	 * Emit LayoutShift events.
+	 *
+	 * @see https://meta.wikimedia.org/wiki/Schema:LayoutShift
 	 *
 	 * @param {Array} An array of PerformanceEntry objects
-	 * @param {PerformanceObserver} The performance observer watching layoutJank
+	 * @param {PerformanceObserver} The performance observer watching LayoutShift
 	 *
 	 */
-	function emitLayoutJank( entries, observer ) {
+	function emitLayoutShift( entries, observer ) {
 		entries.forEach( function ( entry ) {
 			var event = {
 				pageviewToken: mw.user.getPageviewToken(),
-				fraction: entry.fraction
+				value: entry.value,
+				lastInputTime: Math.round( entry.lastInputTime ),
+				entryTime: Math.round( entry.startTime )
 			};
-			mw.eventLog.logEvent( 'LayoutJank', event );
-			layoutJankEmitted++;
+
+			if ( entry.hadRecentInput ) {
+				return;
+			}
+
+			mw.eventLog.logEvent( 'LayoutShift', event );
+			layoutShiftEmitted++;
 		} );
 
-		if ( layoutJankEmitted > 20 ) {
+		if ( layoutShiftEmitted > 20 ) {
 			observer.disconnect();
 		}
 	}
 
 	/**
-	 * Emit existing LayoutJank entries and watch for new ones
+	 * Watch layout-shift entries
+	 *
+	 * @see https://github.com/WICG/layout-instability
 	 */
-	function emitAndObserveLayoutJank() {
-		var observer, layoutJankEntries;
+	function observeLayoutShift() {
+		var observer;
 
 		if ( !window.PerformanceObserver || !window.performance ) {
 			return;
 		}
 
 		observer = new PerformanceObserver( function ( list, observer ) {
-			emitLayoutJank( list.getEntries(), observer );
+			emitLayoutShift( list.getEntries(), observer );
 		} );
 
 		try {
-			observer.observe( { entryTypes: [ 'layoutShift' ] } );
+			observer.observe( { entryTypes: [ 'layout-shift' ], buffered: true } );
 		} catch ( e ) {
-			// layoutJank is experimental (origin trial)
-		}
-
-		try {
-			layoutJankEntries = performance.getEntriesByType( 'layoutShift' );
-		} catch ( e ) {
-			// Support: Safari < 11 (getEntriesByType missing)
-			layoutJankEntries = [];
-		}
-
-		if ( layoutJankEntries.length ) {
-			emitLayoutJank( layoutJankEntries, observer );
+			// layout-shift isn't supported by all browsers with the PerformanceObserver
 		}
 	}
 
@@ -1203,7 +1203,7 @@
 				emitNavigationTimingWithOversample( oversampleReasons );
 			}
 
-			emitAndObserveLayoutJank();
+			observeLayoutShift();
 		}
 	}
 

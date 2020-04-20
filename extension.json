@@ -86,7 +86,7 @@
 				"RUMSpeedIndex": 18813781,
 				"PaintTiming": 19000009,
 				"ElementTiming": 19315761,
-				"LayoutJank": 18935150,
+				"LayoutShift": 19990418,
 				"FeaturePolicyViolation": 19120697,
 				"FirstInputTiming": 19842486
 			}
