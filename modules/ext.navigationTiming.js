@@ -452,7 +452,7 @@
 		worker = new Worker( URL.createObjectURL( blob ) );
 
 		deferred.then( function ( result ) {
-			var event;
+			var event, batteryPromise;
 
 			if ( !result ) {
 				return;
@@ -463,7 +463,17 @@
 				score: result
 			};
 
-			mw.eventLog.logEvent( 'CpuBenchmark', event );
+			batteryPromise = navigator.getBattery ? navigator.getBattery() : $.Deferred().reject();
+
+			batteryPromise.then(
+				function ( battery ) {
+					event.batteryLevel = battery.level;
+					mw.eventLog.logEvent( 'CpuBenchmark', event );
+				},
+				function () {
+					mw.eventLog.logEvent( 'CpuBenchmark', event );
+				}
+			);
 		} );
 
 		worker.onmessage = function ( e ) {

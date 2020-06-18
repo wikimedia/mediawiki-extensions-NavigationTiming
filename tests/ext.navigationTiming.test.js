@@ -33,7 +33,8 @@
 					downlink: 1.4
 				},
 				deviceMemory: 8,
-				hardwareConcurrency: 4
+				hardwareConcurrency: 4,
+				getBattery: function () { return $.Deferred().resolve( { level: 0.2 } ); }
 			};
 
 			window.RLPAGEMODULES = [];
@@ -766,7 +767,7 @@
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].time, 8896, 'Event with rounded numerical value' );
 	} );
 
-	QUnit.skip( 'emitCpuBenchmark', function ( assert ) {
+	QUnit.test( 'emitCpuBenchmark', function ( assert ) {
 		var logEventStub,
 			done = assert.async();
 
@@ -778,6 +779,7 @@
 			setTimeout( function () {
 				assert.equal( mw.eventLog.logEvent.callCount, 1, 'CpuBenchmark event happened' );
 				assert.ok( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].score > 0, 'Event with non-zero score' );
+				assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].batteryLevel, 0.2, 'Event with expected battery level' );
 				done();
 			} );
 		} );
