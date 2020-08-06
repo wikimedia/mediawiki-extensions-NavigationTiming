@@ -951,4 +951,29 @@
 
 		assert.ok( stubObserver.called, 'Observer diconnected when too many events collected' );
 	} );
+
+	QUnit.test( 'emitLayoutShift', function ( assert ) {
+		var i,
+			fakeObserver = { disconnect: function () {} },
+			stubObserver = this.sandbox.stub( fakeObserver, 'disconnect' ),
+			logEvent = this.sandbox.stub( mw.eventLog, 'logEvent' ),
+			$foo = $( '<div class="class1 class2 class3" id="foobar"></div>' ),
+			entries = [ { value: 0.05, lastInputTime: 1, startTime: 2, sources: [ { node: $foo[ 0 ] } ] } ];
+
+		navigationTiming.emitLayoutShift( entries, fakeObserver );
+
+		assert.equal( logEvent.getCall( 0 ).args[ 0 ], 'LayoutShift', 'Schema name' );
+		assert.equal( logEvent.getCall( 0 ).args[ 1 ].value, 0.05, 'Shift value' );
+		assert.equal( logEvent.getCall( 0 ).args[ 1 ].lastInputTime, 1, 'Last input time' );
+		assert.equal( logEvent.getCall( 0 ).args[ 1 ].entryTime, 2, 'Entry time' );
+		assert.equal( logEvent.getCall( 0 ).args[ 1 ].firstSourceNode, 'div#foobar.class1.class2.class3', 'First identified source node' );
+
+		navigationTiming.reinit();
+
+		for ( i = 0; i < 50; i++ ) {
+			navigationTiming.emitLayoutShift( entries, fakeObserver );
+		}
+
+		assert.ok( stubObserver.called, 'Observer diconnected when too many events collected' );
+	} );
 }() );
