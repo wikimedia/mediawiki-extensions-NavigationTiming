@@ -1,11 +1,12 @@
 {
 	"private": true,
 	"scripts": {
-		"test": "grunt test && eslint --report-unused-disable-directives --cache ."
+		"test": "npm run test:eslint && npm run test:banana",
+		"test:eslint": "eslint --ext .js,.json --report-unused-disable-directives --cache .",
+		"test:banana": "banana-checker i18n/"
 	},
 	"devDependencies": {
 		"eslint-config-wikimedia": "0.16.2",
-		"grunt": "1.2.1",
 		"grunt-banana-checker": "0.9.0"
 	},
 	"eslintIgnore": [
