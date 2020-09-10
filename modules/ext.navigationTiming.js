@@ -1035,15 +1035,30 @@
 	 */
 	function emitLayoutShift( entries, observer ) {
 		entries.forEach( function ( entry ) {
-			var event = {
-				pageviewToken: mw.user.getPageviewToken(),
-				value: entry.value,
-				lastInputTime: Math.round( entry.lastInputTime ),
-				entryTime: Math.round( entry.startTime )
-			};
+			var node,
+				event = {
+					pageviewToken: mw.user.getPageviewToken(),
+					value: entry.value,
+					lastInputTime: Math.round( entry.lastInputTime ),
+					entryTime: Math.round( entry.startTime )
+				};
 
 			if ( entry.hadRecentInput ) {
 				return;
+			}
+
+			// Add attribution if any is available
+			if ( Array.isArray( entry.sources ) ) {
+				node = entry.sources[ 0 ].node;
+				event.firstSourceNode = node.localName;
+
+				if ( node.id ) {
+					event.firstSourceNode = event.firstSourceNode + '#' + node.id;
+				}
+
+				if ( node.className ) {
+					event.firstSourceNode = event.firstSourceNode + '.' + node.className.replace( /\s/g, '.' );
+				}
 			}
 
 			mw.eventLog.logEvent( 'LayoutShift', event );
@@ -1271,6 +1286,7 @@
 			emitCpuBenchmark: emitCpuBenchmark,
 			emitRUMSpeedIndex: emitRUMSpeedIndex,
 			emitFeaturePolicyViolation: emitFeaturePolicyViolation,
+			emitLayoutShift: emitLayoutShift,
 			reinit: function () {
 				// Call manually because, during test execution, actual
 				// onLoadComplete will probably not have happened yet.
