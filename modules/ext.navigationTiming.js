@@ -105,23 +105,23 @@
 	 * Set up PerformanceObserver that will listen to Paint performance events.
 	 */
 	function emitAndObservePaintTiming( oversample ) {
-		var observer;
+		var performanceObserver;
 
 		if ( window.PerformanceObserver ) {
-			observer = new PerformanceObserver( function ( list, observer ) {
+			performanceObserver = new PerformanceObserver( function ( list, observer ) {
 				list.getEntries().forEach( function ( entry ) {
 					emitPaintTiming( entry, oversample, observer );
 				} );
 			} );
 
 			try {
-				observer.observe( { entryTypes: [ 'paint' ] } );
+				performanceObserver.observe( { entryTypes: [ 'paint' ] } );
 			} catch ( e ) {
 				// T217210 Some browsers don't support the "paint" entry type
 			}
 		}
 
-		processExistingPaintTiming( oversample, observer );
+		processExistingPaintTiming( oversample, performanceObserver );
 	}
 
 	/**
@@ -1076,18 +1076,18 @@
 	 * @see https://github.com/WICG/layout-instability
 	 */
 	function observeLayoutShift() {
-		var observer;
+		var performanceObserver;
 
 		if ( !window.PerformanceObserver || !window.performance ) {
 			return;
 		}
 
-		observer = new PerformanceObserver( function ( list, observer ) {
+		performanceObserver = new PerformanceObserver( function ( list, observer ) {
 			emitLayoutShift( list.getEntries(), observer );
 		} );
 
 		try {
-			observer.observe( { entryTypes: [ 'layout-shift' ], buffered: true } );
+			performanceObserver.observe( { entryTypes: [ 'layout-shift' ], buffered: true } );
 		} catch ( e ) {
 			// layout-shift isn't supported by all browsers with the PerformanceObserver
 		}
