@@ -1048,7 +1048,7 @@
 			}
 
 			// Add attribution if any is available
-			if ( Array.isArray( entry.sources ) ) {
+			if ( Array.isArray( entry.sources ) && entry.sources.length ) {
 				node = entry.sources[ 0 ].node;
 				event.firstSourceNode = node.localName;
 
