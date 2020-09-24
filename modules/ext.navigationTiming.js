@@ -1087,7 +1087,7 @@
 		} );
 
 		try {
-			performanceObserver.observe( { entryTypes: [ 'layout-shift' ], buffered: true } );
+			performanceObserver.observe( { type: 'layout-shift', buffered: true } );
 		} catch ( e ) {
 			// layout-shift isn't supported by all browsers with the PerformanceObserver
 		}
