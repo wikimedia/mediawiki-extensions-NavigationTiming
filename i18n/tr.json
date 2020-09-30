@@ -1,8 +1,9 @@
 {
 	"@metadata": {
 		"authors": [
-			"BaRaN6161 TURK"
+			"BaRaN6161 TURK",
+			"MuratTheTurkish"
 		]
 	},
-	"navigationtiming-desc": "Müşteri tarafı gecikme ölçümleri günlüğü ekler"
+	"navigationtiming-desc": "İstemci tarafı gecikme ölçümleri günlük kaydı ekler"
 }
