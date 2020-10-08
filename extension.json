@@ -77,12 +77,11 @@
 	"attributes": {
 		"EventLogging": {
 			"Schemas": {
-				"NavigationTiming": 20373802,
+				"NavigationTiming": 20521683,
 				"SaveTiming": 15396492,
 				"ResourceTiming": 20373861,
 				"CentralNoticeTiming": 18418286,
 				"CpuBenchmark": 20188971,
-				"ServerTiming": 18622171,
 				"RUMSpeedIndex": 18813781,
 				"PaintTiming": 19000009,
 				"ElementTiming": 19315761,
