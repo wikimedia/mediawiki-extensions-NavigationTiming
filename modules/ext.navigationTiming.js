@@ -1035,7 +1035,8 @@
 	 */
 	function emitLayoutShift( entries, observer ) {
 		entries.forEach( function ( entry ) {
-			var node,
+			var source,
+				node,
 				event = {
 					pageviewToken: mw.user.getPageviewToken(),
 					value: entry.value,
@@ -1049,15 +1050,22 @@
 
 			// Add attribution if any is available
 			if ( Array.isArray( entry.sources ) && entry.sources.length ) {
-				node = entry.sources[ 0 ].node;
-				event.firstSourceNode = node.localName;
+				source = entry.sources[ 0 ];
 
-				if ( node.id ) {
-					event.firstSourceNode = event.firstSourceNode + '#' + node.id;
-				}
+				if ( source && source.node ) {
+					node = source.node;
 
-				if ( node.className ) {
-					event.firstSourceNode = event.firstSourceNode + '.' + node.className.replace( /\s/g, '.' );
+					if ( 'localName' in node ) {
+						event.firstSourceNode = node.localName;
+					}
+
+					if ( 'id' in node ) {
+						event.firstSourceNode = event.firstSourceNode + '#' + node.id;
+					}
+
+					if ( 'className' in node ) {
+						event.firstSourceNode = event.firstSourceNode + '.' + node.className.replace( /\s/g, '.' );
+					}
 				}
 			}
 

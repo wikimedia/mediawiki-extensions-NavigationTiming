@@ -982,6 +982,30 @@
 
 		navigationTiming.reinit();
 
+		entries = [ { value: 0.05, lastInputTime: 1, startTime: 2, sources: [ null ] } ];
+
+		navigationTiming.emitLayoutShift( entries, fakeObserver );
+
+		assert.equal( logEvent.getCall( 2 ).args[ 0 ], 'LayoutShift', 'Schema name' );
+		assert.equal( logEvent.getCall( 2 ).args[ 1 ].value, 0.05, 'Shift value' );
+		assert.equal( logEvent.getCall( 2 ).args[ 1 ].lastInputTime, 1, 'Last input time' );
+		assert.equal( logEvent.getCall( 2 ).args[ 1 ].entryTime, 2, 'Entry time' );
+		assert.equal( logEvent.getCall( 2 ).args[ 1 ].firstSourceNode, undefined, 'No source node when sources empty' );
+
+		navigationTiming.reinit();
+
+		entries = [ { value: 0.05, lastInputTime: 1, startTime: 2, sources: [ { node: null } ] } ];
+
+		navigationTiming.emitLayoutShift( entries, fakeObserver );
+
+		assert.equal( logEvent.getCall( 3 ).args[ 0 ], 'LayoutShift', 'Schema name' );
+		assert.equal( logEvent.getCall( 3 ).args[ 1 ].value, 0.05, 'Shift value' );
+		assert.equal( logEvent.getCall( 3 ).args[ 1 ].lastInputTime, 1, 'Last input time' );
+		assert.equal( logEvent.getCall( 3 ).args[ 1 ].entryTime, 2, 'Entry time' );
+		assert.equal( logEvent.getCall( 3 ).args[ 1 ].firstSourceNode, undefined, 'No source node when first source node is null' );
+
+		navigationTiming.reinit();
+
 		for ( i = 0; i < 50; i++ ) {
 			navigationTiming.emitLayoutShift( entries, fakeObserver );
 		}
