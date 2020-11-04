@@ -1,14 +1,17 @@
 {
 	"root": true,
-	"extends": "wikimedia/client",
+	"extends": [
+		"wikimedia/client",
+		"wikimedia/mediawiki",
+		"wikimedia/jquery"
+	],
 	"env": {
 		"commonjs": true
 	},
-	"globals": {
-		"mw": false,
-		"$": false
-	},
 	"rules": {
-		"valid-jsdoc": 0
+		"valid-jsdoc": "off",
+		"no-jquery/no-global-selector": "warn",
+		"no-jquery/no-each-util": "warn",
+		"no-jquery/no-parse-html-literal": "warn"
 	}
 }
