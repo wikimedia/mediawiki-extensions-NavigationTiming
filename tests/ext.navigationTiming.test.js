@@ -622,7 +622,12 @@
 				entryType: 'navigation',
 				name: 'http://dev.wiki.local.wmftest.net/wiki/Main_Page',
 				startTime: 0,
-				transferSize: 1234
+				transferSize: 1234,
+				serverTiming: [ {
+					name: 'cache',
+					description: 'miss',
+					duration: 0.0578
+				} ]
 			} ]
 		);
 
@@ -641,6 +646,7 @@
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 0 ], 'NavigationTiming', 'Schema name' );
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].transferSize,
 			1234, 'transferSize value was set using the Navigtion Timing Level 2 call' );
+		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].cacheResponseType, 'miss', 'Description field from the server timing entry is passed along' );
 
 		assert.equal( mw.eventLog.logEvent.getCall( 1 ).args[ 0 ], 'PaintTiming', 'Schema name' );
 		assert.equal( mw.eventLog.logEvent.getCall( 1 ).args[ 1 ].name,
@@ -783,38 +789,6 @@
 				done();
 			} );
 		} );
-	} );
-
-	QUnit.test( 'emitServerTiming', function ( assert ) {
-		var logEventStub, perfStub;
-
-		logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
-		logEventStub.returns( $.Deferred().promise() );
-
-		perfStub = this.sandbox.stub( window.performance, 'getEntriesByType' );
-		perfStub.withArgs( 'paint' ).returns( [] );
-		perfStub.withArgs( 'resource' ).returns( [] );
-		perfStub.withArgs( 'navigation' ).returns(
-			[ {
-				duration: 1902.7,
-				entryType: 'navigation',
-				initiatorType: 'navigation',
-				name: 'http://127.0.0.1:6081/wiki/Main_Page',
-				startTime: 0,
-				serverTiming: [ {
-					name: 'cache',
-					description: 'miss (0)',
-					duration: 0.0578
-				} ]
-			} ]
-		);
-
-		navigationTiming.reinit();
-		navigationTiming.emitServerTiming();
-
-		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].name, 'cache', 'Name field from the performance timing entry is passed along' );
-		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].description, 'miss (0)', 'Description field from the performance timing entry is passed along' );
-		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].duration, 58, 'Duration field from the performance timing entry is passed along, as milliseconds integer' );
 	} );
 
 	QUnit.test( 'emitRUMSpeedIndex', function ( assert ) {

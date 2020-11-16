@@ -165,37 +165,6 @@
 	}
 
 	/**
-	 * Emit ServerTiming events for Server Timing data from the performance timeline
-	 *
-	 * - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Server-Timing
-	 * - https://developer.mozilla.org/en-US/docs/Web/API/PerformanceServerTiming
-	 *
-	 * @see https://meta.wikimedia.org/wiki/Schema:ServerTiming
-	 */
-	function emitServerTiming() {
-		var navigationEntry;
-		try {
-			navigationEntry = performance.getEntriesByType( 'navigation' )[ 0 ];
-		} catch ( e ) {
-			// Support: Safari < 11 (getEntriesByType missing)
-			navigationEntry = false;
-		}
-
-		if ( navigationEntry && navigationEntry.serverTiming ) {
-			navigationEntry.serverTiming.forEach( function ( serverTimingEntry ) {
-				var event = {
-					pageviewToken: mw.user.getPageviewToken(),
-					description: serverTimingEntry.description,
-					name: serverTimingEntry.name,
-					duration: Math.round( 1000 * serverTimingEntry.duration )
-				};
-
-				mw.eventLog.logEvent( 'ServerTiming', event );
-			} );
-		}
-	}
-
-	/**
 	 * PerformanceObserver callback for Element entries, sending them to EventLogging.
 	 */
 	function observeElementTiming( list, observer ) {
@@ -323,6 +292,12 @@
 
 		if ( navigationEntry ) {
 			res.transferSize = navigationEntry.transferSize;
+
+			if ( navigationEntry.serverTiming &&
+				navigationEntry.serverTiming[ 0 ] &&
+				navigationEntry.serverTiming[ 0 ].name === 'cache' ) {
+				res.cacheResponseType = navigationEntry.serverTiming[ 0 ].description;
+			}
 		}
 
 		return res;
@@ -1217,7 +1192,6 @@
 			// same circumstances as navigation timing sampling and oversampling.
 			emitCentralNoticeTiming();
 			emitTopImageResourceTiming();
-			emitServerTiming();
 			emitRUMSpeedIndex();
 			setupElementTimingObserver();
 			setupFeaturePolicyViolationObserver();
@@ -1283,7 +1257,6 @@
 			emitNavTiming: emitNavigationTiming,
 			emitNavigationTimingWithOversample: emitNavigationTimingWithOversample,
 			makeResourceTimingEvent: makeResourceTimingEvent,
-			emitServerTiming: emitServerTiming,
 			emitTopImageResourceTiming: emitTopImageResourceTiming,
 			emitCentralNoticeTiming: emitCentralNoticeTiming,
 			testGeoOversamples: testGeoOversamples,
