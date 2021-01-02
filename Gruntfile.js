@@ -16,7 +16,13 @@ module.exports = function ( grunt ) {
 			all: 'i18n/'
 		},
 		eslint: {
-			all: [ '*.js', '{modules,tests}/**/*.js' ]
+			options: {
+				cache: true
+			},
+			all: [
+				'*.js',
+				'{modules,tests}/**/*.js'
+			]
 		}
 	} );
 
