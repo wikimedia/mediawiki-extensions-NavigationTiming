@@ -77,17 +77,17 @@
 	"attributes": {
 		"EventLogging": {
 			"Schemas": {
-				"NavigationTiming": 20521683,
-				"SaveTiming": 15396492,
-				"ResourceTiming": 20373861,
-				"CentralNoticeTiming": 18418286,
-				"CpuBenchmark": 20188971,
-				"RUMSpeedIndex": 18813781,
-				"PaintTiming": 19000009,
-				"ElementTiming": 19315761,
-				"LayoutShift": 20343429,
-				"FeaturePolicyViolation": 19120697,
-				"FirstInputTiming": 19842486
+		        "CentralNoticeTiming": "/analytics/legacy/centralnoticetiming/1.0.0",
+		        "CpuBenchmark": "/analytics/legacy/cpubenchmark/1.0.0",
+		        "ElementTiming": "/analytics/legacy/elementtiming/1.0.0",
+		        "FeaturePolicyViolation": "/analytics/legacy/featurepolicyviolation/1.0.0",
+		        "FirstInputTiming": "/analytics/legacy/firstinputtiming/1.0.0",
+		        "LayoutShift": "/analytics/legacy/layoutshift/1.0.0",
+		        "NavigationTiming": "/analytics/legacy/navigationtiming/1.0.0",
+		        "PaintTiming": "/analytics/legacy/painttiming/1.0.0",
+		        "ResourceTiming": "/analytics/legacy/resourcetiming/1.0.0",
+		        "RUMSpeedIndex": "/analytics/legacy/rumspeedindex/1.0.0",
+		        "SaveTiming": "/analytics/legacy/savetiming/1.0.0"
 			}
 		}
 	},
