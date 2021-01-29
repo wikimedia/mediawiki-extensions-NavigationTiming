@@ -19,6 +19,10 @@
 
 	/**
 	 * Emit Paint Timing event to Schema:PaintTiming
+	 *
+	 * @param entry
+	 * @param oversample
+	 * @param observer
 	 */
 	function emitPaintTiming( entry, oversample, observer ) {
 		var mobileMode, event = {
@@ -62,6 +66,8 @@
 	 * - https://developer.mozilla.org/en-US/docs/Web/API/Performance/getEntriesByType
 	 * - https://developer.mozilla.org/en-US/docs/Web/API/PerformancePaintTiming
 	 *
+	 * @param oversample
+	 * @param observer
 	 * @return {Object}
 	 */
 	function processExistingPaintTiming( oversample, observer ) {
@@ -103,6 +109,8 @@
 
 	/**
 	 * Set up PerformanceObserver that will listen to Paint performance events.
+	 *
+	 * @param oversample
 	 */
 	function emitAndObservePaintTiming( oversample ) {
 		var performanceObserver;
@@ -166,6 +174,9 @@
 
 	/**
 	 * PerformanceObserver callback for Element entries, sending them to EventLogging.
+	 *
+	 * @param list
+	 * @param observer
 	 */
 	function observeElementTiming( list, observer ) {
 		var event;
@@ -223,6 +234,9 @@
 
 	/**
 	 * PerformanceObserver callback for FirstInputTiming entries, sending them to EventLogging.
+	 *
+	 * @param list
+	 * @param observer
 	 */
 	function observeFirstInputTiming( list, observer ) {
 		list.getEntries().forEach( function ( entry ) {
@@ -514,8 +528,8 @@
 	/**
 	 * Turn a labelled ResourceTiming entry into a Schema:ResourceTiming event.
 	 *
-	 * @params {ResourceTiming|PerformanceResourceTiming} resource From the ResourceTiming API
-	 * @params {string} label Label for the resource
+	 * @param {ResourceTiming|PerformanceResourceTiming} resource From the ResourceTiming API
+	 * @param {string} label Label for the resource
 	 */
 	function makeResourceTimingEvent( resource, label ) {
 		var event, key, value,
@@ -630,6 +644,7 @@
 	/**
 	 * If the current page displays a CentralNotice banner, records its display time
 	 *
+	 * @param existingObserver
 	 * @see https://meta.wikimedia.org/wiki/Schema:CentralNoticeTiming
 	 */
 	function emitCentralNoticeTiming( existingObserver ) {
@@ -696,9 +711,9 @@
 	 * available and isRegularNavigation() returns true.
 	 *
 	 * @see https://meta.wikimedia.org/wiki/Schema:NavigationTiming
-	 * @params {string|boolean} oversample Either a string that indicates the reason
-	 *     that an oversample was collected, or boolean
-	 *     false to indicate that it's not an oversample
+	 * @param {string|boolean} oversample Either a string that indicates the reason
+	 * that an oversample was collected, or boolean
+	 * false to indicate that it's not an oversample
 	 */
 	function emitNavigationTimingWithOversample( oversample ) {
 		var mobileMode,
@@ -837,6 +852,7 @@
 
 	/**
 	 * Run a callback currently loading ResourceLoader modules have settled.
+	 *
 	 * @return {jQuery.Deferred}
 	 */
 	function onMwLoadEnd() {
@@ -1003,10 +1019,8 @@
 	 * Emit LayoutShift events.
 	 *
 	 * @see https://meta.wikimedia.org/wiki/Schema:LayoutShift
-	 *
-	 * @param {Array} An array of PerformanceEntry objects
-	 * @param {PerformanceObserver} The performance observer watching LayoutShift
-	 *
+	 * @param {Array} entries An array of PerformanceEntry objects
+	 * @param {PerformanceObserver} observer The performance observer watching LayoutShift
 	 */
 	function emitLayoutShift( entries, observer ) {
 		entries.forEach( function ( entry ) {
@@ -1079,9 +1093,8 @@
 	/**
 	 * Emit FeaturePolicyViolation entries
 	 *
-	 * @param {Array} An array of Report objects
-	 * @param {ReportingObserver} The reporting observer watching feature-policy-violation
-	 *
+	 * @param {Array} reports An array of Report objects
+	 * @param {ReportingObserver} observer The reporting observer watching feature-policy-violation
 	 */
 	function emitFeaturePolicyViolation( reports, observer ) {
 		reports.forEach( function ( report ) {
