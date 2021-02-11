@@ -1,16 +1,21 @@
 <?php
 
-class NavigationTimingConfig {
+namespace MediaWiki\Extension\NavigationTiming;
+
+use MediaWiki\Logger\LoggerFactory;
+use ResourceLoaderContext;
+
+class Config {
 	/**
 	 * Get config vars to export with the ext.navigationTiming module.
 	 *
 	 * @param ResourceLoaderContext $context
-	 * @param Config $config
+	 * @param \Config $config
 	 * @return array
 	 */
 	public static function getNavigationTimingConfigVars(
 		ResourceLoaderContext $context,
-		Config $config
+		\Config $config
 	) {
 		$configVars = [
 			'samplingFactor' =>
@@ -37,7 +42,7 @@ class NavigationTimingConfig {
 
 				$factor = array_filter( $factor, function ( $val, $term ) {
 					if ( !is_int( $val ) || $val < 1 ) {
-						\MediaWiki\Logger\LoggerFactory::getInstance( 'NavigationTiming' )->error(
+						LoggerFactory::getInstance( 'NavigationTiming' )->error(
 							'Invalid sample value for NavTiming \'{term}\': {val}', [
 								'term' => $term,
 								'val' => $val

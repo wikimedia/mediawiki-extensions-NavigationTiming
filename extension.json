@@ -23,9 +23,8 @@
 			"i18n"
 		]
 	},
-	"AutoloadClasses": {
-		"NavigationTimingHooks": "includes/NavigationTimingHooks.php",
-		"NavigationTimingConfig": "includes/NavigationTimingConfig.php"
+	"AutoloadNamespaces": {
+		"MediaWiki\\Extension\\NavigationTiming\\": "includes/"
 	},
 	"ResourceFileModulePaths": {
 		"localBasePath": "modules",
@@ -37,7 +36,7 @@
 				"ext.navigationTiming.js",
 				{
 					"name": "config.json",
-					"callback": "NavigationTimingConfig::getNavigationTimingConfigVars"
+					"callback": "MediaWiki\\Extension\\NavigationTiming\\Config::getNavigationTimingConfigVars"
 				}
 			],
 			"dependencies": [
@@ -72,7 +71,7 @@
 		]
 	},
 	"Hooks": {
-		"BeforePageDisplay": "NavigationTimingHooks::onBeforePageDisplay"
+		"BeforePageDisplay": "MediaWiki\\Extension\\NavigationTiming\\Hooks::onBeforePageDisplay"
 	},
 	"attributes": {
 		"EventLogging": {

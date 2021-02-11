@@ -1,6 +1,11 @@
 <?php
 
-class NavigationTimingHooks {
+namespace MediaWiki\Extension\NavigationTiming;
+
+use OutputPage;
+use Skin;
+
+class Hooks {
 	/**
 	 * @param OutputPage &$out
 	 * @param Skin &$skin
