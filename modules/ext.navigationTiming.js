@@ -1048,12 +1048,14 @@
 						event.firstSourceNode = node.localName;
 					}
 
-					if ( 'id' in node ) {
-						event.firstSourceNode = event.firstSourceNode + '#' + node.id;
-					}
+					if ( 'getAttribute' in node ) {
+						if ( node.getAttribute( 'id' ) ) {
+							event.firstSourceNode = event.firstSourceNode + '#' + node.getAttribute( 'id' );
+						}
 
-					if ( 'className' in node ) {
-						event.firstSourceNode = event.firstSourceNode + '.' + node.className.replace( /\s/g, '.' );
+						if ( node.getAttribute( 'class' ) ) {
+							event.firstSourceNode = event.firstSourceNode + '.' + node.getAttribute( 'class' ).replace( /\s/g, '.' );
+						}
 					}
 				}
 			}
