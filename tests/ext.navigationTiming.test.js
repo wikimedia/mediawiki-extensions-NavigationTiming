@@ -666,7 +666,7 @@
 
 		assert.equal( event.name, 'foo', 'Fields from the resource are passed along' );
 		assert.equal( event.label, 'test', 'Custom label is set' );
-		assert.equal( event.invalidField, undefined, 'Only whitelisted fields are included' );
+		assert.equal( event.invalidField, undefined, 'Only allowed fields are included' );
 		assert.equal( event.startTime, 1235, 'Float values are rounded' );
 	} );
 
