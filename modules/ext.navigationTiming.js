@@ -307,10 +307,14 @@
 		if ( navigationEntry ) {
 			res.transferSize = navigationEntry.transferSize;
 
-			if ( navigationEntry.serverTiming &&
-				navigationEntry.serverTiming[ 0 ] &&
-				navigationEntry.serverTiming[ 0 ].name === 'cache' ) {
-				res.cacheResponseType = navigationEntry.serverTiming[ 0 ].description;
+			if ( navigationEntry.serverTiming ) {
+				navigationEntry.serverTiming.forEach( function ( entry ) {
+					if ( entry.name === 'cache' ) {
+						res.cacheResponseType = entry.description;
+					} else if ( entry.name === 'host' ) {
+						res.cacheHost = entry.description;
+					}
+				} );
 			}
 		}
 
@@ -1048,12 +1052,14 @@
 						event.firstSourceNode = node.localName;
 					}
 
-					if ( 'id' in node ) {
-						event.firstSourceNode = event.firstSourceNode + '#' + node.id;
-					}
+					if ( 'getAttribute' in node ) {
+						if ( node.getAttribute( 'id' ) ) {
+							event.firstSourceNode = event.firstSourceNode + '#' + node.getAttribute( 'id' );
+						}
 
-					if ( 'className' in node ) {
-						event.firstSourceNode = event.firstSourceNode + '.' + node.className.replace( /\s/g, '.' );
+						if ( node.getAttribute( 'class' ) ) {
+							event.firstSourceNode = event.firstSourceNode + '.' + node.getAttribute( 'class' ).replace( /\s/g, '.' );
+						}
 					}
 				}
 			}
