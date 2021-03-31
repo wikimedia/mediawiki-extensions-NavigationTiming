@@ -627,6 +627,11 @@
 					name: 'cache',
 					description: 'miss',
 					duration: 0.0578
+				},
+				{
+					name: 'host',
+					description: 'cp0062',
+					duration: 0
 				} ]
 			} ]
 		);
@@ -646,7 +651,8 @@
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 0 ], 'NavigationTiming', 'Schema name' );
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].transferSize,
 			1234, 'transferSize value was set using the Navigtion Timing Level 2 call' );
-		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].cacheResponseType, 'miss', 'Description field from the server timing entry is passed along' );
+		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].cacheResponseType, 'miss', 'Description field from the cache server timing entry is passed along' );
+		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].cacheHost, 'cp0062', 'Description field from the host server timing entry is passed along' );
 
 		assert.equal( mw.eventLog.logEvent.getCall( 1 ).args[ 0 ], 'PaintTiming', 'Schema name' );
 		assert.equal( mw.eventLog.logEvent.getCall( 1 ).args[ 1 ].name,

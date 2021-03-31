@@ -307,10 +307,14 @@
 		if ( navigationEntry ) {
 			res.transferSize = navigationEntry.transferSize;
 
-			if ( navigationEntry.serverTiming &&
-				navigationEntry.serverTiming[ 0 ] &&
-				navigationEntry.serverTiming[ 0 ].name === 'cache' ) {
-				res.cacheResponseType = navigationEntry.serverTiming[ 0 ].description;
+			if ( navigationEntry.serverTiming ) {
+				navigationEntry.serverTiming.forEach( function ( entry ) {
+					if ( entry.name === 'cache' ) {
+						res.cacheResponseType = entry.description;
+					} else if ( entry.name === 'host' ) {
+						res.cacheHost = entry.description;
+					}
+				} );
 			}
 		}
 
