@@ -2,7 +2,7 @@
 	"private": true,
 	"scripts": {
 		"test": "npm run test:eslint && npm run test:banana",
-		"test:eslint": "eslint --ext .js,.json --report-unused-disable-directives --cache .",
+		"test:eslint": "eslint --ext .js,.json --cache .",
 		"test:banana": "banana-checker i18n/"
 	},
 	"devDependencies": {
