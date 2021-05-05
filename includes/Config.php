@@ -40,7 +40,7 @@ class Config {
 					continue;
 				}
 
-				$factor = array_filter( $factor, function ( $val, $term ) {
+				$factor = array_filter( $factor, static function ( $val, $term ) {
 					if ( !is_int( $val ) || $val < 1 ) {
 						LoggerFactory::getInstance( 'NavigationTiming' )->error(
 							'Invalid sample value for NavTiming \'{term}\': {val}', [
