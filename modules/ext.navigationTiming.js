@@ -18,29 +18,36 @@
 		policyViolationEmitted = 0;
 
 	/**
-	 * Emit Paint Timing event to Schema:PaintTiming
+	 * Creates an event object populated containing essential request context information.
+	 * These context fields are consumed by get_navigation_timing_context() in the navtiming daemon
+	 * and allow us to explore the data by facet in Prometheus/Grafana.
 	 *
-	 * @param entry
-	 * @param oversample
-	 * @param observer
+	 * The populated fields are:
+	 * - pageviewToken: a unique token for the pageview to cross-reference the request between schemas
+	 * - isAnon: is the user anonymous or authenticated?
+	 * - isOversample: is the request an oversampled measurement?
+	 * - oversampleReason: why was the request oversampled if it was?
+	 * - mobileMode: which mobile mode is the website in?
+	 * - originCountry: based on IP address, which country was the request made from?
+	 *
+	 * @param {Array} oversampleReasons List of zero or more oversample reason strings
 	 */
-	function emitPaintTiming( entry, oversample, observer ) {
-		var mobileMode, event = {
-			pageviewToken: mw.user.getPageviewToken(),
-			name: entry.name,
-			startTime: Math.round( entry.startTime ),
-			isOversample: oversample !== false,
-			isAnon: mw.config.get( 'wgUserId' ) === null
-		};
+	function makeEventWithRequestContext( oversampleReasons ) {
+		var mobileMode, event = {};
+
+		event.pageviewToken = mw.user.getPageviewToken();
+		event.isAnon = mw.config.get( 'wgUserId' ) === null;
+		event.isOversample = oversampleReasons.length > 0;
+
+		if ( oversampleReasons.length ) {
+			event.oversampleReason = JSON.stringify( oversampleReasons );
+		}
 
 		mobileMode = mw.config.get( 'wgMFMode' );
+
 		if ( typeof mobileMode === 'string' && mobileMode.indexOf( 'desktop' ) === -1 ) {
 			// e.g. "stable" or "beta"
 			event.mobileMode = mobileMode;
-		}
-
-		if ( oversample ) {
-			event.oversampleReason = JSON.stringify( oversample );
 		}
 
 		if ( window.Geo ) {
@@ -49,6 +56,22 @@
 				event.originCountry = Geo.country;
 			}
 		}
+
+		return event;
+	}
+
+	/**
+	 * Emit Paint Timing event to Schema:PaintTiming
+	 *
+	 * @param entry
+	 * @param {Array} oversampleReasons List of zero or more oversample reason strings
+	 * @param observer
+	 */
+	function emitPaintTiming( entry, oversampleReasons, observer ) {
+		var event = makeEventWithRequestContext( oversampleReasons );
+
+		event.name = entry.name;
+		event.startTime = Math.round( entry.startTime );
 
 		mw.eventLog.logEvent( 'PaintTiming', event );
 
@@ -66,11 +89,11 @@
 	 * - https://developer.mozilla.org/en-US/docs/Web/API/Performance/getEntriesByType
 	 * - https://developer.mozilla.org/en-US/docs/Web/API/PerformancePaintTiming
 	 *
-	 * @param oversample
+	 * @param {Array} oversampleReasons List of zero or more oversample reason strings
 	 * @param observer
 	 * @return {Object}
 	 */
-	function processExistingPaintTiming( oversample, observer ) {
+	function processExistingPaintTiming( oversampleReasons, observer ) {
 		var chromeLoadTimes, paintEntries,
 			timing = window.performance && performance.timing,
 			entry = {};
@@ -86,14 +109,14 @@
 			// Support: Chrome 60+, Android 5+
 			paintEntries.forEach( function ( paintEntry ) {
 				if ( paintEntry.name === 'first-paint' || paintEntry.name === 'first-contentful-paint' ) {
-					emitPaintTiming( paintEntry, oversample, observer );
+					emitPaintTiming( paintEntry, oversampleReasons, observer );
 				}
 			} );
 		} else if ( timing && timing.msFirstPaint > timing.navigationStart ) {
 			// Support: IE9+, Microsoft Edge
 			entry.name = 'first-paint';
 			entry.startTime = timing.msFirstPaint - timing.navigationStart;
-			emitPaintTiming( entry, oversample, observer );
+			emitPaintTiming( entry, oversampleReasons, observer );
 		/* global chrome */
 		} else if ( window.chrome && chrome.loadTimes ) {
 			// Support: Chrome 64 and earlier
@@ -102,7 +125,7 @@
 				entry.name = 'first-paint';
 				entry.startTime = 1000 *
 					( chromeLoadTimes.firstPaintTime - chromeLoadTimes.startLoadTime );
-				emitPaintTiming( entry, oversample, observer );
+				emitPaintTiming( entry, oversampleReasons, observer );
 			}
 		}
 	}
@@ -110,15 +133,16 @@
 	/**
 	 * Set up PerformanceObserver that will listen to Paint performance events.
 	 *
-	 * @param oversample
+	 * @param {Array} oversampleReasons Either an object that contains the oversample reasons
+	 * or Boolean false to indicate that it's not an oversample
 	 */
-	function emitAndObservePaintTiming( oversample ) {
+	function emitAndObservePaintTiming( oversampleReasons ) {
 		var performanceObserver;
 
 		if ( window.PerformanceObserver ) {
 			performanceObserver = new PerformanceObserver( function ( list, observer ) {
 				list.getEntries().forEach( function ( entry ) {
-					emitPaintTiming( entry, oversample, observer );
+					emitPaintTiming( entry, oversampleReasons, observer );
 				} );
 			} );
 
@@ -129,7 +153,7 @@
 			}
 		}
 
-		processExistingPaintTiming( oversample, performanceObserver );
+		processExistingPaintTiming( oversampleReasons, performanceObserver );
 	}
 
 	/**
@@ -401,8 +425,10 @@
 	 * but it will only run the benchmark and emit the event once.
 	 *
 	 * @see https://meta.wikimedia.org/wiki/Schema:CpuBenchmark
+	 * @param {Array} oversampleReasons Either an object that contains the oversample reasons
+	 * or Boolean false to indicate that it's not an oversample
 	 */
-	function emitCpuBenchmark() {
+	function emitCpuBenchmark( oversampleReasons ) {
 		var blob, worker, work,
 			deferred = $.Deferred();
 
@@ -445,16 +471,13 @@
 		worker = new Worker( URL.createObjectURL( blob ) );
 
 		deferred.then( function ( result ) {
-			var event, batteryPromise;
+			var batteryPromise, event = makeEventWithRequestContext( oversampleReasons );
 
 			if ( !result ) {
 				return;
 			}
 
-			event = {
-				pageviewToken: mw.user.getPageviewToken(),
-				score: result
-			};
+			event.score = result;
 
 			batteryPromise = navigator.getBattery ? navigator.getBattery() : $.Deferred().reject();
 
@@ -526,7 +549,7 @@
 
 		// If we're sampled for the survey, run the CPU microbenchmark
 		// unconditionally, we might need it for machine learning models.
-		emitCpuBenchmark();
+		emitCpuBenchmark( [ 'survey:' + surveyName ] );
 	}
 
 	/**
@@ -715,14 +738,12 @@
 	 * available and isRegularNavigation() returns true.
 	 *
 	 * @see https://meta.wikimedia.org/wiki/Schema:NavigationTiming
-	 * @param {string|boolean} oversample Either a string that indicates the reason
-	 * that an oversample was collected, or boolean
-	 * false to indicate that it's not an oversample
+	 * @param {Array} oversampleReasons Either an object that contains the oversample reasons
+	 * or Boolean false to indicate that it's not an oversample
 	 */
-	function emitNavigationTimingWithOversample( oversample ) {
-		var mobileMode,
-			veaction,
-			event = {};
+	function emitNavigationTimingWithOversample( oversampleReasons ) {
+		var veaction,
+			event = makeEventWithRequestContext( oversampleReasons );
 
 		// No need to wait for the RUM metrics to be recorded before showing the survey
 		showPerformanceSurvey();
@@ -731,7 +752,7 @@
 		//
 		// Custom properties from MediaWiki.
 		event.mediaWikiVersion = mw.config.get( 'wgVersion' );
-		event.isAnon = mw.config.get( 'wgUserId' ) === null;
+
 		if ( mw.config.get( 'wgCanonicalSpecialPageName' ) ) {
 			// Omit page information for special pages,
 			// these don't have IDs, revisions or actions.
@@ -749,25 +770,8 @@
 			event.veaction = veaction;
 		}
 
-		mobileMode = mw.config.get( 'wgMFMode' );
-		if ( typeof mobileMode === 'string' && mobileMode.indexOf( 'desktop' ) === -1 ) {
-			// e.g. "stable" or "beta"
-			event.mobileMode = mobileMode;
-		}
 		if ( mediaWikiLoadEnd ) {
 			event.mediaWikiLoadEnd = mediaWikiLoadEnd;
-		}
-		if ( window.Geo ) {
-			if ( typeof Geo.country === 'string' ) {
-				event.originCountry = Geo.country;
-			}
-		}
-
-		// Properties: meta
-		event.pageviewToken = mw.user.getPageviewToken();
-		event.isOversample = oversample !== false;
-		if ( oversample ) {
-			event.oversampleReason = JSON.stringify( oversample );
 		}
 
 		// Properties: NetworkInfo API
@@ -809,14 +813,14 @@
 
 		mw.eventLog.logEvent( 'NavigationTiming', event );
 
-		emitAndObservePaintTiming( oversample );
+		emitAndObservePaintTiming( oversampleReasons );
 	}
 
 	/**
 	 * Simple wrapper function for readability
 	 */
 	function emitNavigationTiming() {
-		emitNavigationTimingWithOversample( false );
+		emitNavigationTimingWithOversample( [] );
 	}
 
 	/**
@@ -1218,7 +1222,7 @@
 
 			// Run a CPU microbenchmark for a portion of measurements
 			if ( mw.eventLog.randomTokenMatch( config.cpuBenchmarkSamplingFactor || 0 ) ) {
-				emitCpuBenchmark();
+				emitCpuBenchmark( oversampleReasons );
 			}
 
 			if ( isInSample ) {
@@ -1287,6 +1291,7 @@
 			emitRUMSpeedIndex: emitRUMSpeedIndex,
 			emitFeaturePolicyViolation: emitFeaturePolicyViolation,
 			emitLayoutShift: emitLayoutShift,
+			makeEventWithRequestContext: makeEventWithRequestContext,
 			reinit: function () {
 				// Call manually because, during test execution, actual
 				// onLoadComplete will probably not have happened yet.

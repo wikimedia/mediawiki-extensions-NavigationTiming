@@ -787,7 +787,7 @@
 		logEventStub.returns( $.Deferred().resolve() );
 
 		navigationTiming.reinit();
-		navigationTiming.emitCpuBenchmark().then( function () {
+		navigationTiming.emitCpuBenchmark( [] ).then( function () {
 			setTimeout( function () {
 				assert.equal( mw.eventLog.logEvent.callCount, 1, 'CpuBenchmark event happened' );
 				assert.ok( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].score > 0, 'Event with non-zero score' );
@@ -991,5 +991,41 @@
 		}
 
 		assert.ok( stubObserver.called, 'Observer diconnected when too many events collected' );
+	} );
+
+	QUnit.test( 'makeEventWithRequestContext', function ( assert ) {
+		var event,
+			stub,
+			wgUserId = mw.config.get( 'wgUserId' ),
+			wgMFMode = mw.config.get( 'wgMFMode' );
+
+		stub = this.sandbox.stub( mw.user, 'getPageviewToken' );
+		stub.returns( 'tokenfoo' );
+
+		mw.config.set( 'wgUserId', 123 );
+		mw.config.set( 'wgMFMode', 'stable' );
+
+		this.sandbox.stub( window, 'Geo', {
+			country: 'XX'
+		} );
+
+		event = navigationTiming.makeEventWithRequestContext( [] );
+
+		assert.equal( event.pageviewToken, 'tokenfoo', 'Pageview token' );
+		assert.equal( event.isAnon, false, 'User is not anonymous' );
+		assert.equal( event.isOversample, false, 'Pageview is not oversampled' );
+		assert.equal( event.mobileMode, 'stable', 'Mobile mode is stable' );
+		assert.equal( event.originCountry, 'XX', 'Country' );
+
+		mw.config.set( 'wgUserId', null );
+
+		event = navigationTiming.makeEventWithRequestContext( [ 'foo:bar', 'baz:biz' ] );
+
+		assert.equal( event.isAnon, true, 'User is anonymous' );
+		assert.equal( event.isOversample, true, 'Pageview is oversampled' );
+		assert.equal( event.oversampleReason, '["foo:bar","baz:biz"]', 'Oversample reason is set' );
+
+		mw.config.set( 'wgUserId', wgUserId );
+		mw.config.set( 'wgMFMode', wgMFMode );
 	} );
 }() );
