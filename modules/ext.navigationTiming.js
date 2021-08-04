@@ -133,8 +133,7 @@
 	/**
 	 * Set up PerformanceObserver that will listen to Paint performance events.
 	 *
-	 * @param {Array} oversampleReasons Either an object that contains the oversample reasons
-	 * or Boolean false to indicate that it's not an oversample
+	 * @param {Array} oversampleReasons List of zero or more oversample reason strings
 	 */
 	function emitAndObservePaintTiming( oversampleReasons ) {
 		var performanceObserver;
@@ -425,8 +424,7 @@
 	 * but it will only run the benchmark and emit the event once.
 	 *
 	 * @see https://meta.wikimedia.org/wiki/Schema:CpuBenchmark
-	 * @param {Array} oversampleReasons Either an object that contains the oversample reasons
-	 * or Boolean false to indicate that it's not an oversample
+	 * @param {Array} oversampleReasons List of zero or more oversample reason strings
 	 */
 	function emitCpuBenchmark( oversampleReasons ) {
 		var blob, worker, work,
@@ -738,8 +736,7 @@
 	 * available and isRegularNavigation() returns true.
 	 *
 	 * @see https://meta.wikimedia.org/wiki/Schema:NavigationTiming
-	 * @param {Array} oversampleReasons Either an object that contains the oversample reasons
-	 * or Boolean false to indicate that it's not an oversample
+	 * @param {Array} oversampleReasons List of zero or more oversample reason strings
 	 */
 	function emitNavigationTimingWithOversample( oversampleReasons ) {
 		var veaction,
