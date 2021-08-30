@@ -48,15 +48,6 @@
 				"desktop",
 				"mobile"
 			]
-		},
-		"ext.navigationTiming.rumSpeedIndex": {
-			"scripts": [
-				"RUM-SpeedIndex/rum-speedindex.js"
-			],
-			"targets": [
-				"desktop",
-				"mobile"
-			]
 		}
 	},
 	"QUnitTestModule": {
@@ -66,8 +57,7 @@
 			"tests/ext.navigationTiming.test.js"
 		],
 		"dependencies": [
-			"ext.navigationTiming",
-			"ext.navigationTiming.rumSpeedIndex"
+			"ext.navigationTiming"
 		]
 	},
 	"Hooks": {
@@ -85,7 +75,6 @@
 				"NavigationTiming": "/analytics/legacy/navigationtiming/1.1.0",
 				"PaintTiming": "/analytics/legacy/painttiming/1.0.0",
 				"ResourceTiming": "/analytics/legacy/resourcetiming/1.0.0",
-				"RUMSpeedIndex": "/analytics/legacy/rumspeedindex/1.0.0",
 				"SaveTiming": "/analytics/legacy/savetiming/1.0.0"
 			}
 		}

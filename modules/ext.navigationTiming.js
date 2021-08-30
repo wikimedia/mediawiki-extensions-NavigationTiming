@@ -156,46 +156,6 @@
 	}
 
 	/**
-	 * Get RumSpeedIndex for Schema:NavigationTiming.
-	 *
-	 * @return {jQuery.Promise}
-	 */
-	function emitRUMSpeedIndex() {
-		var paintEntries, resourceEntries, ptFirstPaint,
-			event = {};
-
-		try {
-			paintEntries = performance.getEntriesByType( 'paint' );
-			resourceEntries = performance.getEntriesByType( 'resource' );
-		} catch ( e ) {
-			// Support: Safari < 11 (getEntriesByType missing)
-			resourceEntries = [];
-			paintEntries = [];
-		}
-
-		if ( resourceEntries.length && paintEntries.length ) {
-			paintEntries.forEach( function ( entry ) {
-				if ( entry.name === 'first-paint' ) {
-					ptFirstPaint = Math.round( entry.startTime );
-				}
-			} );
-
-			if ( ptFirstPaint !== undefined && ptFirstPaint > 0 && ptFirstPaint < 120000 ) {
-				event.pageviewToken = mw.user.getPageviewToken();
-
-				return mw.loader.using( 'ext.navigationTiming.rumSpeedIndex' ).then( function () {
-					var rumSpeedIndex = require( 'ext.navigationTiming.rumSpeedIndex' );
-
-					event.RSI = Math.round( rumSpeedIndex() );
-					mw.eventLog.logEvent( 'RUMSpeedIndex', event );
-				} );
-			}
-		}
-
-		return $.Deferred().resolve();
-	}
-
-	/**
 	 * PerformanceObserver callback for Element entries, sending them to EventLogging.
 	 *
 	 * @param list
@@ -1212,7 +1172,6 @@
 			// same circumstances as navigation timing sampling and oversampling.
 			emitCentralNoticeTiming();
 			emitTopImageResourceTiming();
-			emitRUMSpeedIndex();
 			setupElementTimingObserver();
 			setupFeaturePolicyViolationObserver();
 			setupFirstInputTimingObserver();
@@ -1285,7 +1244,6 @@
 			loadCallback: loadCallback,
 			onMwLoadEnd: onMwLoadEnd,
 			emitCpuBenchmark: emitCpuBenchmark,
-			emitRUMSpeedIndex: emitRUMSpeedIndex,
 			emitFeaturePolicyViolation: emitFeaturePolicyViolation,
 			emitLayoutShift: emitLayoutShift,
 			makeEventWithRequestContext: makeEventWithRequestContext,

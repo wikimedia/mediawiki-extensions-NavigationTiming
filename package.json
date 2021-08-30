@@ -10,7 +10,6 @@
 		"grunt-banana-checker": "0.9.0"
 	},
 	"eslintIgnore": [
-		"vendor/**",
-		"modules/RUM-SpeedIndex/**"
+		"vendor/**"
 	]
 }
