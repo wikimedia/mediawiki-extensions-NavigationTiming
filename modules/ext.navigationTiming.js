@@ -511,122 +511,6 @@
 	}
 
 	/**
-	 * Turn a labelled ResourceTiming entry into a Schema:ResourceTiming event.
-	 *
-	 * @param {ResourceTiming|PerformanceResourceTiming} resource From the ResourceTiming API
-	 * @param {string} label Label for the resource
-	 */
-	function makeResourceTimingEvent( resource, label ) {
-		var event, key, value,
-			fields = [
-				'startTime',
-				'workerStart',
-				'redirectStart',
-				'redirectEnd',
-				'fetchStart',
-				'domainLookupStart',
-				'domainLookupEnd',
-				'connectStart',
-				'secureConnectionStart',
-				'connectEnd',
-				'requestStart',
-				'responseStart',
-				'responseEnd',
-				'encodedBodySize',
-				'decodedBodySize',
-				'initiatorType',
-				'duration',
-				'name',
-				'nextHopProtocol',
-				'transferSize'
-			];
-
-		event = {
-			pageviewToken: mw.user.getPageviewToken(),
-			label: label
-		};
-
-		for ( key in resource ) {
-			value = resource[ key ];
-
-			if ( fields.indexOf( key ) !== -1 ) {
-				if ( typeof value === 'number' ) {
-					event[ key ] = Math.round( value );
-				} else {
-					event[ key ] = value;
-				}
-			}
-		}
-
-		return event;
-	}
-
-	/**
-	 * If the current page has images, records the ResourceTiming data of the top image
-	 *
-	 * @see https://meta.wikimedia.org/wiki/Schema:ResourceTiming
-	 */
-	function emitTopImageResourceTiming() {
-		var img,
-			resources,
-			srcset,
-			urls = [];
-
-		if ( !window.performance || !performance.getEntriesByType ) {
-			// Support: Safari < 11 (getEntriesByType missing)
-			return;
-		}
-
-		resources = performance.getEntriesByType( 'resource' );
-
-		/* We pick the first reasonably large image inside the article body.
-		It's commonplace for infoboxes to contain small icons that can sometimes
-		precede the first meaningful image in the DOM (eg. the portrait for a person).
-		100 x 100 is a somewhat arbitrary choice, but it should be large enough
-		to avoid small icons. */
-		img = $( '.mw-parser-output img' ).filter( function ( idx, e ) {
-			return e.width * e.height > 100 * 100;
-		} )[ 0 ];
-
-		if ( !resources || !img ) {
-			return;
-		}
-
-		urls.push( img.src );
-
-		if ( img.srcset ) {
-			srcset = img.srcset;
-
-			srcset.split( ',' ).forEach( function ( src ) {
-				var url = src.trim().split( ' ' )[ 0 ];
-
-				if ( url ) {
-					urls.push( url );
-				}
-			} );
-		}
-
-		resources.forEach( function ( resource ) {
-			if ( resource.initiatorType !== 'img' ) {
-				return;
-			}
-
-			urls.forEach( function ( url ) {
-				var resourceUri, uri;
-
-				resourceUri = resource.name.substr( resource.name.indexOf( '//' ) );
-				uri = url.substr( url.indexOf( '//' ) );
-
-				if ( resourceUri === uri ) {
-					// We've found a ResourceTiming entry that corresponds to the top
-					// article image, let's emit an EL event with the entry's data
-					mw.eventLog.logEvent( 'ResourceTiming', makeResourceTimingEvent( resource, 'top-image' ) );
-				}
-			} );
-		} );
-	}
-
-	/**
 	 * If the current page displays a CentralNotice banner, records its display time
 	 *
 	 * @param existingObserver
@@ -1171,7 +1055,6 @@
 			// These are events separate from NavigationTiming that emit under the
 			// same circumstances as navigation timing sampling and oversampling.
 			emitCentralNoticeTiming();
-			emitTopImageResourceTiming();
 			setupElementTimingObserver();
 			setupFeaturePolicyViolationObserver();
 			setupFirstInputTimingObserver();
@@ -1235,8 +1118,6 @@
 		module.exports = {
 			emitNavTiming: emitNavigationTiming,
 			emitNavigationTimingWithOversample: emitNavigationTimingWithOversample,
-			makeResourceTimingEvent: makeResourceTimingEvent,
-			emitTopImageResourceTiming: emitTopImageResourceTiming,
 			emitCentralNoticeTiming: emitCentralNoticeTiming,
 			testGeoOversamples: testGeoOversamples,
 			testUAOversamples: testUAOversamples,
