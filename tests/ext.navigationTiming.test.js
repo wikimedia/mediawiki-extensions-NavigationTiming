@@ -501,6 +501,7 @@
 
 	QUnit.test( 'onMwLoadEnd - controlled', function ( assert ) {
 		var log = [];
+		var clock = this.sandbox.useFakeTimers();
 		mw.loader.state( {
 			'test.mwLoadEnd.ok': 'loading',
 			'test.mwLoadEnd.fail': 'loading',
@@ -514,20 +515,20 @@
 		this.sandbox.stub( mw, 'requestIdleCallback', function ( fn ) {
 			fn();
 		} );
-		this.sandbox.stub( window, 'setTimeout', function ( fn ) {
-			fn();
-		} );
 
 		navigationTiming.onMwLoadEnd().then( function () {
 			log.push( 'call' );
 		} );
+		clock.tick( 10 );
 		assert.propEqual( log, [], 'pending initially' );
 
 		// Make sure that it doesn't stop waiting after the first error.
 		mw.loader.state( { 'test.mwLoadEnd.fail': 'error' } );
+		clock.tick( 10 );
 		assert.propEqual( log, [], 'pending after fail' );
 
 		mw.loader.state( { 'test.mwLoadEnd.ok': 'ready' } );
+		clock.tick( 10 );
 		assert.propEqual( log, [ 'call' ], 'resolved after fail+ok' );
 	} );
 

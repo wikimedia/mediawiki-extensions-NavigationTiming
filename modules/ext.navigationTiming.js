@@ -385,6 +385,7 @@
 	 *
 	 * @see https://meta.wikimedia.org/wiki/Schema:CpuBenchmark
 	 * @param {Array} oversampleReasons List of zero or more oversample reason strings
+	 * @return {jQuery.Promise}
 	 */
 	function emitCpuBenchmark( oversampleReasons ) {
 		var blob, worker, work,
