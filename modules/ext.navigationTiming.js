@@ -9,6 +9,9 @@
 	'use strict';
 
 	var perf = window.performance;
+	var navigator = window.navigator;
+	var Geo = window.Geo;
+
 	var config = require( './config.json' );
 	var layoutShiftEmitted = 0;
 	var collectedPaintEntries = {};
@@ -52,11 +55,8 @@
 			event.mobileMode = mobileMode;
 		}
 
-		if ( window.Geo ) {
-			/* global Geo */
-			if ( typeof Geo.country === 'string' ) {
-				event.originCountry = Geo.country;
-			}
+		if ( Geo && typeof Geo.country === 'string' ) {
+			event.originCountry = Geo.country;
 		}
 
 		return event;
@@ -756,7 +756,7 @@
 		// Geo oversample depends on the global Geo, which is created by the
 		// CentralNotice extension.  We don't depend on it, though, because
 		// it's pretty heavy.
-		if ( !window.Geo ) {
+		if ( !Geo ) {
 			return geoOversamples;
 		}
 
@@ -1095,8 +1095,10 @@
 			emitFeaturePolicyViolation: emitFeaturePolicyViolation,
 			emitLayoutShift: emitLayoutShift,
 			makeEventWithRequestContext: makeEventWithRequestContext,
-			reinit: function () {
-				perf = window.performance;
+			reinit: function ( mocks ) {
+				perf = mocks && mocks.performance || undefined;
+				navigator = mocks && mocks.navigator || window.navigator;
+				Geo = mocks && mocks.Geo || window.Geo;
 
 				// Call manually because, during test execution, actual
 				// onLoadComplete will probably not have happened yet.

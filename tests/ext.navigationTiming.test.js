@@ -10,17 +10,10 @@
 
 	QUnit.module( 'ext.navigationTiming', {
 		beforeEach: function () {
-			// Because stubs can't work on undefined properties and the presence
-			// of window.Geo isn't guaranteed
-			this.Geo = window.Geo;
-			if ( !window.Geo ) {
-				window.Geo = {};
-			}
-
-			// Can't stub window.navigator
-			this.navigator = Object.getOwnPropertyDescriptor( window, 'navigator' ) || {};
-			delete window.navigator;
-			window.navigator = {
+			this.Geo = {};
+			// Can't reliably stub window.navigator and window.performance
+			// due to being read-only Window properties.
+			this.navigator = {
 				userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.12345.94 Safari/537.36',
 				connection: {
 					effectiveType: '4g',
@@ -32,14 +25,34 @@
 				hardwareConcurrency: 4,
 				getBattery: function () { return $.Deferred().resolve( { level: 0.2 } ); }
 			};
+			this.performance = {
+				now: performance.now.bind( performance ),
+				timing: performance.timing,
+				navigation: {
+					// Use TYPE_NAVIGATE in the stub, since we don't collect metrics on
+					// page loads with TYPE_RELOAD.
+					type: TYPE_NAVIGATE,
+					redirectCount: 0
+				},
+				getEntriesByType: function () { return []; },
+				getEntriesByName: function () { return []; }
+			};
+			this.reinit = function () {
+				navigationTiming.reinit( {
+					navigator: this.navigator,
+					performance: this.performance,
+					Geo: this.Geo
+				} );
+			};
 
 			window.RLPAGEMODULES = [];
 		},
 		afterEach: function () {
 			window.Geo = this.Geo;
-
-			delete window.navigator;
-			Object.defineProperty( window, 'navigator', this.navigator );
+			window.RLPAGEMODULES = [];
+			navigationTiming.reinit( {
+				performance: window.performance
+			} );
 		}
 	} );
 
@@ -50,17 +63,7 @@
 			yearMs = 31536000 * 1000,
 			clock = this.sandbox.useFakeTimers();
 
-		this.sandbox.stub( window, 'performance', {
-			now: performance.now.bind( performance ),
-			timing: performance.timing,
-			navigation: {
-				// Use TYPE_NAVIGATE in the stub, since we don't collect types
-				// such as TYPE_RELOAD.
-				type: TYPE_NAVIGATE,
-				redirectCount: 0
-			}
-		} );
-		navigationTiming.reinit();
+		this.reinit();
 
 		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		stub.returns( $.Deferred().promise() );
@@ -115,10 +118,10 @@
 
 		// Make sure things still work when the connection object isn't present
 		stub.reset();
-		delete window.navigator.connection;
-		delete window.navigator.deviceMemory;
-		delete window.navigator.hardwareConcurrency;
-		navigationTiming.reinit();
+		delete this.navigator.connection;
+		delete this.navigator.deviceMemory;
+		delete this.navigator.hardwareConcurrency;
+		this.reinit();
 		navigationTiming.emitNavTiming();
 
 		clock.tick( 10 );
@@ -136,7 +139,7 @@
 		// Make sure things are correct if the page is a special page
 		stub.reset();
 		mw.config.set( 'wgCanonicalSpecialPageName', 'SpecialPageNameTest' );
-		navigationTiming.reinit();
+		this.reinit();
 		navigationTiming.emitNavTiming();
 
 		clock.tick( 10 );
@@ -156,32 +159,24 @@
 		var event, stub, expected, key, val,
 			clock = this.sandbox.useFakeTimers();
 
-		this.sandbox.stub( window, 'performance', {
-			now: performance.now.bind( performance ),
-			timing: {
-				navigationStart: 100,
-				fetchStart: 200,
-				domainLookupStart: 210,
-				domainLookupEnd: 225,
-				connectStart: 226,
-				secureConnectionStart: 235,
-				connectEnd: 250,
-				redirectEnd: 0,
-				redirectStart: 0,
-				requestStart: 250,
-				responseStart: 300,
-				responseEnd: 400,
-				domComplete: 450,
-				loadEventStart: 570,
-				loadEventEnd: 575
-			},
-			navigation: {
-				type: TYPE_NAVIGATE,
-				redirectCount: 0
-			}
-		} );
-
-		navigationTiming.reinit();
+		this.performance.timing = {
+			navigationStart: 100,
+			fetchStart: 200,
+			domainLookupStart: 210,
+			domainLookupEnd: 225,
+			connectStart: 226,
+			secureConnectionStart: 235,
+			connectEnd: 250,
+			redirectEnd: 0,
+			redirectStart: 0,
+			requestStart: 250,
+			responseStart: 300,
+			responseEnd: 400,
+			domComplete: 450,
+			loadEventStart: 570,
+			loadEventEnd: 575
+		};
+		this.reinit();
 
 		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		stub.returns( $.Deferred().promise() );
@@ -229,34 +224,26 @@
 		var event, stub, expected, key, val,
 			clock = this.sandbox.useFakeTimers();
 
-		this.sandbox.stub( window, 'performance', {
-			now: performance.now.bind( performance ),
-			timing: {
-				navigationStart: 100,
-				fetchStart: 100,
-				domainLookupStart: 100,
-				domainLookupEnd: 100,
-				connectStart: 100,
-				secureConnectionStart: 0,
-				connectEnd: 100,
-				redirectStart: 10,
-				redirectEnd: 20,
-				requestStart: 110,
-				responseStart: 200,
-				responseEnd: 300,
-				domComplete: 350,
-				loadEventStart: 470,
-				loadEventEnd: 475,
-				unloadEventStart: 10,
-				unloadEventEnd: 21
-			},
-			navigation: {
-				type: TYPE_NAVIGATE,
-				redirectCount: 0
-			}
-		} );
-
-		navigationTiming.reinit();
+		this.performance.timing = {
+			navigationStart: 100,
+			fetchStart: 100,
+			domainLookupStart: 100,
+			domainLookupEnd: 100,
+			connectStart: 100,
+			secureConnectionStart: 0,
+			connectEnd: 100,
+			redirectStart: 10,
+			redirectEnd: 20,
+			requestStart: 110,
+			responseStart: 200,
+			responseEnd: 300,
+			domComplete: 350,
+			loadEventStart: 470,
+			loadEventEnd: 475,
+			unloadEventStart: 10,
+			unloadEventEnd: 21
+		};
+		this.reinit();
 
 		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		stub.returns( $.Deferred().promise() );
@@ -302,31 +289,24 @@
 		var stub,
 			clock = this.sandbox.useFakeTimers();
 
-		this.sandbox.stub( window, 'performance', {
-			now: performance.now.bind( performance ),
-			timing: {
-				navigationStart: 100,
-				fetchStart: 200,
-				domainLookupStart: 210,
-				domainLookupEnd: 225,
-				connectStart: 226,
-				connectEnd: 250,
-				redirectEnd: 0,
-				redirectStart: 0,
-				requestStart: 250,
-				responseStart: 300,
-				responseEnd: 400,
-				domComplete: 450,
-				loadEventStart: 570,
-				loadEventEnd: 575
-			},
-			navigation: {
-				type: TYPE_RELOAD,
-				redirectCount: 0
-			}
-		} );
-
-		navigationTiming.reinit();
+		this.performance.timing = {
+			navigationStart: 100,
+			fetchStart: 200,
+			domainLookupStart: 210,
+			domainLookupEnd: 225,
+			connectStart: 226,
+			connectEnd: 250,
+			redirectEnd: 0,
+			redirectStart: 0,
+			requestStart: 250,
+			responseStart: 300,
+			responseEnd: 400,
+			domComplete: 450,
+			loadEventStart: 570,
+			loadEventEnd: 575
+		};
+		this.performance.navigation.type = TYPE_RELOAD;
+		this.reinit();
 
 		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		stub.returns( $.Deferred().promise() );
@@ -341,9 +321,8 @@
 		var stub,
 			clock = this.sandbox.useFakeTimers();
 
-		this.sandbox.stub( window, 'performance', undefined );
-
-		navigationTiming.reinit();
+		this.performance = undefined;
+		this.reinit();
 
 		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		stub.returns( $.Deferred().promise() );
@@ -355,23 +334,10 @@
 	} );
 
 	QUnit.test( 'Oversample config and activation', function ( assert ) {
-		// If navigation type is anything other than TYPE_NAVIGATE, the
-		// check for whether to measure will fail.
-		this.sandbox.stub( window, 'performance', {
-			now: performance.now.bind( performance ),
-			timing: performance.timing,
-			navigation: {
-				type: TYPE_NAVIGATE,
-				redirectCount: 0
-			}
-		} );
-
-		navigationTiming.reinit();
-
-		// Make sure that window.Geo represents us correctly.
-		this.sandbox.stub( window, 'Geo', {
+		this.Geo = {
 			country: 'XX'
-		} );
+		};
+		this.reinit();
 
 		// Test that the inGeoOversample correctly identifies whether or not
 		// to oversample
@@ -436,16 +402,7 @@
 		logEventStub.returns( $.Deferred().promise() );
 		logFailureStub = this.sandbox.stub( mw.eventLog, 'logFailure' );
 
-		// Mock at least navigation.type so that tests don't fail
-		// on testrunner reload.
-		this.sandbox.stub( window, 'performance', {
-			now: performance.now.bind( performance ),
-			timing: performance.timing,
-			navigation: {
-				type: TYPE_NAVIGATE
-			}
-		} );
-
+		this.reinit();
 		navigationTiming.emitNavTiming();
 
 		clock.tick( 10 );
@@ -472,7 +429,7 @@
 
 		clock.tick( 10 );
 
-		assert.ok( logEventStub.calledOnce,
+		assert.strictEqual( logEventStub.callCount, 1,
 			'Calling eONT with mutiple oversample reasons triggers logEvent only once' );
 		assert.equal( logEventStub.args[ 0 ][ 1 ].isOversample, true,
 			'Calling eONT with multiple reasons results in isOversample set to true' );
@@ -481,7 +438,7 @@
 	} );
 
 	QUnit.test( 'onMwLoadEnd - plain', function ( assert ) {
-		this.sandbox.stub( window, 'RLPAGEMODULES', [ 'mediawiki.base' ] );
+		window.RLPAGEMODULES = [ 'mediawiki.base' ];
 		return navigationTiming.onMwLoadEnd().then( function () {
 			assert.ok( true, 'called' );
 		} );
@@ -495,10 +452,10 @@
 			'test.mwLoadEnd.fail': 'loading',
 			'test.mwLoadEnd.unrelated': 'loading'
 		} );
-		this.sandbox.stub( window, 'RLPAGEMODULES', [
+		window.RLPAGEMODULES = [
 			'test.mwLoadEnd.ok',
 			'test.mwLoadEnd.fail'
-		] );
+		];
 		// Mock async
 		this.sandbox.stub( mw, 'requestIdleCallback', function ( fn ) {
 			fn();
@@ -526,18 +483,11 @@
 			clock = this.sandbox.useFakeTimers();
 
 		// Mock PerformanceNavigation for TYPE_NAVIGATE
-		this.sandbox.stub( window, 'performance', {
-			now: performance.now.bind( performance ),
-			timing: { /* empty stub */ },
-			navigation: {
-				type: TYPE_NAVIGATE,
-				redirectCount: 0
-			}
-		} );
+		this.performance.timing = {};
 		// Mock Geo for country=XX
-		this.sandbox.stub( window, 'Geo', {
+		this.Geo = {
 			country: 'XX'
-		} );
+		};
 
 		// Stub EventLogging
 		logEvent = this.sandbox.stub( mw.eventLog, 'logEvent' );
@@ -547,7 +497,7 @@
 			return { add: function () {} };
 		} );
 
-		navigationTiming.reinit();
+		this.reinit();
 		navigationTiming.loadCallback();
 
 		clock.tick( 10 );
@@ -583,18 +533,7 @@
 		var stub, logEventStub,
 			clock = this.sandbox.useFakeTimers();
 
-		this.sandbox.stub( window, 'performance', {
-			now: performance.now.bind( performance ),
-			timing: { /* empty stub */ },
-			navigation: {
-				type: TYPE_NAVIGATE,
-				redirectCount: 0
-			},
-			getEntriesByType: function () { }
-		} );
-
-		stub = this.sandbox.stub( window.performance, 'getEntriesByType' );
-
+		stub = this.sandbox.stub( this.performance, 'getEntriesByType' );
 		stub.withArgs( 'paint' ).returns(
 			[ {
 				duration: 0,
@@ -603,7 +542,6 @@
 				startTime: 990.3000454
 			} ]
 		);
-
 		stub.withArgs( 'navigation' ).returns(
 			[ {
 				duration: 18544.49,
@@ -628,12 +566,12 @@
 		logEventStub.returns( $.Deferred().promise() );
 		this.sandbox.stub( mw.eventLog, 'logFailure' );
 
-		navigationTiming.reinit();
+		this.reinit();
 		navigationTiming.emitNavTiming();
 
 		clock.tick( 10 );
 
-		assert.equal( window.performance.getEntriesByType.callCount, 2,
+		assert.equal( stub.callCount, 2,
 			'getEntriesByType was called the expected amount of times' );
 
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 0 ], 'NavigationTiming', 'Schema name' );
@@ -657,20 +595,9 @@
 		logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		logEventStub.returns( $.Deferred().resolve() );
 
-		this.sandbox.stub( window, 'performance', {
-			now: performance.now.bind( performance ),
-			timing: { /* empty stub */ },
-			navigation: {
-				type: TYPE_NAVIGATE,
-				redirectCount: 0
-			},
-			getEntriesByType: function () { return []; },
-			getEntriesByName: function () { return []; }
-		} );
+		perfStub = this.sandbox.stub( this.performance, 'getEntriesByName' );
 
-		perfStub = this.sandbox.stub( window.performance, 'getEntriesByName' );
-
-		navigationTiming.reinit();
+		this.reinit();
 		navigationTiming.emitCentralNoticeTiming();
 
 		assert.equal( mw.eventLog.logEvent.callCount, 0, 'No mwCentralNoticeBanner performance mark' );
@@ -687,7 +614,7 @@
 		// Prevent the real NavigationTiming emitNavigationTiming() from running
 		this.sandbox.stub( mw.eventLog, 'inSample', false );
 
-		navigationTiming.reinit();
+		this.reinit();
 
 		navigationTiming.emitCentralNoticeTiming();
 
@@ -704,7 +631,7 @@
 		logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		logEventStub.returns( $.Deferred().resolve() );
 
-		navigationTiming.reinit();
+		this.reinit();
 		navigationTiming.emitCpuBenchmark( [] ).then( function () {
 			setTimeout( function () {
 				assert.equal( mw.eventLog.logEvent.callCount, 1, 'CpuBenchmark event happened' );
@@ -725,16 +652,7 @@
 			return true;
 		} );
 
-		this.sandbox.stub( window, 'performance', {
-			now: performance.now.bind( performance ),
-			timing: performance.timing,
-			navigation: {
-				type: TYPE_NAVIGATE,
-				redirectCount: 0
-			}
-		} );
-
-		navigationTiming.reinit();
+		this.reinit();
 
 		logEvent = this.sandbox.stub( mw.eventLog, 'logEvent' );
 
@@ -777,7 +695,7 @@
 		assert.equal( logEvent.getCall( 1 ).args[ 1 ].lineNumber, 4, 'Reported lineNumber' );
 		assert.equal( logEvent.getCall( 1 ).args[ 1 ].columnNumber, 5, 'Reported columnNumber' );
 
-		navigationTiming.reinit();
+		this.reinit();
 
 		for ( i = 0; i < 50; i++ ) {
 			navigationTiming.emitFeaturePolicyViolation( [ { url: 'foo', body: { featureId: 123 } } ], fakeObserver );
@@ -802,7 +720,7 @@
 		assert.equal( logEvent.getCall( 0 ).args[ 1 ].entryTime, 2, 'Entry time' );
 		assert.equal( logEvent.getCall( 0 ).args[ 1 ].firstSourceNode, 'div#foobar.class1.class2.class3', 'First identified source node' );
 
-		navigationTiming.reinit();
+		this.reinit();
 
 		entries = [ { value: 0.05, lastInputTime: 1, startTime: 2, sources: [] } ];
 
@@ -814,7 +732,7 @@
 		assert.equal( logEvent.getCall( 1 ).args[ 1 ].entryTime, 2, 'Entry time' );
 		assert.equal( logEvent.getCall( 1 ).args[ 1 ].firstSourceNode, undefined, 'No source node when sources empty' );
 
-		navigationTiming.reinit();
+		this.reinit();
 
 		entries = [ { value: 0.05, lastInputTime: 1, startTime: 2, sources: [ null ] } ];
 
@@ -826,7 +744,7 @@
 		assert.equal( logEvent.getCall( 2 ).args[ 1 ].entryTime, 2, 'Entry time' );
 		assert.equal( logEvent.getCall( 2 ).args[ 1 ].firstSourceNode, undefined, 'No source node when sources empty' );
 
-		navigationTiming.reinit();
+		this.reinit();
 
 		entries = [ { value: 0.05, lastInputTime: 1, startTime: 2, sources: [ { node: null } ] } ];
 
@@ -838,7 +756,7 @@
 		assert.equal( logEvent.getCall( 3 ).args[ 1 ].entryTime, 2, 'Entry time' );
 		assert.equal( logEvent.getCall( 3 ).args[ 1 ].firstSourceNode, undefined, 'No source node when first source node is null' );
 
-		navigationTiming.reinit();
+		this.reinit();
 
 		for ( i = 0; i < 50; i++ ) {
 			navigationTiming.emitLayoutShift( entries, fakeObserver );
@@ -859,9 +777,10 @@
 		mw.config.set( 'wgUserId', 123 );
 		mw.config.set( 'wgMFMode', 'stable' );
 
-		this.sandbox.stub( window, 'Geo', {
+		this.Geo = {
 			country: 'XX'
-		} );
+		};
+		this.reinit();
 
 		event = navigationTiming.makeEventWithRequestContext( [] );
 
