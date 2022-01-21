@@ -1108,9 +1108,9 @@
 		onLoadComplete( loadCallback );
 	}
 
-	main();
-
-	if ( typeof QUnit !== 'undefined' ) {
+	if ( !window.QUnit ) {
+		main();
+	} else {
 		/**
 		 * For testing only. Subject to change any time.
 		 *
