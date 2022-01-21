@@ -113,20 +113,10 @@
 				}
 			} );
 		} else if ( timing && timing.msFirstPaint > timing.navigationStart ) {
-			// Support: IE9+, Microsoft Edge
+			// Support: IE 11, Microsoft Edge
 			entry.name = 'first-paint';
 			entry.startTime = timing.msFirstPaint - timing.navigationStart;
 			emitPaintTiming( entry, oversampleReasons, observer );
-		/* global chrome */
-		} else if ( window.chrome && chrome.loadTimes ) {
-			// Support: Chrome 64 and earlier
-			var chromeLoadTimes = chrome.loadTimes();
-			if ( chromeLoadTimes.firstPaintTime > chromeLoadTimes.startLoadTime ) {
-				entry.name = 'first-paint';
-				entry.startTime = 1000 *
-					( chromeLoadTimes.firstPaintTime - chromeLoadTimes.startLoadTime );
-				emitPaintTiming( entry, oversampleReasons, observer );
-			}
 		}
 	}
 

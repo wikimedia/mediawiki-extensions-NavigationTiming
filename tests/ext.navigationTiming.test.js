@@ -11,14 +11,10 @@
 	QUnit.module( 'ext.navigationTiming', {
 		beforeEach: function () {
 			// Because stubs can't work on undefined properties and the presence
-			// of window.Geo and window.chrome isn't guaranteed
+			// of window.Geo isn't guaranteed
 			this.Geo = window.Geo;
 			if ( !window.Geo ) {
 				window.Geo = {};
-			}
-			this.chrome = window.chrome;
-			if ( !window.chrome ) {
-				window.chrome = {};
 			}
 
 			// Can't stub window.navigator
@@ -41,7 +37,6 @@
 		},
 		afterEach: function () {
 			window.Geo = this.Geo;
-			window.chrome = this.chrome;
 
 			delete window.navigator;
 			Object.defineProperty( window, 'navigator', this.navigator );
@@ -54,9 +49,6 @@
 		var stub, event, expected, key,
 			yearMs = 31536000 * 1000,
 			clock = this.sandbox.useFakeTimers();
-
-		// Hide native oldschool firstPaint
-		this.sandbox.stub( window, 'chrome', false );
 
 		this.sandbox.stub( window, 'performance', {
 			now: performance.now.bind( performance ),
@@ -189,9 +181,6 @@
 			}
 		} );
 
-		// Hide native oldschool firstPaint
-		this.sandbox.stub( window, 'chrome', false );
-
 		navigationTiming.reinit();
 
 		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
@@ -266,9 +255,6 @@
 				redirectCount: 0
 			}
 		} );
-
-		// Hide native oldschool firstPaint
-		this.sandbox.stub( window, 'chrome', false );
 
 		navigationTiming.reinit();
 
@@ -460,9 +446,6 @@
 			}
 		} );
 
-		// Hide native oldschool firstPaint
-		this.sandbox.stub( window, 'chrome', false );
-
 		navigationTiming.emitNavTiming();
 
 		clock.tick( 10 );
@@ -555,9 +538,6 @@
 		this.sandbox.stub( window, 'Geo', {
 			country: 'XX'
 		} );
-
-		// Hide native oldschool firstPaint
-		this.sandbox.stub( window, 'chrome', false );
 
 		// Stub EventLogging
 		logEvent = this.sandbox.stub( mw.eventLog, 'logEvent' );
@@ -744,9 +724,6 @@
 		this.sandbox.stub( mw.eventLog, 'randomTokenMatch', function () {
 			return true;
 		} );
-
-		// Hide native oldschool firstPaint
-		this.sandbox.stub( window, 'chrome', false );
 
 		this.sandbox.stub( window, 'performance', {
 			now: performance.now.bind( performance ),
