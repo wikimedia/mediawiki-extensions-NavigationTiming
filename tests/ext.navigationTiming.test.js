@@ -59,14 +59,14 @@
 		this.sandbox.stub( window, 'chrome', false );
 
 		this.sandbox.stub( window, 'performance', {
+			now: performance.now.bind( performance ),
 			timing: performance.timing,
 			navigation: {
 				// Use TYPE_NAVIGATE in the stub, since we don't collect types
 				// such as TYPE_RELOAD.
 				type: TYPE_NAVIGATE,
 				redirectCount: 0
-			},
-			now: performance.now.bind( performance )
+			}
 		} );
 		navigationTiming.reinit();
 
@@ -165,6 +165,7 @@
 			clock = this.sandbox.useFakeTimers();
 
 		this.sandbox.stub( window, 'performance', {
+			now: performance.now.bind( performance ),
 			timing: {
 				navigationStart: 100,
 				fetchStart: 200,
@@ -240,6 +241,7 @@
 			clock = this.sandbox.useFakeTimers();
 
 		this.sandbox.stub( window, 'performance', {
+			now: performance.now.bind( performance ),
 			timing: {
 				navigationStart: 100,
 				fetchStart: 100,
@@ -315,6 +317,7 @@
 			clock = this.sandbox.useFakeTimers();
 
 		this.sandbox.stub( window, 'performance', {
+			now: performance.now.bind( performance ),
 			timing: {
 				navigationStart: 100,
 				fetchStart: 200,
@@ -369,6 +372,7 @@
 		// If navigation type is anything other than TYPE_NAVIGATE, the
 		// check for whether to measure will fail.
 		this.sandbox.stub( window, 'performance', {
+			now: performance.now.bind( performance ),
 			timing: performance.timing,
 			navigation: {
 				type: TYPE_NAVIGATE,
@@ -449,6 +453,7 @@
 		// Mock at least navigation.type so that tests don't fail
 		// on testrunner reload.
 		this.sandbox.stub( window, 'performance', {
+			now: performance.now.bind( performance ),
 			timing: performance.timing,
 			navigation: {
 				type: TYPE_NAVIGATE
@@ -539,6 +544,7 @@
 
 		// Mock PerformanceNavigation for TYPE_NAVIGATE
 		this.sandbox.stub( window, 'performance', {
+			now: performance.now.bind( performance ),
 			timing: { /* empty stub */ },
 			navigation: {
 				type: TYPE_NAVIGATE,
@@ -598,6 +604,7 @@
 			clock = this.sandbox.useFakeTimers();
 
 		this.sandbox.stub( window, 'performance', {
+			now: performance.now.bind( performance ),
 			timing: { /* empty stub */ },
 			navigation: {
 				type: TYPE_NAVIGATE,
@@ -671,6 +678,7 @@
 		logEventStub.returns( $.Deferred().resolve() );
 
 		this.sandbox.stub( window, 'performance', {
+			now: performance.now.bind( performance ),
 			timing: { /* empty stub */ },
 			navigation: {
 				type: TYPE_NAVIGATE,
@@ -741,6 +749,7 @@
 		this.sandbox.stub( window, 'chrome', false );
 
 		this.sandbox.stub( window, 'performance', {
+			now: performance.now.bind( performance ),
 			timing: performance.timing,
 			navigation: {
 				type: TYPE_NAVIGATE,

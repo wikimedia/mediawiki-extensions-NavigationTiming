@@ -8,14 +8,16 @@
 ( function () {
 	'use strict';
 
+	var perf = window.performance;
+	var config = require( './config.json' );
+	var layoutShiftEmitted = 0;
+	var collectedPaintEntries = {};
+	var collectedElementEntries = 0;
+	var policyViolationEmitted = 0;
+
 	var visibilityEvent, visibilityChanged,
 		mediaWikiLoadEnd, surveyDisplayed,
-		cpuBenchmarkDone,
-		layoutShiftEmitted = 0,
-		config = require( './config.json' ),
-		collectedPaintEntries = {},
-		collectedElementEntries = 0,
-		policyViolationEmitted = 0;
+		cpuBenchmarkDone;
 
 	/**
 	 * Creates an event object populated containing essential request context information.
@@ -31,10 +33,10 @@
 	 * - originCountry: based on IP address, which country was the request made from?
 	 *
 	 * @param {Array} oversampleReasons List of zero or more oversample reason strings
+	 * @return {Object}
 	 */
 	function makeEventWithRequestContext( oversampleReasons ) {
-		var mobileMode, event = {};
-
+		var event = {};
 		event.pageviewToken = mw.user.getPageviewToken();
 		event.isAnon = mw.config.get( 'wgUserId' ) === null;
 		event.isOversample = oversampleReasons.length > 0;
@@ -43,7 +45,7 @@
 			event.oversampleReason = JSON.stringify( oversampleReasons );
 		}
 
-		mobileMode = mw.config.get( 'wgMFMode' );
+		var mobileMode = mw.config.get( 'wgMFMode' );
 
 		if ( typeof mobileMode === 'string' && mobileMode.indexOf( 'desktop' ) === -1 ) {
 			// e.g. "stable" or "beta"
@@ -63,13 +65,12 @@
 	/**
 	 * Emit Paint Timing event to Schema:PaintTiming
 	 *
-	 * @param entry
+	 * @param {Object} entry
 	 * @param {Array} oversampleReasons List of zero or more oversample reason strings
-	 * @param observer
+	 * @param {undefined|PerformanceObserver} observer
 	 */
 	function emitPaintTiming( entry, oversampleReasons, observer ) {
 		var event = makeEventWithRequestContext( oversampleReasons );
-
 		event.name = entry.name;
 		event.startTime = Math.round( entry.startTime );
 
@@ -90,16 +91,15 @@
 	 * - https://developer.mozilla.org/en-US/docs/Web/API/PerformancePaintTiming
 	 *
 	 * @param {Array} oversampleReasons List of zero or more oversample reason strings
-	 * @param observer
-	 * @return {Object}
+	 * @param {undefined|PerformanceObserver} observer
 	 */
 	function processExistingPaintTiming( oversampleReasons, observer ) {
-		var chromeLoadTimes, paintEntries,
-			timing = window.performance && performance.timing,
-			entry = {};
+		var timing = perf && perf.timing;
+		var entry = {};
 
+		var paintEntries;
 		try {
-			paintEntries = performance.getEntriesByType( 'paint' );
+			paintEntries = perf.getEntriesByType( 'paint' );
 		} catch ( e ) {
 			// Support: Safari < 11 (getEntriesByType missing)
 			paintEntries = [];
@@ -120,7 +120,7 @@
 		/* global chrome */
 		} else if ( window.chrome && chrome.loadTimes ) {
 			// Support: Chrome 64 and earlier
-			chromeLoadTimes = chrome.loadTimes();
+			var chromeLoadTimes = chrome.loadTimes();
 			if ( chromeLoadTimes.firstPaintTime > chromeLoadTimes.startLoadTime ) {
 				entry.name = 'first-paint';
 				entry.startTime = 1000 *
@@ -158,14 +158,12 @@
 	/**
 	 * PerformanceObserver callback for Element entries, sending them to EventLogging.
 	 *
-	 * @param list
-	 * @param observer
+	 * @param {PerformanceObserverEntryList} list
+	 * @param {PerformanceObserver} observer
 	 */
 	function observeElementTiming( list, observer ) {
-		var event;
-
 		list.getEntries().forEach( function ( entry ) {
-			event = {
+			var event = {
 				pageviewToken: mw.user.getPageviewToken(),
 				identifier: entry.identifier,
 				name: entry.name,
@@ -211,15 +209,16 @@
 		try {
 			observer.observe( { type: 'element', buffered: true } );
 		} catch ( e ) {
-			// If ElementTiming isn't available, this errors because we try subscribing to an invalid entryType
+			// If ElementTiming isn't available, this errors because we are
+			// subscribing to an invalid entryType
 		}
 	}
 
 	/**
 	 * PerformanceObserver callback for FirstInputTiming entries, sending them to EventLogging.
 	 *
-	 * @param list
-	 * @param observer
+	 * @param {PerformanceObserverEntryList} list
+	 * @param {PerformanceObserver} observer
 	 */
 	function observeFirstInputTiming( list, observer ) {
 		list.getEntries().forEach( function ( entry ) {
@@ -279,14 +278,15 @@
 	 * @return {Object}
 	 */
 	function getNavTimingLevel2() {
-		var navigationEntry, res = {};
+		var navigationEntry;
 		try {
-			navigationEntry = performance.getEntriesByType( 'navigation' )[ 0 ];
+			navigationEntry = perf.getEntriesByType( 'navigation' )[ 0 ];
 		} catch ( e ) {
 			// Support: Safari < 11 (getEntriesByType missing)
 			navigationEntry = false;
 		}
 
+		var res = {};
 		if ( navigationEntry ) {
 			res.transferSize = navigationEntry.transferSize;
 
@@ -310,9 +310,10 @@
 	 * @return {Object}
 	 */
 	function getNavTimingLevel1() {
-		var timing = window.performance && performance.timing,
-			navStart = timing && timing.navigationStart,
-			timingData = {};
+		var timing = perf && perf.timing;
+		var navStart = timing && timing.navigationStart;
+
+		var timingData = {};
 
 		if ( !timing ) {
 			return timingData;
@@ -404,10 +405,6 @@
 		cpuBenchmarkDone = true;
 
 		function onMessage() {
-			var i,
-				startTime,
-				amount = 100000000;
-
 			// Global `performance` was originally window-only, and later added to workers.
 			// Support: Edge, IE 11, Safari < 11, Mobile Safari < 10.
 			if ( !self.performance ) {
@@ -415,9 +412,9 @@
 				return;
 			}
 
-			startTime = performance.now();
-
-			for ( i = amount; i > 0; i-- ) {
+			var amount = 100000000;
+			var startTime = performance.now();
+			for ( var i = amount; i > 0; i-- ) {
 				// empty
 			}
 
@@ -430,16 +427,14 @@
 		worker = new Worker( URL.createObjectURL( blob ) );
 
 		deferred.then( function ( result ) {
-			var batteryPromise, event = makeEventWithRequestContext( oversampleReasons );
-
 			if ( !result ) {
 				return;
 			}
 
+			var event = makeEventWithRequestContext( oversampleReasons );
 			event.score = result;
 
-			batteryPromise = navigator.getBattery ? navigator.getBattery() : $.Deferred().reject();
-
+			var batteryPromise = navigator.getBattery ? navigator.getBattery() : $.Deferred().reject();
 			batteryPromise.then(
 				function ( battery ) {
 					event.batteryLevel = battery.level;
@@ -484,7 +479,9 @@
 			isInSurveySample;
 
 		// QuickSurveys are only meant to be displayed on articles
-		if ( isMainPage || !isArticle || !isViewing || isVE || !exists || !surveyName || surveyDisplayed ) {
+		if ( isMainPage || !isArticle || !isViewing || isVE || !exists ||
+			!surveyName || surveyDisplayed
+		) {
 			return;
 		}
 
@@ -514,18 +511,15 @@
 	/**
 	 * If the current page displays a CentralNotice banner, records its display time
 	 *
-	 * @param existingObserver
+	 * @param {PerformanceObserver} existingObserver
 	 * @see https://meta.wikimedia.org/wiki/Schema:CentralNoticeTiming
 	 */
 	function emitCentralNoticeTiming( existingObserver ) {
-		var event, mark, marks, observer;
-
-		if ( !window.performance || !performance.getEntriesByName ) {
+		if ( !perf || !perf.getEntriesByName ) {
 			return;
 		}
 
-		marks = performance.getEntriesByName( 'mwCentralNoticeBanner', 'mark' );
-
+		var marks = perf.getEntriesByName( 'mwCentralNoticeBanner', 'mark' );
 		if ( !marks || !marks.length ) {
 			if ( !window.PerformanceObserver ) {
 				return;
@@ -536,7 +530,7 @@
 				return;
 			}
 
-			observer = new PerformanceObserver( function () {
+			var observer = new PerformanceObserver( function () {
 				emitCentralNoticeTiming( observer );
 			} );
 
@@ -548,13 +542,11 @@
 				existingObserver.disconnect();
 			}
 
-			mark = marks[ 0 ];
-
-			event = {
+			var mark = marks[ 0 ];
+			var event = {
 				pageviewToken: mw.user.getPageviewToken(),
 				time: Math.round( mark.startTime )
 			};
-
 			mw.eventLog.logEvent( 'CentralNoticeTiming', event );
 		}
 	}
@@ -568,10 +560,10 @@
 		// performance.navigation is part of Navigation Timing Level 1.
 		// Under Navigation Timing Level 2, it is available as a string
 		// under PerformanceNavigationTiming#type.
-		return window.performance &&
-			performance.timing &&
-			performance.navigation &&
-			performance.navigation.type === TYPE_NAVIGATE;
+		return perf &&
+			perf.timing &&
+			perf.navigation &&
+			perf.navigation.type === TYPE_NAVIGATE;
 	}
 
 	/**
@@ -584,8 +576,7 @@
 	 * @param {Array} oversampleReasons List of zero or more oversample reason strings
 	 */
 	function emitNavigationTimingWithOversample( oversampleReasons ) {
-		var veaction,
-			event = makeEventWithRequestContext( oversampleReasons );
+		var event = makeEventWithRequestContext( oversampleReasons );
 
 		// No need to wait for the RUM metrics to be recorded before showing the survey
 		showPerformanceSurvey();
@@ -606,8 +597,7 @@
 			event.action = mw.config.get( 'wgAction' );
 		}
 
-		veaction = mw.util.getParamValue( 'veaction' );
-
+		var veaction = mw.util.getParamValue( 'veaction' );
 		if ( veaction !== null ) {
 			event.veaction = veaction;
 		}
@@ -671,15 +661,13 @@
 	 * @see https://meta.wikimedia.org/wiki/Schema:SaveTiming
 	 */
 	function emitSaveTiming() {
-		var timing = window.performance && performance.timing,
-			responseStart;
+		var timing = perf && perf.timing;
 
 		if ( !mw.config.get( 'wgPostEdit' ) || !timing ) {
 			return;
 		}
 
-		responseStart = timing.responseStart - timing.navigationStart;
-
+		var responseStart = timing.responseStart - timing.navigationStart;
 		if ( !responseStart ) {
 			return;
 		}
@@ -694,9 +682,9 @@
 	 * Set the local mediaWikiLoadEnd variable
 	 */
 	function setMwLoadEnd() {
-		if ( window.performance && performance.now ) {
+		if ( perf && perf.now ) {
 			// Record this now, for later use by emitNavigationTiming
-			mediaWikiLoadEnd = Math.round( performance.now() );
+			mediaWikiLoadEnd = Math.round( perf.now() );
 		}
 	}
 
@@ -706,8 +694,8 @@
 	 * @return {jQuery.Deferred}
 	 */
 	function onMwLoadEnd() {
-		var deferred = $.Deferred(),
-			modules = window.RLPAGEMODULES;
+		var deferred = $.Deferred();
+		var modules = window.RLPAGEMODULES;
 
 		if ( !modules ) {
 			// Fallback for parser cache from 1.32.0-wmf.20 and earlier
@@ -736,7 +724,7 @@
 			setMwLoadEnd();
 			deferred.resolve();
 		} ).fail( function () {
-			var i, count = modules.length;
+			var count = modules.length;
 			function decrement() {
 				count--;
 				if ( count === 0 ) {
@@ -744,7 +732,7 @@
 					deferred.resolve();
 				}
 			}
-			for ( i = 0; i < modules.length; i++ ) {
+			for ( var i = 0; i < modules.length; i++ ) {
 				mw.loader.using( modules[ i ] ).always( decrement );
 			}
 		} );
@@ -773,7 +761,7 @@
 	 * @return {Array} A list of geos that were selected for oversample
 	 */
 	function testGeoOversamples( geos ) {
-		var myGeo, geoOversamples = [];
+		var geoOversamples = [];
 
 		// Geo oversample depends on the global Geo, which is created by the
 		// CentralNotice extension.  We don't depend on it, though, because
@@ -782,8 +770,7 @@
 			return geoOversamples;
 		}
 
-		myGeo = Geo.country || Geo.country_code;
-
+		var myGeo = Geo.country || Geo.country_code;
 		if ( myGeo in geos ) {
 			if ( mw.eventLog.randomTokenMatch( geos[ myGeo ] ) ) {
 				geoOversamples.push( myGeo );
@@ -802,7 +789,7 @@
 	 * @return {Array} An array of User Agent strings that are being oversampled
 	 */
 	function testUAOversamples( userAgents ) {
-		var userAgent, userAgentSamples = [];
+		var userAgentSamples = [];
 
 		if ( !navigator.userAgent ) {
 			return userAgentSamples;
@@ -822,7 +809,7 @@
 		//    5% of the time: ['Firefox']
 		//    45% of the time: []
 		//
-		for ( userAgent in userAgents ) {
+		for ( var userAgent in userAgents ) {
 			if ( navigator.userAgent.indexOf( userAgent ) >= 0 ) {
 				if ( mw.eventLog.randomTokenMatch( userAgents[ userAgent ] ) ) {
 					userAgentSamples.push( userAgent );
@@ -842,13 +829,12 @@
 	 * @return {Array} An array of page names that are being oversampled
 	 */
 	function testPageNameOversamples( pageNames ) {
-		var pageNamesSamples = [],
-			pageName = mw.config.get( 'wgPageName' );
+		var pageNamesSamples = [];
 
 		// Look at each page name that's been selected for oversampling,
 		// and check whether the current page matches.  If it does, do a random to select
 		// whether or not to oversample in this case.
-		//
+		var pageName = mw.config.get( 'wgPageName' );
 		if ( pageName in pageNames ) {
 			if ( mw.eventLog.randomTokenMatch( pageNames[ pageName ] ) ) {
 				pageNamesSamples.push( pageName );
@@ -874,25 +860,23 @@
 	 */
 	function emitLayoutShift( entries, observer ) {
 		entries.forEach( function ( entry ) {
-			var source,
-				node,
-				event = {
-					pageviewToken: mw.user.getPageviewToken(),
-					value: entry.value,
-					lastInputTime: Math.round( entry.lastInputTime ),
-					entryTime: Math.round( entry.startTime )
-				};
-
 			if ( entry.hadRecentInput ) {
 				return;
 			}
 
+			var event = {
+				pageviewToken: mw.user.getPageviewToken(),
+				value: entry.value,
+				lastInputTime: Math.round( entry.lastInputTime ),
+				entryTime: Math.round( entry.startTime )
+			};
+
 			// Add attribution if any is available
 			if ( Array.isArray( entry.sources ) && entry.sources.length ) {
-				source = entry.sources[ 0 ];
+				var source = entry.sources[ 0 ];
 
 				if ( source && source.node ) {
-					node = source.node;
+					var node = source.node;
 
 					if ( 'localName' in node ) {
 						event.firstSourceNode = node.localName;
@@ -925,13 +909,11 @@
 	 * @see https://github.com/WICG/layout-instability
 	 */
 	function observeLayoutShift() {
-		var performanceObserver;
-
 		if ( !window.PerformanceObserver || !window.performance ) {
 			return;
 		}
 
-		performanceObserver = new PerformanceObserver( function ( list, observer ) {
+		var performanceObserver = new PerformanceObserver( function ( list, observer ) {
 			emitLayoutShift( list.getEntries(), observer );
 		} );
 
@@ -981,14 +963,12 @@
 	 * Observe Feature Policy Violation reports: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Feature-Policy
 	 */
 	function setupFeaturePolicyViolationObserver() {
-		var observer;
-
 		if ( !window.ReportingObserver ) {
 			return;
 		}
 
 		/* global ReportingObserver */
-		observer = new ReportingObserver( emitFeaturePolicyViolation, { buffered: true, types: [ 'feature-policy-violation' ] } );
+		var observer = new ReportingObserver( emitFeaturePolicyViolation, { buffered: true, types: [ 'feature-policy-violation' ] } );
 		observer.observe();
 	}
 
@@ -996,8 +976,6 @@
 	 * Called after loadEventEnd by onLoadComplete()
 	 */
 	function loadCallback() {
-		var oversamples, oversampleReasons, isInSample;
-
 		// Maybe send SaveTiming beacon
 		mw.hook( 'postEdit' ).add( emitSaveTiming );
 
@@ -1016,9 +994,8 @@
 		}
 
 		// Get any oversamples, and see whether we match
-		oversamples = config.oversampleFactor;
-
-		oversampleReasons = [];
+		var oversamples = config.oversampleFactor;
+		var oversampleReasons = [];
 		if ( oversamples ) {
 			if ( 'geo' in oversamples ) {
 				testGeoOversamples( oversamples.geo ).forEach( function ( key ) {
@@ -1045,8 +1022,7 @@
 			}
 		}
 
-		isInSample = mw.eventLog.inSample( config.samplingFactor || 0 );
-
+		var isInSample = mw.eventLog.inSample( config.samplingFactor || 0 );
 		if ( !oversampleReasons.length && !isInSample ) {
 			// NavTiming: Not sampled
 			return;
@@ -1130,6 +1106,8 @@
 			emitLayoutShift: emitLayoutShift,
 			makeEventWithRequestContext: makeEventWithRequestContext,
 			reinit: function () {
+				perf = window.performance;
+
 				// Call manually because, during test execution, actual
 				// onLoadComplete will probably not have happened yet.
 				setMwLoadEnd();
