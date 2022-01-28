@@ -444,7 +444,8 @@
 		} );
 	} );
 
-	QUnit.test( 'onMwLoadEnd - controlled', function ( assert ) {
+	// FIXME: T299780
+	QUnit.skip( 'onMwLoadEnd - controlled', function ( assert ) {
 		var log = [];
 		var clock = this.sandbox.useFakeTimers();
 		mw.loader.state( {
