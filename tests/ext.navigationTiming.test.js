@@ -626,20 +626,28 @@
 	} );
 
 	QUnit.test( 'emitCpuBenchmark', function ( assert ) {
-		var logEventStub,
-			done = assert.async();
+		var events = [];
 
-		logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
-		logEventStub.returns( $.Deferred().resolve() );
+		this.sandbox.stub( mw.eventLog, 'logEvent', function ( schema, event ) {
+			events.push( { schema: schema, event: event } );
+			return $.Deferred().resolve();
+		} );
 
 		this.reinit();
-		navigationTiming.emitCpuBenchmark( [] ).then( function () {
-			setTimeout( function () {
-				assert.equal( mw.eventLog.logEvent.callCount, 1, 'CpuBenchmark event happened' );
-				assert.ok( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].score > 0, 'Event with non-zero score' );
-				assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].batteryLevel, 0.2, 'Event with expected battery level' );
-				done();
-			} );
+		return navigationTiming.emitCpuBenchmark( [] ).then( function () {
+			assert.propContains( events,
+				[ {
+					schema: 'CpuBenchmark',
+					event: {
+						isAnon: true,
+						isOversample: false,
+						batteryLevel: 0.2
+					}
+				} ],
+				'events'
+			);
+
+			assert.true( events[ 0 ].event.score > 0, 'event.score is non-zero' );
 		} );
 	} );
 

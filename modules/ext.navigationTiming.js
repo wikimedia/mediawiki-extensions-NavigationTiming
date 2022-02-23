@@ -416,7 +416,14 @@
 		blob = new Blob( [ work ], { type: 'application/javascript' } );
 		worker = new Worker( URL.createObjectURL( blob ) );
 
-		deferred.then( function ( result ) {
+		worker.onmessage = function ( e ) {
+			deferred.resolve( e.data );
+			worker.terminate();
+		};
+
+		worker.postMessage( false );
+
+		return deferred.then( function ( result ) {
 			if ( !result ) {
 				return;
 			}
@@ -425,7 +432,7 @@
 			event.score = result;
 
 			var batteryPromise = navigator.getBattery ? navigator.getBattery() : $.Deferred().reject();
-			batteryPromise.then(
+			return batteryPromise.then(
 				function ( battery ) {
 					event.batteryLevel = battery.level;
 					mw.eventLog.logEvent( 'CpuBenchmark', event );
@@ -435,15 +442,6 @@
 				}
 			);
 		} );
-
-		worker.onmessage = function ( e ) {
-			deferred.resolve( e.data );
-			worker.terminate();
-		};
-
-		worker.postMessage( false );
-
-		return deferred;
 	}
 
 	/**
