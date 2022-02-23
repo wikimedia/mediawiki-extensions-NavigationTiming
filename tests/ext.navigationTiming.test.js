@@ -58,7 +58,7 @@
 
 	// Basic test will ensure no exceptions are thrown and various
 	// of the core properties are set as expected.
-	QUnit.test( 'Basic', function ( assert ) {
+	QUnit.test( 'emitNavTiming - Basic', function ( assert ) {
 		var stub, event, expected, key,
 			yearMs = 31536000 * 1000,
 			clock = this.sandbox.useFakeTimers();
@@ -155,7 +155,7 @@
 
 	// Case with example values typical for a first view
 	// where DNS, TCP, SSL etc. all need to happen.
-	QUnit.test( 'First view', function ( assert ) {
+	QUnit.test( 'emitNavTiming - First view', function ( assert ) {
 		var event, stub, expected, key, val,
 			clock = this.sandbox.useFakeTimers();
 
@@ -220,7 +220,7 @@
 
 	// Case with example values typical for a repeat view
 	// where DNS, TCP, SSL etc. are cached/re-used.
-	QUnit.test( 'Repeat view', function ( assert ) {
+	QUnit.test( 'emitNavTiming - Repeat view', function ( assert ) {
 		var event, stub, expected, key, val,
 			clock = this.sandbox.useFakeTimers();
 
@@ -285,10 +285,7 @@
 		}
 	} );
 
-	QUnit.test( 'Reloaded view', function ( assert ) {
-		var stub,
-			clock = this.sandbox.useFakeTimers();
-
+	QUnit.test( 'isRegularNavigation - reload', function ( assert ) {
 		this.performance.timing = {
 			navigationStart: 100,
 			fetchStart: 200,
@@ -308,29 +305,14 @@
 		this.performance.navigation.type = TYPE_RELOAD;
 		this.reinit();
 
-		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
-		stub.returns( $.Deferred().promise() );
-		navigationTiming.loadCallback();
-
-		clock.tick( 10 );
-
-		assert.strictEqual( stub.args.length, 0, 'mw.eventLog.logEvent not called' );
+		assert.false( navigationTiming.isRegularNavigation() );
 	} );
 
-	QUnit.test( 'Without Navigation Timing API', function ( assert ) {
-		var stub,
-			clock = this.sandbox.useFakeTimers();
-
+	QUnit.test( 'isRegularNavigation - no Navigation Timing API', function ( assert ) {
 		this.performance = undefined;
 		this.reinit();
 
-		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
-		stub.returns( $.Deferred().promise() );
-		navigationTiming.loadCallback();
-
-		clock.tick( 10 );
-
-		assert.strictEqual( stub.args.length, 0, 'mw.eventLog.logEvent not called' );
+		assert.false( navigationTiming.isRegularNavigation() );
 	} );
 
 	QUnit.test( 'Oversample config and activation', function ( assert ) {
@@ -394,7 +376,7 @@
 			'When randomTokenMatch returns false, the resulting list of oversample reasons is empty' );
 	} );
 
-	QUnit.test( 'emitOversampleNavigationTiming tests', function ( assert ) {
+	QUnit.test( 'emitOversampleNavigationTiming', function ( assert ) {
 		var logEventStub, logFailureStub,
 			clock = this.sandbox.useFakeTimers();
 
@@ -444,8 +426,7 @@
 		} );
 	} );
 
-	// FIXME: T299780
-	QUnit.skip( 'onMwLoadEnd - controlled', function ( assert ) {
+	QUnit.test( 'onMwLoadEnd - controlled', function ( assert ) {
 		var log = [];
 		var clock = this.sandbox.useFakeTimers();
 		mw.loader.state( {
@@ -478,59 +459,7 @@
 		assert.propEqual( log, [ 'call' ], 'resolved after fail+ok' );
 	} );
 
-	QUnit.test( 'Oversample Geo integration tests', function ( assert ) {
-		var logEvent,
-			navigationTimingEvents,
-			clock = this.sandbox.useFakeTimers();
-
-		// Mock PerformanceNavigation for TYPE_NAVIGATE
-		this.performance.timing = {};
-		// Mock Geo for country=XX
-		this.Geo = {
-			country: 'XX'
-		};
-
-		// Stub EventLogging
-		logEvent = this.sandbox.stub( mw.eventLog, 'logEvent' );
-		logEvent.returns( $.Deferred().promise() );
-		// Stub mw.hook (unrelated)
-		this.sandbox.stub( mw, 'hook', function () {
-			return { add: function () {} };
-		} );
-
-		this.reinit();
-		navigationTiming.loadCallback();
-
-		clock.tick( 10 );
-
-		// There should be two events
-		assert.equal( logEvent.args.length, 2, '2 events were emitted' );
-
-		// There should be one NavigationTiming event with isOversample == false
-		assert.equal( logEvent.args.filter( function ( event ) {
-			return event[ 1 ].isOversample === false && event[ 0 ] === 'NavigationTiming';
-		} ).length, 1, 'Exactly one NavigationTiming event has isOversample === false' );
-
-		// There should be one NavigationTiming event with isOversample == true
-		assert.equal( logEvent.args.filter( function ( event ) {
-			return event[ 1 ].isOversample === true && event[ 0 ] === 'NavigationTiming';
-		} ).length, 1, 'Exactly one NavigationTiming event has isOversample === true' );
-
-		// Delete properties that are expected to be different and check remainder
-		logEvent.args.forEach( function ( event ) {
-			delete event[ 1 ].isOversample;
-			delete event[ 1 ].oversampleReason;
-		} );
-
-		navigationTimingEvents = logEvent.args.filter( function ( event ) {
-			return event[ 0 ] === 'NavigationTiming';
-		} );
-
-		assert.deepEqual( navigationTimingEvents[ 0 ][ 1 ], navigationTimingEvents[ 1 ][ 1 ],
-			'Oversample and regular sample contain the same data' );
-	} );
-
-	QUnit.test( 'Optional APIs', function ( assert ) {
+	QUnit.test( 'emitNavTiming - Optional APIs', function ( assert ) {
 		var stub, logEventStub,
 			clock = this.sandbox.useFakeTimers();
 
@@ -651,31 +580,13 @@
 		} );
 	} );
 
-	QUnit.test( 'Wiki oversampling', function ( assert ) {
-		var logEvent,
-			clock = this.sandbox.useFakeTimers();
-
+	QUnit.test( 'getOversampleReasons - by wiki', function ( assert ) {
 		mw.config.set( 'wgDBname', 'foowiki' );
-
 		this.sandbox.stub( mw.eventLog, 'randomTokenMatch', function () {
 			return true;
 		} );
 
-		this.reinit();
-
-		logEvent = this.sandbox.stub( mw.eventLog, 'logEvent' );
-
-		navigationTiming.loadCallback();
-
-		clock.tick( 10 );
-
-		assert.equal( logEvent.args.filter( function ( event ) {
-			return event[ 1 ].isOversample === true;
-		} ).length, 1, '1 event with oversample == true' );
-
-		assert.equal( logEvent.args.filter( function ( event ) {
-			return event[ 1 ].oversampleReason === '["wiki:foowiki"]';
-		} ).length, 1, '1 event with oversampleReason == wiki:foowiki' );
+		assert.deepEqual( navigationTiming.getOversampleReasons(), [ 'wiki:foowiki' ], 'reasons' );
 	} );
 
 	QUnit.test( 'emitFeaturePolicyViolation', function ( assert ) {

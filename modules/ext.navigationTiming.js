@@ -548,10 +548,10 @@
 		// performance.navigation is part of Navigation Timing Level 1.
 		// Under Navigation Timing Level 2, it is available as a string
 		// under PerformanceNavigationTiming#type.
-		return perf &&
+		return !!( perf &&
 			perf.timing &&
 			perf.navigation &&
-			perf.navigation.type === TYPE_NAVIGATE;
+			perf.navigation.type === TYPE_NAVIGATE );
 	}
 
 	/**
@@ -960,31 +960,8 @@
 		observer.observe();
 	}
 
-	/**
-	 * Called after loadEventEnd by onLoadComplete()
-	 */
-	function loadCallback() {
-		// Maybe send SaveTiming beacon
-		mw.hook( 'postEdit' ).add( emitSaveTiming );
-
-		// Stop listening for 'visibilitychange' events
-		$( document ).off( visibilityEvent, setVisibilityChanged );
-
-		// Decide whether to send NavTiming beacon
-		if ( visibilityChanged ) {
-			// NavTiming: Ignore background tabs
-			//
-			// Don't report measurements for pages that have loaded in the background.
-			// Browsers defer or deprioritize loading background pages, causing them to
-			// take longer to load, which throws off our measurements.
-			// See <https://phabricator.wikimedia.org/T146510#2794213> for more details.
-			return;
-		}
-
-		if ( !isRegularNavigation() ) {
-			return;
-		}
-
+	/** @return {string[]} */
+	function getOversampleReasons() {
 		// Get any oversamples, and see whether we match
 		var oversamples = config.oversampleFactor;
 		var oversampleReasons = [];
@@ -1014,6 +991,35 @@
 			}
 		}
 
+		return oversampleReasons;
+	}
+
+	/**
+	 * Called after loadEventEnd by onLoadComplete()
+	 */
+	function loadCallback() {
+		// Maybe send SaveTiming beacon
+		mw.hook( 'postEdit' ).add( emitSaveTiming );
+
+		// Stop listening for 'visibilitychange' events
+		$( document ).off( visibilityEvent, setVisibilityChanged );
+
+		// Decide whether to send NavTiming beacon
+		if ( visibilityChanged ) {
+			// NavTiming: Ignore background tabs
+			//
+			// Don't report measurements for pages that have loaded in the background.
+			// Browsers defer or deprioritize loading background pages, causing them to
+			// take longer to load, which throws off our measurements.
+			// See <https://phabricator.wikimedia.org/T146510#2794213> for more details.
+			return;
+		}
+
+		if ( !isRegularNavigation() ) {
+			return;
+		}
+
+		var oversampleReasons = getOversampleReasons();
 		var isInSample = mw.eventLog.inSample( config.samplingFactor || 0 );
 		if ( !oversampleReasons.length && !isInSample ) {
 			// NavTiming: Not sampled
@@ -1083,13 +1089,14 @@
 		 * @private
 		 */
 		module.exports = {
+			isRegularNavigation: isRegularNavigation,
+			getOversampleReasons: getOversampleReasons,
 			emitNavTiming: emitNavigationTiming,
 			emitNavigationTimingWithOversample: emitNavigationTimingWithOversample,
 			emitCentralNoticeTiming: emitCentralNoticeTiming,
 			testGeoOversamples: testGeoOversamples,
 			testUAOversamples: testUAOversamples,
 			testPageNameOversamples: testPageNameOversamples,
-			loadCallback: loadCallback,
 			onMwLoadEnd: onMwLoadEnd,
 			emitCpuBenchmark: emitCpuBenchmark,
 			emitFeaturePolicyViolation: emitFeaturePolicyViolation,
