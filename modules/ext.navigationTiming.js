@@ -28,7 +28,7 @@
 	 * and allow us to explore the data by facet in Prometheus/Grafana.
 	 *
 	 * The populated fields are:
-	 * - pageviewToken: a unique token for the pageview to cross-reference the request between schemas
+	 * - pageviewToken: unique token for the pageview to cross-reference the request between schemas
 	 * - isAnon: is the user anonymous or authenticated?
 	 * - isOversample: is the request an oversampled measurement?
 	 * - oversampleReason: why was the request oversampled if it was?
@@ -309,7 +309,7 @@
 			return timingData;
 		}
 
-		$.each( [
+		[
 			'connectEnd',
 			'connectStart',
 			'domComplete',
@@ -321,7 +321,7 @@
 			'responseEnd',
 			'responseStart',
 			'secureConnectionStart'
-		], function ( i, marker ) {
+		].forEach( function ( marker ) {
 			// Verify the key exists and that it is equal or above zero to avoid submit
 			// of invalid/negative values after subtracting navStart.
 			// While these keys are meant to be timestamps, they may be absent
