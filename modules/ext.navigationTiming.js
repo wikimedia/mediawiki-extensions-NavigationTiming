@@ -983,6 +983,10 @@
 			return;
 		}
 
+		if ( !isRegularNavigation() ) {
+			return;
+		}
+
 		// Get any oversamples, and see whether we match
 		var oversamples = config.oversampleFactor;
 		var oversampleReasons = [];
@@ -1018,29 +1022,27 @@
 			return;
 		}
 
-		if ( isRegularNavigation() ) {
-			// These are events separate from NavigationTiming that emit under the
-			// same circumstances as navigation timing sampling and oversampling.
-			emitCentralNoticeTiming();
-			setupElementTimingObserver();
-			setupFeaturePolicyViolationObserver();
-			setupFirstInputTimingObserver();
+		// These are events separate from NavigationTiming that emit under the
+		// same circumstances as navigation timing sampling and oversampling.
+		emitCentralNoticeTiming();
+		setupElementTimingObserver();
+		setupFeaturePolicyViolationObserver();
+		setupFirstInputTimingObserver();
 
-			// Run a CPU microbenchmark for a portion of measurements
-			if ( mw.eventLog.randomTokenMatch( config.cpuBenchmarkSamplingFactor || 0 ) ) {
-				emitCpuBenchmark( oversampleReasons );
-			}
-
-			if ( isInSample ) {
-				emitNavigationTiming();
-			}
-
-			if ( oversampleReasons.length ) {
-				emitNavigationTimingWithOversample( oversampleReasons );
-			}
-
-			observeLayoutShift();
+		// Run a CPU microbenchmark for a portion of measurements
+		if ( mw.eventLog.randomTokenMatch( config.cpuBenchmarkSamplingFactor || 0 ) ) {
+			emitCpuBenchmark( oversampleReasons );
 		}
+
+		if ( isInSample ) {
+			emitNavigationTiming();
+		}
+
+		if ( oversampleReasons.length ) {
+			emitNavigationTimingWithOversample( oversampleReasons );
+		}
+
+		observeLayoutShift();
 	}
 
 	/**
