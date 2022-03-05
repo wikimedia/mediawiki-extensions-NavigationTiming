@@ -419,16 +419,14 @@
 			[ 'UA:Chrome', 'geo:XX' ], 'Both reasons listed after calling ENTWO' );
 	} );
 
-	QUnit.test( 'onMwLoadEnd - plain', function ( assert ) {
+	QUnit.test( 'onMwLoadEnd - simple', function ( assert ) {
 		window.RLPAGEMODULES = [ 'mediawiki.base' ];
 		return navigationTiming.onMwLoadEnd().then( function () {
-			assert.ok( true, 'called' );
+			assert.true( true, 'called' );
 		} );
 	} );
 
-	QUnit.test( 'onMwLoadEnd - controlled', function ( assert ) {
-		var log = [];
-		var clock = this.sandbox.useFakeTimers();
+	QUnit.test( 'onMwLoadEnd - mixed states', function ( assert ) {
 		mw.loader.state( {
 			'test.mwLoadEnd.ok': 'loading',
 			'test.mwLoadEnd.fail': 'loading',
@@ -438,25 +436,20 @@
 			'test.mwLoadEnd.ok',
 			'test.mwLoadEnd.fail'
 		];
-		// Mock async
 		this.sandbox.stub( mw, 'requestIdleCallback', function ( fn ) {
+			// Run test callback immediately and more reliably
 			fn();
 		} );
 
-		navigationTiming.onMwLoadEnd().then( function () {
-			log.push( 'call' );
-		} );
-		clock.tick( 10 );
-		assert.propEqual( log, [], 'pending initially' );
+		var promise = navigationTiming.onMwLoadEnd();
 
-		// Make sure that it doesn't stop waiting after the first error.
+		//  Make sure that it doesn't stop waiting after the first error.
 		mw.loader.state( { 'test.mwLoadEnd.fail': 'error' } );
-		clock.tick( 10 );
-		assert.propEqual( log, [], 'pending after fail' );
-
 		mw.loader.state( { 'test.mwLoadEnd.ok': 'ready' } );
-		clock.tick( 10 );
-		assert.propEqual( log, [ 'call' ], 'resolved after fail+ok' );
+
+		return promise.then( function () {
+			assert.true( true, 'called' );
+		} );
 	} );
 
 	QUnit.test( 'emitNavTiming - Optional APIs', function ( assert ) {
