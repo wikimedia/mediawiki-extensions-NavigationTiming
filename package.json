@@ -1,4 +1,5 @@
 {
+	"name": "NavigationTiming",
 	"private": true,
 	"scripts": {
 		"test": "grunt test && eslint --report-unused-disable-directives --cache ."
