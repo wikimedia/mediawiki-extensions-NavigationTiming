@@ -1,4 +1,5 @@
 {
+	"name": "NavigationTiming",
 	"private": true,
 	"scripts": {
 		"test": "npm run test:eslint && npm run test:banana",
