@@ -3,18 +3,18 @@
 namespace MediaWiki\Extension\NavigationTiming;
 
 use MediaWiki\Logger\LoggerFactory;
-use ResourceLoaderContext;
+use MediaWiki\ResourceLoader as RL;
 
 class Config {
 	/**
 	 * Get config vars to export with the ext.navigationTiming module.
 	 *
-	 * @param ResourceLoaderContext $context
+	 * @param RL\Context $context
 	 * @param \Config $config
 	 * @return array
 	 */
 	public static function getNavigationTimingConfigVars(
-		ResourceLoaderContext $context,
+		RL\Context $context,
 		\Config $config
 	) {
 		$configVars = [
