@@ -1,8 +1,9 @@
 {
 	"@metadata": {
 		"authors": [
-			"Gomoko"
+			"Gomoko",
+			"Verdy p"
 		]
 	},
-	"navigationtiming-desc": "Ajouter une trace des mesures de latence côté client"
+	"navigationtiming-desc": "Ajoute un traçage des mesures de latence du côté client"
 }
