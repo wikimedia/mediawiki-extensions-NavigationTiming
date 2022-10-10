@@ -36,7 +36,14 @@
 				"ext.navigationTiming.js",
 				{
 					"name": "config.json",
-					"callback": "MediaWiki\\Extension\\NavigationTiming\\Config::getNavigationTimingConfigVars"
+					"config": {
+						"samplingFactor": "NavigationTimingSamplingFactor",
+						"surveySamplingFactor": "NavigationTimingSurveySamplingFactor",
+						"surveyAuthenticatedSamplingFactor": "NavigationTimingSurveyAuthenticatedSamplingFactor",
+						"surveyName": "NavigationTimingSurveyName",
+						"cpuBenchmarkSamplingFactor": "NavigationTimingCpuBenchmarkSamplingFactor",
+						"oversampleFactor": "NavigationTimingOversampleFactor"
+					}
 				}
 			],
 			"dependencies": [
