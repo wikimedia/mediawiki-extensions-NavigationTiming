@@ -13,7 +13,6 @@
 	var Geo = window.Geo;
 
 	var config = require( './config.json' );
-	var layoutShiftEmitted = 0;
 	var collectedPaintEntries = {};
 	var collectedElementEntries = 0;
 	var policyViolationEmitted = 0;
@@ -582,6 +581,11 @@
 			event.hardwareConcurrency = navigator.hardwareConcurrency;
 		}
 
+		// Only use in browser that supports the layout shift API
+		if ( window.PerformanceObserver && window.PerformanceObserver.supportedEntryTypes && PerformanceObserver.supportedEntryTypes.indexOf( 'layout-shift' ) > -1 ) {
+			event.cumulativeLayoutShift = getCumulativeLayoutShift();
+		}
+
 		$.extend( event,
 			getNavTimingLevel1(),
 			getNavTimingLevel2()
@@ -796,76 +800,37 @@
 	}
 
 	/**
-	 * Emit LayoutShift events.
+	 * Get Cumulative LayoutShift score.
 	 *
-	 * @see https://meta.wikimedia.org/wiki/Schema:LayoutShift
-	 * @param {Array} entries An array of PerformanceEntry objects
-	 * @param {PerformanceObserver} observer The performance observer watching LayoutShift
+	 * @return {number}
 	 */
-	function emitLayoutShift( entries, observer ) {
+	function getCumulativeLayoutShift() {
+		var perfObserver = new PerformanceObserver( function () {} );
+
+		// See https://github.com/mmocny/web-vitals/wiki/Snippets-for-LSN-using-PerformanceObserver#max-session-gap1s-limit5s
+		// https://github.com/GoogleChrome/web-vitals/blob/v3.1.0/src/onCLS.ts
+		perfObserver.observe( { type: 'layout-shift', buffered: true } );
+		var entries = perfObserver.takeRecords();
+		var max = 0;
+		var curr = 0;
+		var firstTs = Number.NEGATIVE_INFINITY;
+		var prevTs = Number.NEGATIVE_INFINITY;
 		entries.forEach( function ( entry ) {
 			if ( entry.hadRecentInput ) {
 				return;
 			}
-
-			var event = {
-				pageviewToken: mw.user.getPageviewToken(),
-				value: entry.value,
-				lastInputTime: Math.round( entry.lastInputTime ),
-				entryTime: Math.round( entry.startTime )
-			};
-
-			// Add attribution if any is available
-			if ( Array.isArray( entry.sources ) && entry.sources.length ) {
-				var source = entry.sources[ 0 ];
-
-				if ( source && source.node ) {
-					var node = source.node;
-
-					if ( 'localName' in node ) {
-						event.firstSourceNode = node.localName;
-					}
-
-					if ( 'getAttribute' in node ) {
-						if ( node.getAttribute( 'id' ) ) {
-							event.firstSourceNode = event.firstSourceNode + '#' + node.getAttribute( 'id' );
-						}
-
-						if ( node.getAttribute( 'class' ) ) {
-							event.firstSourceNode = event.firstSourceNode + '.' + node.getAttribute( 'class' ).replace( /\s/g, '.' );
-						}
-					}
-				}
+			if ( entry.startTime - firstTs > 5000 || entry.startTime - prevTs > 1000 ) {
+				firstTs = entry.startTime;
+				curr = 0;
 			}
-
-			mw.eventLog.logEvent( 'LayoutShift', event );
-			layoutShiftEmitted++;
+			prevTs = entry.startTime;
+			curr += entry.value;
+			max = Math.max( max, curr );
 		} );
-
-		if ( layoutShiftEmitted > 20 ) {
-			observer.disconnect();
-		}
-	}
-
-	/**
-	 * Watch layout-shift entries
-	 *
-	 * @see https://github.com/WICG/layout-instability
-	 */
-	function observeLayoutShift() {
-		if ( !window.PerformanceObserver || !window.performance ) {
-			return;
-		}
-
-		var performanceObserver = new PerformanceObserver( function ( list, observer ) {
-			emitLayoutShift( list.getEntries(), observer );
-		} );
-
-		try {
-			performanceObserver.observe( { type: 'layout-shift', buffered: true } );
-		} catch ( e ) {
-			// layout-shift isn't supported by all browsers with the PerformanceObserver
-		}
+		perfObserver.disconnect();
+		// 0.25 is poor CLS, below 0.1 is good we don't
+		// really care about low values
+		return max > 0.01 ? Number( max.toFixed( 3 ) ) : 0;
 	}
 
 	/**
@@ -1000,8 +965,6 @@
 		if ( oversampleReasons.length ) {
 			emitNavigationTimingWithOversample( oversampleReasons );
 		}
-
-		observeLayoutShift();
 	}
 
 	/**
@@ -1055,7 +1018,6 @@
 			onMwLoadEnd: onMwLoadEnd,
 			emitCpuBenchmark: emitCpuBenchmark,
 			emitFeaturePolicyViolation: emitFeaturePolicyViolation,
-			emitLayoutShift: emitLayoutShift,
 			makeEventWithRequestContext: makeEventWithRequestContext,
 			reinit: function ( mocks ) {
 				perf = mocks && mocks.performance || undefined;

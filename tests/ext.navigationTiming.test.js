@@ -486,6 +486,20 @@
 			} ]
 		);
 
+		var performanceObserver = this.sandbox.stub( window, 'PerformanceObserver', function () {
+			return {
+				observe: function ( config ) { this.type = config.type; },
+				disconnect: function () {},
+				takeRecords: function () {
+					if ( this.type === 'layout-shift' ) {
+						return [ { startTime: 1000, value: 0.1000 } ];
+					}
+				}
+			};
+		} );
+
+		performanceObserver.supportedEntryTypes = [ 'layout-shift' ];
+
 		logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		logEventStub.returns( $.Deferred().promise() );
 		this.sandbox.stub( mw.eventLog, 'logFailure' );
@@ -503,6 +517,7 @@
 			1234, 'transferSize value was set using the Navigtion Timing Level 2 call' );
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].cacheResponseType, 'miss', 'Description field from the cache server timing entry is passed along' );
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].cacheHost, 'cp0062', 'Description field from the host server timing entry is passed along' );
+		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].cumulativeLayoutShift, 0.1000, 'Score from Cumulative layout shift' );
 
 		assert.equal( mw.eventLog.logEvent.getCall( 1 ).args[ 0 ], 'PaintTiming', 'Schema name' );
 		assert.equal( mw.eventLog.logEvent.getCall( 1 ).args[ 1 ].name,
@@ -613,67 +628,6 @@
 
 		for ( i = 0; i < 50; i++ ) {
 			navigationTiming.emitFeaturePolicyViolation( [ { url: 'foo', body: { featureId: 123 } } ], fakeObserver );
-		}
-
-		assert.ok( stubObserver.called, 'Observer diconnected when too many events collected' );
-	} );
-
-	QUnit.test( 'emitLayoutShift', function ( assert ) {
-		var i,
-			fakeObserver = { disconnect: function () {} },
-			stubObserver = this.sandbox.stub( fakeObserver, 'disconnect' ),
-			logEvent = this.sandbox.stub( mw.eventLog, 'logEvent' ),
-			$foo = $( '<div class="class1 class2 class3" id="foobar"></div>' ),
-			entries = [ { value: 0.05, lastInputTime: 1, startTime: 2, sources: [ { node: $foo[ 0 ] } ] } ];
-
-		navigationTiming.emitLayoutShift( entries, fakeObserver );
-
-		assert.equal( logEvent.getCall( 0 ).args[ 0 ], 'LayoutShift', 'Schema name' );
-		assert.equal( logEvent.getCall( 0 ).args[ 1 ].value, 0.05, 'Shift value' );
-		assert.equal( logEvent.getCall( 0 ).args[ 1 ].lastInputTime, 1, 'Last input time' );
-		assert.equal( logEvent.getCall( 0 ).args[ 1 ].entryTime, 2, 'Entry time' );
-		assert.equal( logEvent.getCall( 0 ).args[ 1 ].firstSourceNode, 'div#foobar.class1.class2.class3', 'First identified source node' );
-
-		this.reinit();
-
-		entries = [ { value: 0.05, lastInputTime: 1, startTime: 2, sources: [] } ];
-
-		navigationTiming.emitLayoutShift( entries, fakeObserver );
-
-		assert.equal( logEvent.getCall( 1 ).args[ 0 ], 'LayoutShift', 'Schema name' );
-		assert.equal( logEvent.getCall( 1 ).args[ 1 ].value, 0.05, 'Shift value' );
-		assert.equal( logEvent.getCall( 1 ).args[ 1 ].lastInputTime, 1, 'Last input time' );
-		assert.equal( logEvent.getCall( 1 ).args[ 1 ].entryTime, 2, 'Entry time' );
-		assert.equal( logEvent.getCall( 1 ).args[ 1 ].firstSourceNode, undefined, 'No source node when sources empty' );
-
-		this.reinit();
-
-		entries = [ { value: 0.05, lastInputTime: 1, startTime: 2, sources: [ null ] } ];
-
-		navigationTiming.emitLayoutShift( entries, fakeObserver );
-
-		assert.equal( logEvent.getCall( 2 ).args[ 0 ], 'LayoutShift', 'Schema name' );
-		assert.equal( logEvent.getCall( 2 ).args[ 1 ].value, 0.05, 'Shift value' );
-		assert.equal( logEvent.getCall( 2 ).args[ 1 ].lastInputTime, 1, 'Last input time' );
-		assert.equal( logEvent.getCall( 2 ).args[ 1 ].entryTime, 2, 'Entry time' );
-		assert.equal( logEvent.getCall( 2 ).args[ 1 ].firstSourceNode, undefined, 'No source node when sources empty' );
-
-		this.reinit();
-
-		entries = [ { value: 0.05, lastInputTime: 1, startTime: 2, sources: [ { node: null } ] } ];
-
-		navigationTiming.emitLayoutShift( entries, fakeObserver );
-
-		assert.equal( logEvent.getCall( 3 ).args[ 0 ], 'LayoutShift', 'Schema name' );
-		assert.equal( logEvent.getCall( 3 ).args[ 1 ].value, 0.05, 'Shift value' );
-		assert.equal( logEvent.getCall( 3 ).args[ 1 ].lastInputTime, 1, 'Last input time' );
-		assert.equal( logEvent.getCall( 3 ).args[ 1 ].entryTime, 2, 'Entry time' );
-		assert.equal( logEvent.getCall( 3 ).args[ 1 ].firstSourceNode, undefined, 'No source node when first source node is null' );
-
-		this.reinit();
-
-		for ( i = 0; i < 50; i++ ) {
-			navigationTiming.emitLayoutShift( entries, fakeObserver );
 		}
 
 		assert.ok( stubObserver.called, 'Observer diconnected when too many events collected' );
