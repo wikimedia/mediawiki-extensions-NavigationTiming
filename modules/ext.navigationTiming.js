@@ -574,6 +574,9 @@
 		// Custom properties from MediaWiki.
 		event.mediaWikiVersion = mw.config.get( 'wgVersion' );
 
+		// Skin like vector/vector-2022 etc
+		event.skin = mw.config.get( 'skin' );
+
 		if ( mw.config.get( 'wgCanonicalSpecialPageName' ) ) {
 			// Omit page information for special pages,
 			// these don't have IDs, revisions or actions.
