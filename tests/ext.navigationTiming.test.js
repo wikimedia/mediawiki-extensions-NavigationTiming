@@ -81,6 +81,7 @@
 			isOversample: 'boolean',
 			mediaWikiVersion: 'string',
 			mediaWikiLoadEnd: 'number',
+			skin: 'string',
 
 			// NetworkInfo API
 			netinfoEffectiveConnectionType: 'string',
