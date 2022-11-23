@@ -73,6 +73,15 @@
 		event.name = entry.name;
 		event.startTime = Math.round( entry.startTime );
 
+		// Skin like vector/vector-2022 etc
+		event.skin = mw.config.get( 'skin' );
+
+		if ( !mw.config.get( 'wgCanonicalSpecialPageName' ) ) {
+			event.namespaceId = mw.config.get( 'wgNamespaceNumber' );
+			// e.g. "view", "edit", "history", etc.
+			event.action = mw.config.get( 'wgAction' );
+		}
+
 		mw.eventLog.logEvent( 'PaintTiming', event );
 
 		collectedPaintEntries[ entry.name ] = true;
