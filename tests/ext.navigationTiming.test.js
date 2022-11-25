@@ -492,7 +492,10 @@
 				disconnect: function () {},
 				takeRecords: function () {
 					if ( this.type === 'layout-shift' ) {
-						return [ { startTime: 1000, value: 0.1000 } ];
+						return [
+							{ startTime: 1000, value: 0.110498 },
+							{ startTime: 1001, value: 0.005231 }
+						];
 					}
 				}
 			};
@@ -517,7 +520,7 @@
 			1234, 'transferSize value was set using the Navigtion Timing Level 2 call' );
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].cacheResponseType, 'miss', 'Description field from the cache server timing entry is passed along' );
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].cacheHost, 'cp0062', 'Description field from the host server timing entry is passed along' );
-		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].cumulativeLayoutShift, 0.1000, 'Score from Cumulative layout shift' );
+		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].cumulativeLayoutShift, 0.116, 'Score from Cumulative layout shift' );
 
 		assert.equal( mw.eventLog.logEvent.getCall( 1 ).args[ 0 ], 'PaintTiming', 'Schema name' );
 		assert.equal( mw.eventLog.logEvent.getCall( 1 ).args[ 1 ].name,
