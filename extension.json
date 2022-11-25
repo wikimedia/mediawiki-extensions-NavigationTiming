@@ -47,7 +47,6 @@
 				}
 			],
 			"dependencies": [
-				"jquery.cookie",
 				"ext.eventLogging",
 				"mediawiki.user"
 			],
