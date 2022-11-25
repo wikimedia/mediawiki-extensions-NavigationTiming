@@ -354,6 +354,28 @@
 	}
 
 	/**
+	 * Get the largest contentful paint (LCP).
+	 *
+	 * @return {{value: number, element: string}}  When the largest element was painted.
+	 */
+	function getLargestContentfulPaint() {
+		// eslint-disable-next-line compat/compat -- PerformanceObserver checked
+		var element, value, perfObserver = new PerformanceObserver( function () {
+		} );
+		// See https://github.com/GoogleChrome/web-vitals/blob/v3.1.0/src/onLCP.ts
+		perfObserver.observe( { type: 'largest-contentful-paint', buffered: true } );
+		var entries = perfObserver.takeRecords();
+		if ( entries.length > 0 ) {
+			// https://github.com/w3c/largest-contentful-paint
+			var largestEntry = entries[ entries.length - 1 ];
+			value = Number( Math.max( largestEntry.renderTime, largestEntry.loadTime ).toFixed( 0 ) );
+			element = largestEntry.element ? largestEntry.element.tagName : undefined;
+		}
+		perfObserver.disconnect();
+		return { value: value, element: element };
+	}
+
+	/**
 	 * Run a CPU benchmark inside a Worker (off the main thread) and
 	 * emit the CpuBenchmark event afterward.
 	 *
@@ -621,6 +643,12 @@
 		// Only use in browser that supports the layout shift API
 		if ( window.PerformanceObserver && window.PerformanceObserver.supportedEntryTypes && PerformanceObserver.supportedEntryTypes.indexOf( 'layout-shift' ) > -1 ) {
 			event.cumulativeLayoutShift = getCumulativeLayoutShift();
+		}
+
+		if ( window.PerformanceObserver && PerformanceObserver.supportedEntryTypes && PerformanceObserver.supportedEntryTypes.indexOf( 'largest-contentful-paint' ) > -1 ) {
+			var lcpInfo = getLargestContentfulPaint();
+			event.largestContentfulPaint = lcpInfo.value;
+			event.largestContentfulPaintElement = lcpInfo.element;
 		}
 
 		$.extend( event,
