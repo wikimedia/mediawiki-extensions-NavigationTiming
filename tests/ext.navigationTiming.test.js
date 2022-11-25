@@ -59,49 +59,42 @@
 	// Basic test will ensure no exceptions are thrown and various
 	// of the core properties are set as expected.
 	QUnit.test( 'emitNavTiming - Basic', function ( assert ) {
-		var stub, event, expected, key,
-			yearMs = 31536000 * 1000,
-			clock = this.sandbox.useFakeTimers();
-
+		var clock = this.sandbox.useFakeTimers();
 		this.reinit();
 
-		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
+		var stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		stub.returns( $.Deferred().promise() );
 		navigationTiming.emitNavTiming();
-
 		clock.tick( 10 );
 
 		assert.ok( stub.calledOnce, 'mw.eventLog.logEvent was called once' );
 		assert.equal( stub.getCall( 0 ).args[ 0 ], 'NavigationTiming', 'Schema name' );
-		event = stub.getCall( 0 ).args[ 1 ];
+		var event = stub.getCall( 0 ).args[ 1 ];
 
-		expected = {
+		var expected = {
 			// MediaWiki
 			isAnon: 'boolean',
 			isOversample: 'boolean',
 			mediaWikiVersion: 'string',
 			mediaWikiLoadEnd: 'number',
 			skin: 'string',
-
 			// NetworkInfo API
 			netinfoEffectiveConnectionType: 'string',
 			netinfoConnectionType: 'string',
 			netinfoRtt: 'number',
 			netinfoDownlink: 'number',
-
 			// Device Memory API
 			deviceMemory: 'number',
-
 			// HTML Living Standard
 			hardwareConcurrency: 'number',
-
 			// Navigation Timing API
 			responseStart: 'number',
 			domComplete: 'number',
 			loadEventEnd: 'number'
 		};
 
-		for ( key in expected ) {
+		var yearMs = 31536000 * 1000;
+		for ( var key in expected ) {
 			assert.strictEqual( typeof event[ key ], expected[ key ], 'Type of ' + key );
 			if ( expected[ key ] === 'number' ) {
 				// Regression test for T160315
@@ -157,9 +150,7 @@
 	// Case with example values typical for a first view
 	// where DNS, TCP, SSL etc. all need to happen.
 	QUnit.test( 'emitNavTiming - First view', function ( assert ) {
-		var event, stub, expected, key, val,
-			clock = this.sandbox.useFakeTimers();
-
+		var clock = this.sandbox.useFakeTimers();
 		this.performance.timing = {
 			navigationStart: 100,
 			fetchStart: 200,
@@ -179,22 +170,16 @@
 		};
 		this.reinit();
 
-		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
+		var stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		stub.returns( $.Deferred().promise() );
 		navigationTiming.emitNavTiming();
-
 		clock.tick( 10 );
 
 		assert.ok( stub.calledOnce, 'mw.eventLog.logEvent was called once' );
 		assert.equal( stub.getCall( 0 ).args[ 0 ], 'NavigationTiming', 'Schema name' );
-		event = stub.getCall( 0 ).args[ 1 ];
 
-		expected = {
-			// MediaWiki
-			mediaWikiVersion: { type: 'string' },
-			isOversample: { type: 'boolean' },
-			mediaWikiLoadEnd: { type: 'number' },
-			// Navigation Timing API
+		var event = stub.getCall( 0 ).args[ 1 ];
+		assert.propContains( event, {
 			connectStart: 126,
 			secureConnectionStart: 135,
 			connectEnd: 150,
@@ -207,24 +192,13 @@
 			unload: 0,
 			redirecting: 0,
 			gaps: 131
-		};
-
-		for ( key in expected ) {
-			val = expected[ key ];
-			if ( val.type ) {
-				assert.strictEqual( typeof event[ key ], val.type, 'Type of ' + key );
-			} else {
-				assert.strictEqual( event[ key ], val, 'Value of ' + key );
-			}
-		}
+		} );
 	} );
 
 	// Case with example values typical for a repeat view
 	// where DNS, TCP, SSL etc. are cached/re-used.
 	QUnit.test( 'emitNavTiming - Repeat view', function ( assert ) {
-		var event, stub, expected, key, val,
-			clock = this.sandbox.useFakeTimers();
-
+		var clock = this.sandbox.useFakeTimers();
 		this.performance.timing = {
 			navigationStart: 100,
 			fetchStart: 100,
@@ -246,7 +220,7 @@
 		};
 		this.reinit();
 
-		stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
+		var stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		stub.returns( $.Deferred().promise() );
 		navigationTiming.emitNavTiming();
 
@@ -254,14 +228,9 @@
 
 		assert.ok( stub.calledOnce, 'mw.eventLog.logEvent was called once' );
 		assert.equal( stub.getCall( 0 ).args[ 0 ], 'NavigationTiming', 'Schema name' );
-		event = stub.getCall( 0 ).args[ 1 ];
 
-		expected = {
-			// MediaWiki
-			mediaWikiVersion: { type: 'string' },
-			isOversample: { type: 'boolean' },
-			mediaWikiLoadEnd: { type: 'number' },
-			// Navigation Timing API
+		var event = stub.getCall( 0 ).args[ 1 ];
+		assert.propContains( event, {
 			dnsLookup: 0,
 			connectStart: 0,
 			secureConnectionStart: 0,
@@ -274,16 +243,7 @@
 			loadEventEnd: 375,
 			unload: 11,
 			redirecting: 10
-		};
-
-		for ( key in expected ) {
-			val = expected[ key ];
-			if ( val.type ) {
-				assert.strictEqual( typeof event[ key ], val.type, 'Type of ' + key );
-			} else {
-				assert.strictEqual( event[ key ], val, 'Value of ' + key );
-			}
-		}
+		} );
 	} );
 
 	QUnit.test( 'isRegularNavigation - reload', function ( assert ) {
@@ -316,23 +276,23 @@
 		assert.false( navigationTiming.isRegularNavigation() );
 	} );
 
-	QUnit.test( 'Oversample config and activation', function ( assert ) {
+	QUnit.test( 'testGeoOversamples()', function ( assert ) {
 		this.Geo = {
 			country: 'XX'
 		};
 		this.reinit();
 
-		// Test that the inGeoOversample correctly identifies whether or not
-		// to oversample
 		assert.propEqual( navigationTiming.testGeoOversamples( { XX: 1 } ), [ 'XX' ],
-			'Geo oversample occurs when window.Geo.country is present in oversampleFactor' );
+			'Match Geo.country' );
 		assert.propEqual( navigationTiming.testGeoOversamples( { US: 1 } ), [],
-			'Geo oversample does not occur when country is not in config' );
+			'Not matching Geo.country' );
 		assert.propEqual( navigationTiming.testGeoOversamples( {} ), [],
-			'Geo oversample does not occur when geo is an empty object' );
+			'Empty object' );
+	} );
 
-		// Test that inUserAgentOversample correctly identifies whether or not
-		// to oversample
+	QUnit.test( 'testUAOversamples()', function ( assert ) {
+		this.reinit();
+
 		assert.propEqual( navigationTiming.testUAOversamples( { Chrome: 1 } ), [ 'Chrome' ],
 			'Generic Chrome user agent is identified and oversampled' );
 		assert.propEqual( navigationTiming.testUAOversamples( { 'Chrome/62.0.12345.94': 1 } ),
@@ -344,9 +304,11 @@
 		} ), [ 'Chrome', 'AppleWebKit' ], 'Most likely oversample rate is the one used' );
 		assert.propEqual( navigationTiming.testUAOversamples( { FakeBrowser: 1 } ),
 			[], 'Non-matching user agent is not sampled' );
+	} );
 
-		// Test that inPageNameOversample correctly identifies whether or not
-		// to oversample
+	QUnit.test( 'testPageNameOversamples()', function ( assert ) {
+		this.reinit();
+
 		mw.config.set( 'wgPageName', 'File:Foo.jpg' );
 		assert.propEqual( navigationTiming.testPageNameOversamples( { 'File:Foo.jpg': 1 } ), [ 'File:Foo.jpg' ],
 			'File page is identified and oversampled' );
@@ -360,7 +322,12 @@
 		} ), [ 'Something' ], 'Only matching page name is sampled' );
 		assert.propEqual( navigationTiming.testPageNameOversamples( { Foo: 1 } ),
 			[], 'Non-matching page name is not sampled' );
+	} );
 
+	QUnit.test( 'Oversampling - unsampled', function ( assert ) {
+		this.Geo = {
+			country: 'XX'
+		};
 		this.sandbox.stub( mw.eventLog, 'randomTokenMatch', function () {
 			return false;
 		} );
@@ -370,6 +337,7 @@
 		Math.random.returns( 1.0 );
 		this.sandbox.stub( window.crypto, 'getRandomValues' );
 		window.crypto.getRandomValues.returns( [ 4294967295 ] );
+		this.reinit();
 
 		assert.propEqual( navigationTiming.testGeoOversamples( { XX: 2 } ), [],
 			'When randomTokenMatch returns false, resulting list of geo oversamples is empty' );
@@ -454,10 +422,8 @@
 	} );
 
 	QUnit.test( 'emitNavTiming - Optional APIs', function ( assert ) {
-		var stub, logEventStub,
-			clock = this.sandbox.useFakeTimers();
-
-		stub = this.sandbox.stub( this.performance, 'getEntriesByType' );
+		var clock = this.sandbox.useFakeTimers();
+		var stub = this.sandbox.stub( this.performance, 'getEntriesByType' );
 		stub.withArgs( 'paint' ).returns(
 			[ {
 				duration: 0,
@@ -503,7 +469,7 @@
 
 		performanceObserver.supportedEntryTypes = [ 'layout-shift' ];
 
-		logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
+		var logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		logEventStub.returns( $.Deferred().promise() );
 		this.sandbox.stub( mw.eventLog, 'logFailure' );
 
@@ -512,21 +478,24 @@
 
 		clock.tick( 10 );
 
-		assert.equal( stub.callCount, 2,
-			'getEntriesByType was called the expected amount of times' );
+		assert.equal( stub.callCount, 2, 'getEntriesByType calls' );
 
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 0 ], 'NavigationTiming', 'Schema name' );
-		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].transferSize,
-			1234, 'transferSize value was set using the Navigtion Timing Level 2 call' );
-		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].cacheResponseType, 'miss', 'Description field from the cache server timing entry is passed along' );
-		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].cacheHost, 'cp0062', 'Description field from the host server timing entry is passed along' );
-		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].cumulativeLayoutShift, 0.116, 'Score from Cumulative layout shift' );
+		assert.propContains( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ], {
+			// Navigtion Timing Level 2
+			transferSize: 1234,
+			// Server-Timing entry
+			cacheResponseType: 'miss',
+			cacheHost: 'cp0062',
+			// Cumulative layout shift score
+			cumulativeLayoutShift: 0.116
+		}, 'Event data' );
 
 		assert.equal( mw.eventLog.logEvent.getCall( 1 ).args[ 0 ], 'PaintTiming', 'Schema name' );
-		assert.equal( mw.eventLog.logEvent.getCall( 1 ).args[ 1 ].name,
-			'first-paint', 'firstPaint value was set using the Paint Timing API call' );
-		assert.equal( mw.eventLog.logEvent.getCall( 1 ).args[ 1 ].startTime,
-			990, 'firstPaint value was set using the Paint Timing API call' );
+		assert.propContains( mw.eventLog.logEvent.getCall( 1 ).args[ 1 ], {
+			name: 'first-paint',
+			startTime: 990
+		}, 'Event data' );
 
 	} );
 
@@ -568,7 +537,6 @@
 
 	QUnit.test( 'emitCpuBenchmark', function ( assert ) {
 		var events = [];
-
 		this.sandbox.stub( mw.eventLog, 'logEvent', function ( schema, event ) {
 			events.push( { schema: schema, event: event } );
 			return $.Deferred().resolve();
@@ -602,10 +570,9 @@
 	} );
 
 	QUnit.test( 'emitFeaturePolicyViolation', function ( assert ) {
-		var i,
-			fakeObserver = { disconnect: function () {} },
-			stubObserver = this.sandbox.stub( fakeObserver, 'disconnect' ),
-			logEvent = this.sandbox.stub( mw.eventLog, 'logEvent' );
+		var fakeObserver = { disconnect: function () {} };
+		var stubObserver = this.sandbox.stub( fakeObserver, 'disconnect' );
+		var logEvent = this.sandbox.stub( mw.eventLog, 'logEvent' );
 
 		navigationTiming.emitFeaturePolicyViolation( [ { url: 'foo', body: { featureId: 123 } } ], fakeObserver );
 
@@ -629,7 +596,7 @@
 
 		this.reinit();
 
-		for ( i = 0; i < 50; i++ ) {
+		for ( var i = 0; i < 50; i++ ) {
 			navigationTiming.emitFeaturePolicyViolation( [ { url: 'foo', body: { featureId: 123 } } ], fakeObserver );
 		}
 
@@ -637,12 +604,9 @@
 	} );
 
 	QUnit.test( 'makeEventWithRequestContext', function ( assert ) {
-		var event,
-			stub,
-			wgUserId = mw.config.get( 'wgUserId' ),
-			wgMFMode = mw.config.get( 'wgMFMode' );
-
-		stub = this.sandbox.stub( mw.user, 'getPageviewToken' );
+		var wgUserId = mw.config.get( 'wgUserId' );
+		var wgMFMode = mw.config.get( 'wgMFMode' );
+		var stub = this.sandbox.stub( mw.user, 'getPageviewToken' );
 		stub.returns( 'tokenfoo' );
 
 		mw.config.set( 'wgUserId', 123 );
@@ -653,21 +617,22 @@
 		};
 		this.reinit();
 
-		event = navigationTiming.makeEventWithRequestContext( [] );
-
-		assert.equal( event.pageviewToken, 'tokenfoo', 'Pageview token' );
-		assert.equal( event.isAnon, false, 'User is not anonymous' );
-		assert.equal( event.isOversample, false, 'Pageview is not oversampled' );
-		assert.equal( event.mobileMode, 'stable', 'Mobile mode is stable' );
-		assert.equal( event.originCountry, 'XX', 'Country' );
+		var event = navigationTiming.makeEventWithRequestContext( [] );
+		assert.propContains( event, {
+			pageviewToken: 'tokenfoo',
+			isAnon: false,
+			isOversample: false,
+			mobileMode: 'stable',
+			originCountry: 'XX'
+		} );
 
 		mw.config.set( 'wgUserId', null );
-
 		event = navigationTiming.makeEventWithRequestContext( [ 'foo:bar', 'baz:biz' ] );
-
-		assert.equal( event.isAnon, true, 'User is anonymous' );
-		assert.equal( event.isOversample, true, 'Pageview is oversampled' );
-		assert.equal( event.oversampleReason, '["foo:bar","baz:biz"]', 'Oversample reason is set' );
+		assert.propContains( event, {
+			isAnon: true,
+			isOversample: true,
+			oversampleReason: '["foo:bar","baz:biz"]'
+		} );
 
 		mw.config.set( 'wgUserId', wgUserId );
 		mw.config.set( 'wgMFMode', wgMFMode );
