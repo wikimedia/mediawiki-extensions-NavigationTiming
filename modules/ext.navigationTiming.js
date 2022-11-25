@@ -187,13 +187,12 @@
 	 * https://github.com/WICG/element-timing
 	 */
 	function setupElementTimingObserver() {
-		var observer;
-
 		if ( !window.PerformanceObserver ) {
 			return;
 		}
 
-		observer = new PerformanceObserver( observeElementTiming );
+		// eslint-disable-next-line compat/compat -- PerformanceObserver checked
+		var observer = new PerformanceObserver( observeElementTiming );
 
 		try {
 			observer.observe( { type: 'element', buffered: true } );
@@ -320,6 +319,41 @@
 	}
 
 	/**
+	 * Get Cumulative LayoutShift score.
+	 *
+	 * @return {number}
+	 */
+	function getCumulativeLayoutShift() {
+		// eslint-disable-next-line compat/compat -- Checked by caller
+		var perfObserver = new PerformanceObserver( function () {} );
+
+		// See https://github.com/mmocny/web-vitals/wiki/Snippets-for-LSN-using-PerformanceObserver#max-session-gap1s-limit5s
+		// https://github.com/GoogleChrome/web-vitals/blob/v3.1.0/src/onCLS.ts
+		perfObserver.observe( { type: 'layout-shift', buffered: true } );
+		var entries = perfObserver.takeRecords();
+		var max = 0;
+		var curr = 0;
+		var firstTs = Number.NEGATIVE_INFINITY;
+		var prevTs = Number.NEGATIVE_INFINITY;
+		entries.forEach( function ( entry ) {
+			if ( entry.hadRecentInput ) {
+				return;
+			}
+			if ( entry.startTime - firstTs > 5000 || entry.startTime - prevTs > 1000 ) {
+				firstTs = entry.startTime;
+				curr = 0;
+			}
+			prevTs = entry.startTime;
+			curr += entry.value;
+			max = Math.max( max, curr );
+		} );
+		perfObserver.disconnect();
+		// 0.25 is poor CLS, below 0.1 is good we don't
+		// really care about low values
+		return max > 0.01 ? Number( max.toFixed( 3 ) ) : 0;
+	}
+
+	/**
 	 * Run a CPU benchmark inside a Worker (off the main thread) and
 	 * emit the CpuBenchmark event afterward.
 	 *
@@ -366,6 +400,7 @@
 		work = 'onmessage = ' + String( onMessage );
 
 		blob = new Blob( [ work ], { type: 'application/javascript' } );
+		// eslint-disable-next-line compat/compat -- URL checked
 		worker = new Worker( URL.createObjectURL( blob ) );
 
 		worker.onmessage = function ( e ) {
@@ -383,7 +418,9 @@
 			var event = makeEventWithRequestContext( oversampleReasons );
 			event.score = result;
 
-			var batteryPromise = navigator.getBattery ? navigator.getBattery() : $.Deferred().reject();
+			var batteryPromise = navigator.getBattery ?
+				navigator.getBattery() :
+				$.Deferred().reject();
 			return batteryPromise.then(
 				function ( battery ) {
 					event.batteryLevel = battery.level;
@@ -800,40 +837,6 @@
 	}
 
 	/**
-	 * Get Cumulative LayoutShift score.
-	 *
-	 * @return {number}
-	 */
-	function getCumulativeLayoutShift() {
-		var perfObserver = new PerformanceObserver( function () {} );
-
-		// See https://github.com/mmocny/web-vitals/wiki/Snippets-for-LSN-using-PerformanceObserver#max-session-gap1s-limit5s
-		// https://github.com/GoogleChrome/web-vitals/blob/v3.1.0/src/onCLS.ts
-		perfObserver.observe( { type: 'layout-shift', buffered: true } );
-		var entries = perfObserver.takeRecords();
-		var max = 0;
-		var curr = 0;
-		var firstTs = Number.NEGATIVE_INFINITY;
-		var prevTs = Number.NEGATIVE_INFINITY;
-		entries.forEach( function ( entry ) {
-			if ( entry.hadRecentInput ) {
-				return;
-			}
-			if ( entry.startTime - firstTs > 5000 || entry.startTime - prevTs > 1000 ) {
-				firstTs = entry.startTime;
-				curr = 0;
-			}
-			prevTs = entry.startTime;
-			curr += entry.value;
-			max = Math.max( max, curr );
-		} );
-		perfObserver.disconnect();
-		// 0.25 is poor CLS, below 0.1 is good we don't
-		// really care about low values
-		return max > 0.01 ? Number( max.toFixed( 3 ) ) : 0;
-	}
-
-	/**
 	 * Emit FeaturePolicyViolation entries
 	 *
 	 * @param {Array} reports An array of Report objects
@@ -872,11 +875,12 @@
 	 * Observe Feature Policy Violation reports: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Feature-Policy
 	 */
 	function setupFeaturePolicyViolationObserver() {
+		/* global ReportingObserver */
 		if ( !window.ReportingObserver ) {
 			return;
 		}
 
-		/* global ReportingObserver */
+		// eslint-disable-next-line compat/compat -- ReportingObserver checked
 		var observer = new ReportingObserver( emitFeaturePolicyViolation, { buffered: true, types: [ 'feature-policy-violation' ] } );
 		observer.observe();
 	}

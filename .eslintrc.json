@@ -13,6 +13,6 @@
 		"no-jquery/no-global-selector": "warn",
 		"no-jquery/no-each-util": "warn",
 		"no-jquery/no-parse-html-literal": "warn",
-		"compat/compat": "warn"
+		"compat/compat": "error"
 	}
 }
