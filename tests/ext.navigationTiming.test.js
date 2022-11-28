@@ -473,6 +473,11 @@
 		logEventStub.returns( $.Deferred().promise() );
 		this.sandbox.stub( mw.eventLog, 'logFailure' );
 
+		mw.config.set( 'wgNamespaceNumber', 1 );
+		mw.config.set( 'wgAction', 'view' );
+		mw.config.set( 'skin', 'vector' );
+		mw.config.set( 'wgCanonicalSpecialPageName', undefined );
+
 		this.reinit();
 		navigationTiming.emitNavTiming();
 
@@ -494,9 +499,11 @@
 		assert.equal( mw.eventLog.logEvent.getCall( 1 ).args[ 0 ], 'PaintTiming', 'Schema name' );
 		assert.propContains( mw.eventLog.logEvent.getCall( 1 ).args[ 1 ], {
 			name: 'first-paint',
-			startTime: 990
+			startTime: 990,
+			skin: 'vector',
+			action: 'view',
+			namespaceId: 1
 		}, 'Event data' );
-
 	} );
 
 	QUnit.test( 'emitCentralNoticeTiming', function ( assert ) {
