@@ -2,11 +2,11 @@
 ( function () {
 	'use strict';
 
-	var navigationTiming = require( 'ext.navigationTiming' ),
-		hasOwn = Object.hasOwnProperty,
-		// https://www.w3.org/TR/navigation-timing-2/#the-performancenavigation-interface
-		TYPE_NAVIGATE = 0,
-		TYPE_RELOAD = 1;
+	var navigationTiming = require( 'ext.navigationTiming' );
+	var hasOwn = Object.hasOwnProperty;
+	// https://www.w3.org/TR/navigation-timing-2/#the-performancenavigation-interface
+	var TYPE_NAVIGATE = 0;
+	var TYPE_RELOAD = 1;
 
 	QUnit.module( 'ext.navigationTiming', {
 		beforeEach: function () {
@@ -346,13 +346,10 @@
 	} );
 
 	QUnit.test( 'emitOversampleNavigationTiming', function ( assert ) {
-		var logEventStub, logFailureStub,
-			clock = this.sandbox.useFakeTimers();
-
-		logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
+		var clock = this.sandbox.useFakeTimers();
+		var logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		logEventStub.returns( $.Deferred().promise() );
-		logFailureStub = this.sandbox.stub( mw.eventLog, 'logFailure' );
-
+		var logFailureStub = this.sandbox.stub( mw.eventLog, 'logFailure' );
 		this.reinit();
 		navigationTiming.emitNavTiming();
 
@@ -507,15 +504,12 @@
 	} );
 
 	QUnit.test( 'emitCentralNoticeTiming', function ( assert ) {
-		var logEventStub, perfStub,
-			clock = this.sandbox.useFakeTimers();
-
-		logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
+		var clock = this.sandbox.useFakeTimers();
+		var logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		logEventStub.returns( $.Deferred().resolve() );
-
-		perfStub = this.sandbox.stub( this.performance, 'getEntriesByName' );
-
+		var perfStub = this.sandbox.stub( this.performance, 'getEntriesByName' );
 		this.reinit();
+
 		navigationTiming.emitCentralNoticeTiming();
 
 		assert.equal( mw.eventLog.logEvent.callCount, 0, 'No mwCentralNoticeBanner performance mark' );
@@ -528,10 +522,6 @@
 				startTime: 8895.899999999983
 			} ]
 		);
-
-		// Prevent the real NavigationTiming emitNavigationTiming() from running
-		this.sandbox.stub( mw.eventLog, 'inSample', false );
-
 		this.reinit();
 
 		navigationTiming.emitCentralNoticeTiming();
