@@ -14,7 +14,6 @@
 
 	var config = require( './config.json' );
 	var collectedPaintEntries = {};
-	var collectedElementEntries = 0;
 	var policyViolationEmitted = 0;
 
 	var visibilityEvent, visibilityChanged,
@@ -154,76 +153,14 @@
 	}
 
 	/**
-	 * PerformanceObserver callback for Element entries, sending them to EventLogging.
-	 *
-	 * @param {PerformanceObserverEntryList} list
-	 * @param {PerformanceObserver} observer
-	 */
-	function observeElementTiming( list, observer ) {
-		list.getEntries().forEach( function ( entry ) {
-			var event = {
-				pageviewToken: mw.user.getPageviewToken(),
-				identifier: entry.identifier,
-				name: entry.name,
-				url: entry.url,
-				loadTime: Math.round( entry.loadTime ),
-				startTime: Math.round( entry.startTime ),
-				renderTime: Math.round( entry.renderTime ),
-				bottom: entry.intersectionRect.bottom,
-				height: entry.intersectionRect.height,
-				left: entry.intersectionRect.left,
-				right: entry.intersectionRect.right,
-				top: entry.intersectionRect.top,
-				width: entry.intersectionRect.width,
-				x: entry.intersectionRect.x,
-				y: entry.intersectionRect.y
-			};
-
-			mw.eventLog.logEvent( 'ElementTiming', event );
-
-			collectedElementEntries++;
-
-			// We don't want a misbehaving client to flood us indefinitely with reports
-			if ( collectedElementEntries > 20 ) {
-				observer.disconnect();
-			}
-		} );
-	}
-
-	/**
-	 * Set up PerformanceObserver that will listen to Element performance events.
-	 *
-	 * https://github.com/WICG/element-timing
-	 */
-	function setupElementTimingObserver() {
-		if ( !window.PerformanceObserver ) {
-			return;
-		}
-
-		// eslint-disable-next-line compat/compat -- PerformanceObserver checked
-		var observer = new PerformanceObserver( observeElementTiming );
-
-		try {
-			observer.observe( { type: 'element', buffered: true } );
-		} catch ( e ) {
-			// If ElementTiming isn't available, this errors because we are
-			// subscribing to an invalid entryType
-		}
-	}
-
-	/**
 	 * Get Navigation Timing Level 2 metrics for Schema:NavigationTiming.
 	 *
 	 * As of Navigation Timing Level 2, navigation timing information is also
 	 * exposed via the Peformance Timeline, where PerformanceNavigationTiming
 	 * extends PerformanceResourceTiming.
 	 *
-	 * We currently only use this for Resource Timing information about the main
-	 * document resource. For the bulk of the Navigation Timing metrics, we use
-	 * the Level 1 API, see #getNavTiming().
 	 *
 	 * - https://www.w3.org/TR/navigation-timing-2/#sec-PerformanceNavigationTiming
-	 * - https://www.w3.org/TR/resource-timing-2/#dom-performanceresourcetiming
 	 *
 	 * @return {Object}
 	 */
@@ -963,7 +900,6 @@
 		// These are events separate from NavigationTiming that emit under the
 		// same circumstances as navigation timing sampling and oversampling.
 		emitCentralNoticeTiming();
-		setupElementTimingObserver();
 		setupFeaturePolicyViolationObserver();
 
 		// Run a CPU microbenchmark for a portion of measurements
