@@ -459,12 +459,17 @@
 							{ startTime: 1000, value: 0.110498 },
 							{ startTime: 1001, value: 0.005231 }
 						];
+					} else if ( this.type === 'largest-contentful-paint' ) {
+						return [
+							{ renderTime: 1000, element: { tagName: 'p' } },
+							{ loadTime: 1100, renderTime: 1200, element: { tagName: 'img' } }
+						];
 					}
 				}
 			};
 		} );
 
-		performanceObserver.supportedEntryTypes = [ 'layout-shift' ];
+		performanceObserver.supportedEntryTypes = [ 'layout-shift', 'largest-contentful-paint' ];
 
 		var logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		logEventStub.returns( $.Deferred().promise() );
@@ -490,7 +495,10 @@
 			cacheResponseType: 'miss',
 			cacheHost: 'cp0062',
 			// Cumulative layout shift score
-			cumulativeLayoutShift: 0.116
+			cumulativeLayoutShift: 0.116,
+			// Largest contentful paint render and element
+			largestContentfulPaint: 1200,
+			largestContentfulPaintElement: 'img'
 		}, 'Event data' );
 
 		assert.equal( mw.eventLog.logEvent.getCall( 1 ).args[ 0 ], 'PaintTiming', 'Schema name' );
