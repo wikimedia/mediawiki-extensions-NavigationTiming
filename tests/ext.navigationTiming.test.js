@@ -489,8 +489,6 @@
 
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 0 ], 'NavigationTiming', 'Schema name' );
 		assert.propContains( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ], {
-			// Navigtion Timing Level 2
-			transferSize: 1234,
 			// Server-Timing entry
 			cacheResponseType: 'miss',
 			cacheHost: 'cp0062',

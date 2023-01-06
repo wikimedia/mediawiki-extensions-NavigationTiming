@@ -153,45 +153,6 @@
 	}
 
 	/**
-	 * Get Navigation Timing Level 2 metrics for Schema:NavigationTiming.
-	 *
-	 * As of Navigation Timing Level 2, navigation timing information is also
-	 * exposed via the Peformance Timeline, where PerformanceNavigationTiming
-	 * extends PerformanceResourceTiming.
-	 *
-	 *
-	 * - https://www.w3.org/TR/navigation-timing-2/#sec-PerformanceNavigationTiming
-	 *
-	 * @return {Object}
-	 */
-	function getNavTimingLevel2() {
-		var navigationEntry;
-		try {
-			navigationEntry = perf.getEntriesByType( 'navigation' )[ 0 ];
-		} catch ( e ) {
-			// Support: Safari < 11 (getEntriesByType missing)
-			navigationEntry = false;
-		}
-
-		var res = {};
-		if ( navigationEntry ) {
-			res.transferSize = navigationEntry.transferSize;
-
-			if ( navigationEntry.serverTiming ) {
-				navigationEntry.serverTiming.forEach( function ( entry ) {
-					if ( entry.name === 'cache' ) {
-						res.cacheResponseType = entry.description;
-					} else if ( entry.name === 'host' ) {
-						res.cacheHost = entry.description;
-					}
-				} );
-			}
-		}
-
-		return res;
-	}
-
-	/**
 	 * Get Navigation Timing Level 1 metrics for Schema:NavigationTiming.
 	 *
 	 * @return {Object}
@@ -586,20 +547,45 @@
 			event.hardwareConcurrency = navigator.hardwareConcurrency;
 		}
 
-		// Only use in browser that supports the layout shift API
+		// Properties: LayoutShift from Layout Instability API
+		//
+		// https://developer.mozilla.org/en-US/docs/Web/API/Layout_Instability_API
+		// https://wicg.github.io/layout-instability/#sec-layout-shift
 		if ( window.PerformanceObserver && window.PerformanceObserver.supportedEntryTypes && PerformanceObserver.supportedEntryTypes.indexOf( 'layout-shift' ) > -1 ) {
 			event.cumulativeLayoutShift = getCumulativeLayoutShift();
 		}
 
+		// Properties: Paint Timing API
 		if ( window.PerformanceObserver && PerformanceObserver.supportedEntryTypes && PerformanceObserver.supportedEntryTypes.indexOf( 'largest-contentful-paint' ) > -1 ) {
 			var lcpInfo = getLargestContentfulPaint();
 			event.largestContentfulPaint = lcpInfo.value;
 			event.largestContentfulPaintElement = lcpInfo.element;
 		}
 
+		// Properties: Navigation Timing Level 2
+		//
+		// https://www.w3.org/TR/navigation-timing-2/#sec-PerformanceNavigationTiming
+		//
+		// Includes:
+		// - Server Timing <https://w3c.github.io/server-timing/>
+		var navigationEntry;
+		try {
+			navigationEntry = perf.getEntriesByType( 'navigation' )[ 0 ];
+		} catch ( e ) {
+			// Support: Safari < 11 (getEntriesByType missing)
+		}
+		if ( navigationEntry && navigationEntry.serverTiming ) {
+			navigationEntry.serverTiming.forEach( function ( entry ) {
+				if ( entry.name === 'cache' ) {
+					event.cacheResponseType = entry.description;
+				} else if ( entry.name === 'host' ) {
+					event.cacheHost = entry.description;
+				}
+			} );
+		}
+
 		$.extend( event,
-			getNavTimingLevel1(),
-			getNavTimingLevel2()
+			getNavTimingLevel1()
 		);
 
 		mw.eventLog.logEvent( 'NavigationTiming', event );
