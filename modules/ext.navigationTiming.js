@@ -15,10 +15,11 @@
 	var config = require( './config.json' );
 	var collectedPaintEntries = {};
 	var policyViolationEmitted = 0;
+	var visibilityChanged = false;
 
-	var visibilityEvent, visibilityChanged,
-		mediaWikiLoadEnd, surveyDisplayed,
-		cpuBenchmarkDone;
+	var mediaWikiLoadEnd;
+	var surveyDisplayed;
+	var cpuBenchmarkDone;
 
 	/**
 	 * Creates an event object populated containing essential request context information.
@@ -887,7 +888,7 @@
 		mw.hook( 'postEdit' ).add( emitSaveTiming );
 
 		// Stop listening for 'visibilitychange' events
-		$( document ).off( visibilityEvent, setVisibilityChanged );
+		$( document ).off( 'visibilitychange', setVisibilityChanged );
 
 		// Decide whether to send NavTiming beacon
 		if ( visibilityChanged ) {
@@ -938,23 +939,9 @@
 	function main() {
 		// Collect whether document was hidden at least once during the
 		// page loading process. Used by loadCallback().
-		if ( typeof document.hidden !== 'undefined' ) {
-			visibilityChanged = document.hidden;
-			visibilityEvent = 'visibilitychange';
-		} else if ( typeof document.mozHidden !== 'undefined' ) {
-			visibilityChanged = document.mozHidden;
-			visibilityEvent = 'mozvisibilitychange';
-		} else if ( typeof document.msHidden !== 'undefined' ) {
-			visibilityChanged = document.msHidden;
-			visibilityEvent = 'msvisibilitychange';
-		} else if ( typeof document.webkitHidden !== 'undefined' ) {
-			visibilityChanged = document.webkitHidden;
-			visibilityEvent = 'webkitvisibilitychange';
-		} else {
-			visibilityChanged = false;
-		}
+		visibilityChanged = typeof document.hidden !== 'undefined' ? document.hidden : false;
 		if ( !visibilityChanged ) {
-			$( document ).one( visibilityEvent, setVisibilityChanged );
+			$( document ).one( 'visibilitychange', setVisibilityChanged );
 		}
 
 		// Do the rest after loadEventEnd
@@ -983,18 +970,16 @@
 			emitFeaturePolicyViolation: emitFeaturePolicyViolation,
 			makeEventWithRequestContext: makeEventWithRequestContext,
 			reinit: function ( mocks ) {
+				// Reset initial state
 				perf = mocks && mocks.performance || undefined;
 				navigator = mocks && mocks.navigator || window.navigator;
 				Geo = mocks && mocks.Geo || window.Geo;
+				policyViolationEmitted = 0;
+				visibilityChanged = false;
 
 				// Call manually because, during test execution, actual
 				// onLoadComplete will probably not have happened yet.
 				setMwLoadEnd();
-
-				// Mock a few things that main() normally does,
-				// so that we  can test loadCallback()
-				visibilityChanged = false;
-				policyViolationEmitted = 0;
 			}
 		};
 
