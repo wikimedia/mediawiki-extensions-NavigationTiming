@@ -464,12 +464,17 @@
 							{ renderTime: 1000, element: { tagName: 'p' } },
 							{ loadTime: 1100, renderTime: 1200, element: { tagName: 'img' } }
 						];
+					} else if ( this.type === 'longtask' ) {
+						return [
+							{ startTime: 2951, duration: 104 },
+							{ startTime: 3285, duration: 75 }
+						];
 					}
 				}
 			};
 		} );
 
-		performanceObserver.supportedEntryTypes = [ 'layout-shift', 'largest-contentful-paint' ];
+		performanceObserver.supportedEntryTypes = [ 'layout-shift', 'largest-contentful-paint', 'longtask' ];
 
 		var logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		logEventStub.returns( $.Deferred().promise() );
@@ -496,7 +501,10 @@
 			cumulativeLayoutShift: 0.116,
 			// Largest contentful paint render and element
 			largestContentfulPaint: 1200,
-			largestContentfulPaintElement: 'img'
+			largestContentfulPaintElement: 'img',
+			// longtask total entries and duration
+			longTaskTotalTasks: 2,
+			longTaskTotalDuration: 179
 		}, 'Event data' );
 
 		assert.equal( mw.eventLog.logEvent.getCall( 1 ).args[ 0 ], 'PaintTiming', 'Schema name' );
