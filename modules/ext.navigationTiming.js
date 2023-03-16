@@ -276,11 +276,27 @@
 		if ( entries.length > 0 ) {
 			// https://github.com/w3c/largest-contentful-paint
 			var largestEntry = entries[ entries.length - 1 ];
-			value = Number( Math.max( largestEntry.renderTime, largestEntry.loadTime ).toFixed( 0 ) );
+			value = Number( Math.max( largestEntry.renderTime, largestEntry.loadTime ).toFixed( 0 )
+			);
 			element = largestEntry.element ? largestEntry.element.tagName : undefined;
 		}
 		perfObserver.disconnect();
 		return { value: value, element: element };
+	}
+
+	function getLongTask() {
+		// eslint-disable-next-line compat/compat -- PerformanceObserver checked
+		var totalEntries, totalDuration, perfObserver = new PerformanceObserver( function () {
+		} );
+		// https://github.com/w3c/longtasks/blob/6d0a5dff7f20083cff74f057822920fd7c731cef/README.md
+		perfObserver.observe( { type: 'longtask', buffered: true } );
+		var entries = perfObserver.takeRecords();
+		totalDuration = 0;
+		totalEntries = entries.length;
+		entries.forEach( function ( entry ) {
+			totalDuration += entry.duration;
+		} );
+		return { totalEntries: totalEntries, totalDuration: totalDuration };
 	}
 
 	/**
@@ -561,6 +577,12 @@
 			var lcpInfo = getLargestContentfulPaint();
 			event.largestContentfulPaint = lcpInfo.value;
 			event.largestContentfulPaintElement = lcpInfo.element;
+		}
+
+		if ( window.PerformanceObserver && window.PerformanceObserver.supportedEntryTypes && PerformanceObserver.supportedEntryTypes.indexOf( 'longtask' ) > -1 ) {
+			var ltInfo = getLongTask();
+			event.longTaskTotalDuration = ltInfo.totalDuration;
+			event.longTaskTotalTasks = ltInfo.totalEntries;
 		}
 
 		// Properties: Navigation Timing Level 2
