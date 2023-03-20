@@ -296,6 +296,8 @@
 		entries.forEach( function ( entry ) {
 			totalDuration += entry.duration;
 		} );
+
+		perfObserver.disconnect();
 		return { totalEntries: totalEntries, totalDuration: totalDuration };
 	}
 
