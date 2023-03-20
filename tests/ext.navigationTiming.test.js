@@ -427,7 +427,14 @@
 				entryType: 'paint',
 				name: 'first-paint',
 				startTime: 990.3000454
-			} ]
+			},
+			{
+				duration: 0,
+				entryType: 'paint',
+				name: 'first-contentful-paint',
+				startTime: 3085
+			}
+			]
 		);
 		stub.withArgs( 'navigation' ).returns(
 			[ {
@@ -490,8 +497,6 @@
 
 		clock.tick( 10 );
 
-		assert.equal( stub.callCount, 2, 'getEntriesByType calls' );
-
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 0 ], 'NavigationTiming', 'Schema name' );
 		assert.propContains( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ], {
 			// Server-Timing entry
@@ -504,16 +509,9 @@
 			largestContentfulPaintElement: 'img',
 			// longtask total entries and duration
 			longTaskTotalTasks: 2,
-			longTaskTotalDuration: 179
-		}, 'Event data' );
-
-		assert.equal( mw.eventLog.logEvent.getCall( 1 ).args[ 0 ], 'PaintTiming', 'Schema name' );
-		assert.propContains( mw.eventLog.logEvent.getCall( 1 ).args[ 1 ], {
-			name: 'first-paint',
-			startTime: 990,
-			skin: 'vector',
-			action: 'view',
-			namespaceId: 1
+			longTaskTotalDuration: 179,
+			firstPaint: 990,
+			firstContentfulPaint: 3085
 		}, 'Event data' );
 	} );
 

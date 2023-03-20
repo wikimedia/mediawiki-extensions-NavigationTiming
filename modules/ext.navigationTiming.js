@@ -13,7 +13,6 @@
 	var Geo = window.Geo;
 
 	var config = require( './config.json' );
-	var collectedPaintEntries = {};
 	var policyViolationEmitted = 0;
 	var visibilityChanged = false;
 
@@ -59,98 +58,6 @@
 		}
 
 		return event;
-	}
-
-	/**
-	 * Emit Paint Timing event to Schema:PaintTiming
-	 *
-	 * @param {Object} entry
-	 * @param {Array} oversampleReasons List of zero or more oversample reason strings
-	 * @param {undefined|PerformanceObserver} observer
-	 */
-	function emitPaintTiming( entry, oversampleReasons, observer ) {
-		var event = makeEventWithRequestContext( oversampleReasons );
-		event.name = entry.name;
-		event.startTime = Math.round( entry.startTime );
-
-		// Skin like vector/vector-2022 etc
-		event.skin = mw.config.get( 'skin' );
-
-		if ( !mw.config.get( 'wgCanonicalSpecialPageName' ) ) {
-			event.namespaceId = mw.config.get( 'wgNamespaceNumber' );
-			// e.g. "view", "edit", "history", etc.
-			event.action = mw.config.get( 'wgAction' );
-		}
-
-		mw.eventLog.logEvent( 'PaintTiming', event );
-
-		collectedPaintEntries[ entry.name ] = true;
-
-		// We've collected all paint entries, stop observing
-		if ( observer && collectedPaintEntries[ 'first-paint' ] && collectedPaintEntries[ 'first-contentful-paint' ] ) {
-			observer.disconnect();
-		}
-	}
-
-	/**
-	 * Process Paint Timing metrics that happened before the load event.
-	 *
-	 * - https://developer.mozilla.org/en-US/docs/Web/API/Performance/getEntriesByType
-	 * - https://developer.mozilla.org/en-US/docs/Web/API/PerformancePaintTiming
-	 *
-	 * @param {Array} oversampleReasons List of zero or more oversample reason strings
-	 * @param {undefined|PerformanceObserver} observer
-	 */
-	function processExistingPaintTiming( oversampleReasons, observer ) {
-		var timing = perf && perf.timing;
-		var entry = {};
-
-		var paintEntries;
-		try {
-			paintEntries = perf.getEntriesByType( 'paint' );
-		} catch ( e ) {
-			// Support: Safari < 11 (getEntriesByType missing)
-			paintEntries = [];
-		}
-
-		if ( paintEntries.length ) {
-			// Support: Chrome 60+, Android 5+
-			paintEntries.forEach( function ( paintEntry ) {
-				if ( paintEntry.name === 'first-paint' || paintEntry.name === 'first-contentful-paint' ) {
-					emitPaintTiming( paintEntry, oversampleReasons, observer );
-				}
-			} );
-		} else if ( timing && timing.msFirstPaint > timing.navigationStart ) {
-			// Support: IE 11, Microsoft Edge
-			entry.name = 'first-paint';
-			entry.startTime = timing.msFirstPaint - timing.navigationStart;
-			emitPaintTiming( entry, oversampleReasons, observer );
-		}
-	}
-
-	/**
-	 * Set up PerformanceObserver that will listen to Paint performance events.
-	 *
-	 * @param {Array} oversampleReasons List of zero or more oversample reason strings
-	 */
-	function emitAndObservePaintTiming( oversampleReasons ) {
-		var performanceObserver;
-
-		if ( window.PerformanceObserver ) {
-			performanceObserver = new PerformanceObserver( function ( list, observer ) {
-				list.getEntries().forEach( function ( entry ) {
-					emitPaintTiming( entry, oversampleReasons, observer );
-				} );
-			} );
-
-			try {
-				performanceObserver.observe( { entryTypes: [ 'paint' ] } );
-			} catch ( e ) {
-				// T217210 Some browsers don't support the "paint" entry type
-			}
-		}
-
-		processExistingPaintTiming( oversampleReasons, performanceObserver );
 	}
 
 	/**
@@ -297,6 +204,28 @@
 			totalDuration += entry.duration;
 		} );
 		return { totalEntries: totalEntries, totalDuration: totalDuration };
+	}
+
+	/**
+	 * Get paint timing from browser that support the paint timing API.
+	 * Some browsers (meaning Safari) do not implement first paint.
+	 *
+	 * @return {{firstPaint: number | undefined, firstContentfulPaint: number}}
+	 */
+	function getPaintTiming() {
+		var firstPaint, firstContentfulPaint;
+
+		// https://github.com/w3c/paint-timing/blob/08005b9ef104918ff372a0c6cc8f5339f6b46906/README.md
+		var entries = perf.getEntriesByType( 'paint' );
+		entries.forEach( function ( entry ) {
+			if ( entry.name === 'first-paint' ) {
+				firstPaint = Math.round( entry.startTime );
+			} else if ( entry.name === 'first-contentful-paint' ) {
+				firstContentfulPaint = Math.round( entry.startTime );
+			}
+		} );
+		return { firstPaint: firstPaint, firstContentfulPaint: firstContentfulPaint };
+
 	}
 
 	/**
@@ -572,11 +501,24 @@
 			event.cumulativeLayoutShift = getCumulativeLayoutShift();
 		}
 
-		// Properties: Paint Timing API
 		if ( window.PerformanceObserver && PerformanceObserver.supportedEntryTypes && PerformanceObserver.supportedEntryTypes.indexOf( 'largest-contentful-paint' ) > -1 ) {
 			var lcpInfo = getLargestContentfulPaint();
 			event.largestContentfulPaint = lcpInfo.value;
 			event.largestContentfulPaintElement = lcpInfo.element;
+		}
+
+		if ( perf.timing && perf.timing.msFirstPaint > perf.timing.navigationStart ) {
+			// Support: IE 11, Microsoft Edge
+			event.firstPaint = Math.round( perf.timing.msFirstPaint - perf.timing.navigationStart );
+		} else if ( perf.getEntriesByType ) {
+			var ptInfo = getPaintTiming();
+			// First paint is missing in Safari
+			if ( ptInfo.firstPaint ) {
+				event.firstPaint = ptInfo.firstPaint;
+			}
+			if ( ptInfo.firstContentfulPaint ) {
+				event.firstContentfulPaint = ptInfo.firstContentfulPaint;
+			}
 		}
 
 		if ( window.PerformanceObserver && window.PerformanceObserver.supportedEntryTypes && PerformanceObserver.supportedEntryTypes.indexOf( 'longtask' ) > -1 ) {
@@ -612,8 +554,6 @@
 		);
 
 		mw.eventLog.logEvent( 'NavigationTiming', event );
-
-		emitAndObservePaintTiming( oversampleReasons );
 	}
 
 	/**
