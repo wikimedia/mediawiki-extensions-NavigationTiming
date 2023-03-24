@@ -61,6 +61,56 @@
 	}
 
 	/**
+	 * Emit First Input Delay event to Schema:FirstInputDelay
+	 *
+	 * @param {Object} entry
+	 * @param {PerformanceObserver} observer
+	 * @param {Array} oversampleReasons List of zero or more oversample reason strings
+	 */
+	function emitFirstInputDelay( entry, observer, oversampleReasons ) {
+		var event = {
+			oversampleReasons: oversampleReasons
+		};
+
+		event.pageviewToken = mw.user.getPageviewToken();
+		event.isOversample = oversampleReasons.length > 0;
+		event.inputDelay = Math.round( entry.processingStart - entry.startTime );
+		event.skin = mw.config.get( 'skin' );
+
+		if ( Geo && typeof Geo.country === 'string' ) {
+			event.originCountry = Geo.country;
+		}
+
+		mw.eventLog.logEvent( 'FirstInputDelay', event );
+
+		observer.disconnect();
+	}
+
+	/**
+	 * Set up PerformanceObserver that will listen to First Input delay performance events.
+	 *
+	 * @param {Array} oversampleReasons List of zero or more oversample reason strings
+	 */
+	function setUpFirstInputDelayObserver( oversampleReasons ) {
+		var performanceObserver;
+
+		if ( window.PerformanceObserver ) {
+			performanceObserver = new PerformanceObserver( function ( list, observer ) {
+				var entries = list.getEntries();
+				if ( entries.length > 0 ) {
+					var firstEntry = entries[ 0 ];
+					emitFirstInputDelay( firstEntry, observer, oversampleReasons );
+				}
+			} );
+
+			try {
+				performanceObserver.observe( { type: 'first-input', buffered: true } );
+			} catch ( e ) {
+			}
+		}
+	}
+
+	/**
 	 * Get Navigation Timing Level 1 metrics for Schema:NavigationTiming.
 	 *
 	 * @return {Object}
@@ -892,6 +942,7 @@
 		// same circumstances as navigation timing sampling and oversampling.
 		emitCentralNoticeTiming();
 		setupFeaturePolicyViolationObserver();
+		setUpFirstInputDelayObserver( oversampleReasons );
 
 		// Run a CPU microbenchmark for a portion of measurements
 		if ( mw.eventLog.randomTokenMatch( config.cpuBenchmarkSamplingFactor || 0 ) ) {
@@ -937,6 +988,7 @@
 			getOversampleReasons: getOversampleReasons,
 			emitNavTiming: emitNavigationTiming,
 			emitNavigationTimingWithOversample: emitNavigationTimingWithOversample,
+			emitFirstInputDelay: emitFirstInputDelay,
 			emitCentralNoticeTiming: emitCentralNoticeTiming,
 			testGeoOversamples: testGeoOversamples,
 			testUAOversamples: testUAOversamples,

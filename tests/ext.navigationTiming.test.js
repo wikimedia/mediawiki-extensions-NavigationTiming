@@ -560,6 +560,36 @@
 		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].time, 8896, 'Event with rounded numerical value' );
 	} );
 
+	QUnit.test( 'FirstInputDelay: emitFirstInputDelay', function ( assert ) {
+		var clock = this.sandbox.useFakeTimers();
+		this.reinit();
+
+		var stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
+		stub.returns( $.Deferred().promise() );
+
+		var entryMock = { processingStart: 5.4, startTime: 2.9 };
+		var observerMock = { disconnect: function () {} };
+		var oversampleReasonsMock = [ 'foo:bar', 'baz:biz' ];
+		navigationTiming.emitFirstInputDelay( entryMock, observerMock, oversampleReasonsMock );
+
+		clock.tick( 10 );
+
+		assert.ok( stub.calledOnce, 'mw.eventLog.logEvent was called once' );
+		var schemaName = stub.getCall( 0 ).args[ 0 ];
+		var event = stub.getCall( 0 ).args[ 1 ];
+		assert.equal( schemaName, 'FirstInputDelay', 'Schema name: FirstInputDelay' );
+		assert.propEqual( event, {
+			inputDelay: 3,
+			isOversample: true,
+			oversampleReasons: [
+				'foo:bar',
+				'baz:biz'
+			],
+			pageviewToken: '0000ffff0000ffff0000',
+			skin: 'vector'
+		} );
+	} );
+
 	QUnit.test( 'emitCpuBenchmark', function ( assert ) {
 		var events = [];
 		this.sandbox.stub( mw.eventLog, 'logEvent', function ( schema, event ) {
