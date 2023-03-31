@@ -3,12 +3,11 @@
 	'use strict';
 
 	var navigationTiming = require( 'ext.navigationTiming' );
-	var hasOwn = Object.hasOwnProperty;
 	// https://www.w3.org/TR/navigation-timing-2/#the-performancenavigation-interface
 	var TYPE_NAVIGATE = 0;
 	var TYPE_RELOAD = 1;
 
-	QUnit.module( 'ext.navigationTiming', {
+	QUnit.module( 'ext.navigationTiming', QUnit.newMwEnvironment( {
 		beforeEach: function () {
 			this.Geo = {};
 			// Can't reliably stub window.navigator and window.performance
@@ -45,6 +44,16 @@
 				} );
 			};
 
+			this.sandbox.stub( mw.user, 'getPageviewToken', function () {
+				return '0000ffff0000ffff0000';
+			} );
+
+			mw.config.set( 'skin', 'vector' );
+			mw.config.set( 'wgVersion', '0.0-example' );
+			mw.config.set( 'wgNamespaceNumber', 1 );
+			mw.config.set( 'wgAction', 'view' );
+			mw.config.set( 'wgCanonicalSpecialPageName', undefined );
+
 			window.RLPAGEMODULES = [];
 		},
 		afterEach: function () {
@@ -54,103 +63,17 @@
 				performance: window.performance
 			} );
 		}
-	} );
+	} ) );
 
 	// Basic test will ensure no exceptions are thrown and various
 	// of the core properties are set as expected.
 	QUnit.test( 'emitNavTiming - Basic', function ( assert ) {
 		var clock = this.sandbox.useFakeTimers();
-		this.reinit();
-
-		var stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
-		stub.returns( $.Deferred().promise() );
-		navigationTiming.emitNavTiming();
-		clock.tick( 10 );
-
-		assert.ok( stub.calledOnce, 'mw.eventLog.logEvent was called once' );
-		assert.equal( stub.getCall( 0 ).args[ 0 ], 'NavigationTiming', 'Schema name' );
-		var event = stub.getCall( 0 ).args[ 1 ];
-
-		var expected = {
-			// MediaWiki
-			isAnon: 'boolean',
-			isOversample: 'boolean',
-			mediaWikiVersion: 'string',
-			mediaWikiLoadEnd: 'number',
-			skin: 'string',
-			// NetworkInfo API
-			netinfoEffectiveConnectionType: 'string',
-			netinfoConnectionType: 'string',
-			netinfoRtt: 'number',
-			netinfoDownlink: 'number',
-			// Device Memory API
-			deviceMemory: 'number',
-			// HTML Living Standard
-			hardwareConcurrency: 'number',
-			// Navigation Timing API
-			responseStart: 'number',
-			domComplete: 'number',
-			loadEventEnd: 'number'
+		this.performance.now = function () {
+			return 1234.56;
 		};
-
-		var yearMs = 31536000 * 1000;
-		for ( var key in expected ) {
-			assert.strictEqual( typeof event[ key ], expected[ key ], 'Type of ' + key );
-			if ( expected[ key ] === 'number' ) {
-				// Regression test for T160315
-				// Assert the metric is an offset and not an absolute timestamp
-				assert.pushResult( {
-					// If this is less than a year in milliseconds, assume it's an offset.
-					// Otherwise, it's probably a timestamp which is wrong.
-					result: event[ key ] < yearMs,
-					actual: event[ key ],
-					expected: yearMs,
-					message: key + ' must be an offset, not a timestamp'
-				} );
-			}
-		}
-
-		// Make sure things still work when the connection object isn't present
-		stub.reset();
-		delete this.navigator.connection;
-		delete this.navigator.deviceMemory;
-		delete this.navigator.hardwareConcurrency;
-		this.reinit();
-		navigationTiming.emitNavTiming();
-
-		clock.tick( 10 );
-
-		event = stub.getCall( 0 ).args[ 1 ];
-		assert.strictEqual( hasOwn.call( event, 'netinfoEffectiveConnectionType' ),
-			false, 'When the connection object is not present, things still work' );
-		assert.strictEqual( hasOwn.call( event, 'netinfoConnectionType' ),
-			false, 'When the connection object is not present, things still work' );
-		assert.strictEqual( hasOwn.call( event, 'deviceMemory' ),
-			false, 'When the deviceMemory property is not present, things still work' );
-		assert.strictEqual( hasOwn.call( event, 'hardwareConcurrency' ),
-			false, 'When the hardwareConcurrency property is not present, things still work' );
-
-		// Make sure things are correct if the page is a special page
-		stub.reset();
-		mw.config.set( 'wgCanonicalSpecialPageName', 'SpecialPageNameTest' );
-		this.reinit();
-		navigationTiming.emitNavTiming();
-
-		clock.tick( 10 );
-
-		event = stub.getCall( 0 ).args[ 1 ];
-		assert.strictEqual( event.mwSpecialPageName, 'SpecialPageNameTest',
-			'Special page name is correct in the emitted object' );
-		assert.strictEqual( hasOwn.call( event, 'namespaceId' ), false,
-			'namespaceId is not included for Special Pages' );
-		assert.strictEqual( hasOwn.call( event, 'revId' ), false,
-			'revId is not included for Special pages' );
-	} );
-
-	// Case with example values typical for a first view
-	// where DNS, TCP, SSL etc. all need to happen.
-	QUnit.test( 'emitNavTiming - First view', function ( assert ) {
-		var clock = this.sandbox.useFakeTimers();
+		// Case with example values typical for a first view
+		// where DNS, TCP, SSL etc. all need to happen.
 		this.performance.timing = {
 			navigationStart: 100,
 			fetchStart: 200,
@@ -168,6 +91,8 @@
 			loadEventStart: 570,
 			loadEventEnd: 575
 		};
+		var perfObserver = this.sandbox.stub( window, 'PerformanceObserver', function () {} );
+		perfObserver.supportedEntryTypes = [];
 		this.reinit();
 
 		var stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
@@ -175,12 +100,29 @@
 		navigationTiming.emitNavTiming();
 		clock.tick( 10 );
 
-		assert.ok( stub.calledOnce, 'mw.eventLog.logEvent was called once' );
+		assert.strictEqual( stub.callCount, 1, 'mw.eventLog.logEvent called' );
 		assert.equal( stub.getCall( 0 ).args[ 0 ], 'NavigationTiming', 'Schema name' );
-
-		var event = stub.getCall( 0 ).args[ 1 ];
-		assert.propContains( event, {
+		assert.propEqual( stub.getCall( 0 ).args[ 1 ], {
+			// Page/user metadata
+			action: 'view',
+			isAnon: true,
+			isOversample: false,
+			mediaWikiVersion: '0.0-example',
+			namespaceId: 1,
+			pageviewToken: '0000ffff0000ffff0000',
+			revId: null,
+			skin: 'vector',
+			// Device/connection metadata
+			deviceMemory: 8,
+			hardwareConcurrency: 4,
+			netinfoConnectionType: 'cellular',
+			netinfoDownlink: 1.4,
+			netinfoEffectiveConnectionType: '4g',
+			netinfoRtt: 900,
+			// Page load
+			fetchStart: 100,
 			connectStart: 126,
+			dnsLookup: 15,
 			secureConnectionStart: 135,
 			connectEnd: 150,
 			requestStart: 150,
@@ -189,10 +131,87 @@
 			domComplete: 350,
 			loadEventStart: 470,
 			loadEventEnd: 475,
+			mediaWikiLoadEnd: 1235,
 			unload: 0,
 			redirecting: 0,
 			gaps: 131
-		} );
+		}, 'Event object' );
+
+		// Make sure things still work when the connection object isn't present
+		delete this.navigator.connection;
+		delete this.navigator.deviceMemory;
+		delete this.navigator.hardwareConcurrency;
+		this.reinit();
+
+		stub.reset();
+		navigationTiming.emitNavTiming();
+		clock.tick( 10 );
+
+		assert.strictEqual( stub.callCount, 1, 'mw.eventLog.logEvent called' );
+		assert.propEqual( stub.getCall( 0 ).args[ 1 ], {
+			// Page/user metadata
+			action: 'view',
+			isAnon: true,
+			isOversample: false,
+			mediaWikiVersion: '0.0-example',
+			namespaceId: 1,
+			pageviewToken: '0000ffff0000ffff0000',
+			revId: null,
+			skin: 'vector',
+			// Device/connection metadata (ommitted)
+			// Page load
+			fetchStart: 100,
+			connectStart: 126,
+			dnsLookup: 15,
+			secureConnectionStart: 135,
+			connectEnd: 150,
+			requestStart: 150,
+			responseStart: 200,
+			responseEnd: 300,
+			domComplete: 350,
+			loadEventStart: 470,
+			loadEventEnd: 475,
+			mediaWikiLoadEnd: 1235,
+			unload: 0,
+			redirecting: 0,
+			gaps: 131
+		}, 'Event object, when device/connection info is unsupported' );
+
+		// Make sure things are correct if the page is a special page
+		mw.config.set( 'wgCanonicalSpecialPageName', 'MySpecialPage' );
+		this.reinit();
+
+		stub.reset();
+		navigationTiming.emitNavTiming();
+		clock.tick( 10 );
+
+		assert.strictEqual( stub.callCount, 1, 'mw.eventLog.logEvent called' );
+		assert.propEqual( stub.getCall( 0 ).args[ 1 ], {
+			// Page/user metadata (omit 'action' and 'namespaceId', add 'mwSpecialPageName')
+			isAnon: true,
+			isOversample: false,
+			mediaWikiVersion: '0.0-example',
+			mwSpecialPageName: 'MySpecialPage',
+			pageviewToken: '0000ffff0000ffff0000',
+			skin: 'vector',
+			// Device/connection metadata (omitted)
+			// Page load
+			fetchStart: 100,
+			connectStart: 126,
+			dnsLookup: 15,
+			secureConnectionStart: 135,
+			connectEnd: 150,
+			requestStart: 150,
+			responseStart: 200,
+			responseEnd: 300,
+			domComplete: 350,
+			loadEventStart: 470,
+			loadEventEnd: 475,
+			mediaWikiLoadEnd: 1235,
+			unload: 0,
+			redirecting: 0,
+			gaps: 131
+		}, 'Event object, on a special page' );
 	} );
 
 	// Case with example values typical for a repeat view
@@ -487,11 +506,6 @@
 		logEventStub.returns( $.Deferred().promise() );
 		this.sandbox.stub( mw.eventLog, 'logFailure' );
 
-		mw.config.set( 'wgNamespaceNumber', 1 );
-		mw.config.set( 'wgAction', 'view' );
-		mw.config.set( 'skin', 'vector' );
-		mw.config.set( 'wgCanonicalSpecialPageName', undefined );
-
 		this.reinit();
 		navigationTiming.emitNavTiming();
 
@@ -613,11 +627,6 @@
 	} );
 
 	QUnit.test( 'makeEventWithRequestContext', function ( assert ) {
-		var wgUserId = mw.config.get( 'wgUserId' );
-		var wgMFMode = mw.config.get( 'wgMFMode' );
-		var stub = this.sandbox.stub( mw.user, 'getPageviewToken' );
-		stub.returns( 'tokenfoo' );
-
 		mw.config.set( 'wgUserId', 123 );
 		mw.config.set( 'wgMFMode', 'stable' );
 
@@ -628,7 +637,7 @@
 
 		var event = navigationTiming.makeEventWithRequestContext( [] );
 		assert.propContains( event, {
-			pageviewToken: 'tokenfoo',
+			pageviewToken: '0000ffff0000ffff0000',
 			isAnon: false,
 			isOversample: false,
 			mobileMode: 'stable',
@@ -642,8 +651,5 @@
 			isOversample: true,
 			oversampleReason: '["foo:bar","baz:biz"]'
 		} );
-
-		mw.config.set( 'wgUserId', wgUserId );
-		mw.config.set( 'wgMFMode', wgMFMode );
 	} );
 }() );
