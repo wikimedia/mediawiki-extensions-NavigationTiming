@@ -525,7 +525,9 @@
 			longTaskTotalTasks: 2,
 			longTaskTotalDuration: 179,
 			firstPaint: 990,
-			firstContentfulPaint: 3085
+			firstContentfulPaint: 3085,
+			longTasksBeforeFcp: 1,
+			longTasksDurationBeforeFcp: 104
 		}, 'Event data' );
 	} );
 

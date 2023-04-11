@@ -75,7 +75,7 @@
 				"CentralNoticeTiming": "/analytics/legacy/centralnoticetiming/1.0.0",
 				"CpuBenchmark": "/analytics/legacy/cpubenchmark/1.1.0",
 				"FeaturePolicyViolation": "/analytics/legacy/featurepolicyviolation/1.0.0",
-				"NavigationTiming": "/analytics/legacy/navigationtiming/1.5.0",
+				"NavigationTiming": "/analytics/legacy/navigationtiming/1.6.0",
 				"SaveTiming": "/analytics/legacy/savetiming/1.0.0"
 			}
 		}

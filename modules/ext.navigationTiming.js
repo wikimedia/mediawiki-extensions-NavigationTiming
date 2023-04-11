@@ -191,21 +191,31 @@
 		return { value: value, element: element };
 	}
 
-	function getLongTask() {
-		// eslint-disable-next-line compat/compat -- PerformanceObserver checked
-		var totalEntries, totalDuration, perfObserver = new PerformanceObserver( function () {
-		} );
+	function getLongTask( firstContentfulPaint ) {
+		var totalEntries, totalDuration, longTasksBeforeFcp, longTasksDurationBeforeFcp,
+			// eslint-disable-next-line compat/compat -- PerformanceObserver checked
+			perfObserver = new PerformanceObserver( function () {
+			} );
 		// https://github.com/w3c/longtasks/blob/6d0a5dff7f20083cff74f057822920fd7c731cef/README.md
 		perfObserver.observe( { type: 'longtask', buffered: true } );
 		var entries = perfObserver.takeRecords();
 		totalDuration = 0;
 		totalEntries = entries.length;
+		longTasksBeforeFcp = 0;
+		longTasksDurationBeforeFcp = 0;
 		entries.forEach( function ( entry ) {
 			totalDuration += entry.duration;
+			if ( entry.startTime < firstContentfulPaint ) {
+				longTasksBeforeFcp++;
+				longTasksDurationBeforeFcp += entry.duration;
+			}
 		} );
 
 		perfObserver.disconnect();
-		return { totalEntries: totalEntries, totalDuration: totalDuration };
+		return { totalEntries: totalEntries,
+			totalDuration: totalDuration,
+			longTasksBeforeFcp: longTasksBeforeFcp,
+			longTasksDurationBeforeFcp: longTasksDurationBeforeFcp };
 	}
 
 	/**
@@ -524,9 +534,11 @@
 		}
 
 		if ( window.PerformanceObserver && window.PerformanceObserver.supportedEntryTypes && PerformanceObserver.supportedEntryTypes.indexOf( 'longtask' ) > -1 ) {
-			var ltInfo = getLongTask();
+			var ltInfo = getLongTask( event.firstContentfulPaint );
 			event.longTaskTotalDuration = ltInfo.totalDuration;
 			event.longTaskTotalTasks = ltInfo.totalEntries;
+			event.longTasksBeforeFcp = ltInfo.longTasksBeforeFcp;
+			event.longTasksDurationBeforeFcp = ltInfo.longTasksDurationBeforeFcp;
 		}
 
 		// Properties: Navigation Timing Level 2
