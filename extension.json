@@ -72,7 +72,6 @@
 	"attributes": {
 		"EventLogging": {
 			"Schemas": {
-				"CentralNoticeTiming": "/analytics/legacy/centralnoticetiming/1.0.0",
 				"CpuBenchmark": "/analytics/legacy/cpubenchmark/1.1.0",
 				"FirstInputDelay": "/analytics/legacy/firstinputdelay/1.0.0",
 				"FeaturePolicyViolation": "/analytics/legacy/featurepolicyviolation/1.0.0",

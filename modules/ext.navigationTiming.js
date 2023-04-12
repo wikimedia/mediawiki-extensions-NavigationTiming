@@ -422,49 +422,6 @@
 		emitCpuBenchmark( [ 'survey:' + surveyName ] );
 	}
 
-	/**
-	 * If the current page displays a CentralNotice banner, records its display time
-	 *
-	 * @param {PerformanceObserver} existingObserver
-	 * @see https://meta.wikimedia.org/wiki/Schema:CentralNoticeTiming
-	 */
-	function emitCentralNoticeTiming( existingObserver ) {
-		if ( !perf || !perf.getEntriesByName ) {
-			return;
-		}
-
-		var marks = perf.getEntriesByName( 'mwCentralNoticeBanner', 'mark' );
-		if ( !marks || !marks.length ) {
-			if ( !window.PerformanceObserver ) {
-				return;
-			}
-
-			// Already observing marks
-			if ( existingObserver ) {
-				return;
-			}
-
-			var observer = new PerformanceObserver( function () {
-				emitCentralNoticeTiming( observer );
-			} );
-
-			observer.observe( { entryTypes: [ 'mark' ] } );
-
-			return;
-		} else {
-			if ( existingObserver ) {
-				existingObserver.disconnect();
-			}
-
-			var mark = marks[ 0 ];
-			var event = {
-				pageviewToken: mw.user.getPageviewToken(),
-				time: Math.round( mark.startTime )
-			};
-			mw.eventLog.logEvent( 'CentralNoticeTiming', event );
-		}
-	}
-
 	/** @return {boolean} */
 	function isRegularNavigation() {
 		var TYPE_NAVIGATE = 0;
@@ -940,7 +897,6 @@
 
 		// These are events separate from NavigationTiming that emit under the
 		// same circumstances as navigation timing sampling and oversampling.
-		emitCentralNoticeTiming();
 		setupFeaturePolicyViolationObserver();
 		setUpFirstInputDelayObserver( oversampleReasons );
 
@@ -989,7 +945,6 @@
 			emitNavTiming: emitNavigationTiming,
 			emitNavigationTimingWithOversample: emitNavigationTimingWithOversample,
 			emitFirstInputDelay: emitFirstInputDelay,
-			emitCentralNoticeTiming: emitCentralNoticeTiming,
 			testGeoOversamples: testGeoOversamples,
 			testUAOversamples: testUAOversamples,
 			testPageNameOversamples: testPageNameOversamples,

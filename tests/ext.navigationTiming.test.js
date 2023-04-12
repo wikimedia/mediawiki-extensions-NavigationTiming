@@ -531,35 +531,6 @@
 		}, 'Event data' );
 	} );
 
-	QUnit.test( 'emitCentralNoticeTiming', function ( assert ) {
-		var clock = this.sandbox.useFakeTimers();
-		var logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
-		logEventStub.returns( $.Deferred().resolve() );
-		var perfStub = this.sandbox.stub( this.performance, 'getEntriesByName' );
-		this.reinit();
-
-		navigationTiming.emitCentralNoticeTiming();
-
-		assert.equal( mw.eventLog.logEvent.callCount, 0, 'No mwCentralNoticeBanner performance mark' );
-
-		perfStub.withArgs( 'mwCentralNoticeBanner', 'mark' ).returns(
-			[ {
-				duration: 0,
-				entryType: 'mark',
-				name: 'mwCentralNoticeBanner',
-				startTime: 8895.899999999983
-			} ]
-		);
-		this.reinit();
-
-		navigationTiming.emitCentralNoticeTiming();
-
-		clock.tick( 10 );
-
-		assert.equal( mw.eventLog.logEvent.callCount, 1, 'CentralNoticeTiming event happened' );
-		assert.equal( mw.eventLog.logEvent.getCall( 0 ).args[ 1 ].time, 8896, 'Event with rounded numerical value' );
-	} );
-
 	QUnit.test( 'FirstInputDelay: emitFirstInputDelay', function ( assert ) {
 		var clock = this.sandbox.useFakeTimers();
 		this.reinit();
