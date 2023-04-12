@@ -13,7 +13,6 @@
 	var Geo = window.Geo;
 
 	var config = require( './config.json' );
-	var policyViolationEmitted = 0;
 	var visibilityChanged = false;
 
 	var mediaWikiLoadEnd;
@@ -780,55 +779,6 @@
 		visibilityChanged = true;
 	}
 
-	/**
-	 * Emit FeaturePolicyViolation entries
-	 *
-	 * @param {Array} reports An array of Report objects
-	 * @param {ReportingObserver} observer The reporting observer watching feature-policy-violation
-	 */
-	function emitFeaturePolicyViolation( reports, observer ) {
-		reports.forEach( function ( report ) {
-			var event = {
-				pageviewToken: mw.user.getPageviewToken(),
-				url: report.url,
-				featureId: report.body.featureId
-			};
-
-			if ( report.body.sourceFile ) {
-				event.sourceFile = report.body.sourceFile;
-			}
-
-			if ( report.body.lineNumber ) {
-				event.lineNumber = report.body.lineNumber;
-			}
-
-			if ( report.body.columnNumber ) {
-				event.columnNumber = report.body.columnNumber;
-			}
-
-			mw.eventLog.logEvent( 'FeaturePolicyViolation', event );
-			policyViolationEmitted++;
-		} );
-
-		if ( policyViolationEmitted > 20 ) {
-			observer.disconnect();
-		}
-	}
-
-	/**
-	 * Observe Feature Policy Violation reports: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Feature-Policy
-	 */
-	function setupFeaturePolicyViolationObserver() {
-		/* global ReportingObserver */
-		if ( !window.ReportingObserver ) {
-			return;
-		}
-
-		// eslint-disable-next-line compat/compat -- ReportingObserver checked
-		var observer = new ReportingObserver( emitFeaturePolicyViolation, { buffered: true, types: [ 'feature-policy-violation' ] } );
-		observer.observe();
-	}
-
 	/** @return {string[]} */
 	function getOversampleReasons() {
 		// Get any oversamples, and see whether we match
@@ -897,7 +847,6 @@
 
 		// These are events separate from NavigationTiming that emit under the
 		// same circumstances as navigation timing sampling and oversampling.
-		setupFeaturePolicyViolationObserver();
 		setUpFirstInputDelayObserver( oversampleReasons );
 
 		// Run a CPU microbenchmark for a portion of measurements
@@ -950,14 +899,12 @@
 			testPageNameOversamples: testPageNameOversamples,
 			onMwLoadEnd: onMwLoadEnd,
 			emitCpuBenchmark: emitCpuBenchmark,
-			emitFeaturePolicyViolation: emitFeaturePolicyViolation,
 			makeEventWithRequestContext: makeEventWithRequestContext,
 			reinit: function ( mocks ) {
 				// Reset initial state
 				perf = mocks && mocks.performance || undefined;
 				navigator = mocks && mocks.navigator || window.navigator;
 				Geo = mocks && mocks.Geo || window.Geo;
-				policyViolationEmitted = 0;
 				visibilityChanged = false;
 
 				// Call manually because, during test execution, actual
