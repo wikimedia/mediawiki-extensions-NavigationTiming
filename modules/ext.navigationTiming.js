@@ -188,7 +188,7 @@
 	 * @return {number}
 	 */
 	function getCumulativeLayoutShift() {
-		// eslint-disable-next-line compat/compat -- Checked by caller
+
 		var perfObserver = new PerformanceObserver( function () {} );
 
 		// See https://github.com/mmocny/web-vitals/wiki/Snippets-for-LSN-using-PerformanceObserver#max-session-gap1s-limit5s
@@ -223,7 +223,7 @@
 	 * @return {{value: number, element: string}}  When the largest element was painted.
 	 */
 	function getLargestContentfulPaint() {
-		// eslint-disable-next-line compat/compat -- PerformanceObserver checked
+
 		var element, value, perfObserver = new PerformanceObserver( function () {
 		} );
 		// See https://github.com/GoogleChrome/web-vitals/blob/v3.1.0/src/onLCP.ts
@@ -242,7 +242,7 @@
 
 	function getLongTask( firstContentfulPaint ) {
 		var totalEntries, totalDuration, longTasksBeforeFcp, longTasksDurationBeforeFcp,
-			// eslint-disable-next-line compat/compat -- PerformanceObserver checked
+
 			perfObserver = new PerformanceObserver( function () {
 			} );
 		// https://github.com/w3c/longtasks/blob/6d0a5dff7f20083cff74f057822920fd7c731cef/README.md
@@ -336,7 +336,7 @@
 		work = 'onmessage = ' + String( onMessage );
 
 		blob = new Blob( [ work ], { type: 'application/javascript' } );
-		// eslint-disable-next-line compat/compat -- URL checked
+
 		worker = new Worker( URL.createObjectURL( blob ) );
 
 		worker.onmessage = function ( e ) {
