@@ -16,7 +16,6 @@
 	var visibilityChanged = false;
 
 	var mediaWikiLoadEnd;
-	var surveyDisplayed;
 	var cpuBenchmarkDone;
 
 	/**
@@ -293,8 +292,7 @@
 	 * Run a CPU benchmark inside a Worker (off the main thread) and
 	 * emit the CpuBenchmark event afterward.
 	 *
-	 * This can be called from both showPerformanceSurvey() and onLoadComplete(),
-	 * but it will only run the benchmark and emit the event once.
+	 * This is called from onLoadComplete().
 	 *
 	 * @see https://meta.wikimedia.org/wiki/Schema:CpuBenchmark
 	 * @param {Array} oversampleReasons List of zero or more oversample reason strings
@@ -369,58 +367,6 @@
 		} );
 	}
 
-	/**
-	 * Display a performance survey using the QuickSurveys extension
-	 * if the extension is present and based on a sub-sampling factor.
-	 *
-	 * The surveySamplingFactor sampling ratio is
-	 * applied after the general NavigationTiming sampling ratio has
-	 * been acted on. Meaning it's a percentage of the percentage of
-	 * pageviews NavigationTiming is sampled for.
-	 *
-	 * surveyAuthenticatedSamplingFactor is the same for logged-in users.
-	 */
-	function showPerformanceSurvey() {
-		var isMainPage = mw.config.get( 'wgIsMainPage' ),
-			isArticle = mw.config.get( 'wgNamespaceNumber' ) === 0,
-			isViewing = mw.config.get( 'wgAction' ) === 'view',
-			isVE = mw.util.getParamValue( 'veaction' ),
-			exists = mw.config.get( 'wgCurRevisionId' ) > 0,
-			surveyName = config.surveyName,
-			loggedOutSamplingFactor = config.surveySamplingFactor || 0,
-			loggedInSamplingFactor = config.surveyAuthenticatedSamplingFactor || 0,
-			isInSurveySample;
-
-		// QuickSurveys are only meant to be displayed on articles
-		if ( isMainPage || !isArticle || !isViewing || isVE || !exists ||
-			!surveyName || surveyDisplayed
-		) {
-			return;
-		}
-
-		surveyDisplayed = true;
-
-		if ( mw.config.get( 'wgUserId' ) !== null ) {
-			isInSurveySample = mw.eventLog.randomTokenMatch(
-				loggedInSamplingFactor || loggedOutSamplingFactor
-			);
-		} else {
-			isInSurveySample = mw.eventLog.randomTokenMatch( loggedOutSamplingFactor );
-		}
-
-		if ( !isInSurveySample ) {
-			return;
-		}
-
-		mw.loader.using( 'ext.quicksurveys.init' ).then( function () {
-			mw.extQuickSurveys.showSurvey( surveyName );
-		} );
-
-		// If we're sampled for the survey, run the CPU microbenchmark
-		// unconditionally, we might need it for machine learning models.
-		emitCpuBenchmark( [ 'survey:' + surveyName ] );
-	}
-
 	/** @return {boolean} */
 	function isRegularNavigation() {
 		var TYPE_NAVIGATE = 0;
@@ -447,9 +393,6 @@
 	 */
 	function emitNavigationTimingWithOversample( oversampleReasons ) {
 		var event = makeEventWithRequestContext( oversampleReasons );
-
-		// No need to wait for the RUM metrics to be recorded before showing the survey
-		showPerformanceSurvey();
 
 		// Properties: MediaWiki
 		//
