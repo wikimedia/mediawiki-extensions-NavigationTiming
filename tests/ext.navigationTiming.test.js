@@ -552,7 +552,7 @@
 		assert.propEqual( event, {
 			inputDelay: 3,
 			isOversample: true,
-			oversampleReasons: [
+			oversampleReason: [
 				'foo:bar',
 				'baz:biz'
 			],

@@ -67,7 +67,7 @@
 	 */
 	function emitFirstInputDelay( entry, observer, oversampleReasons ) {
 		var event = {
-			oversampleReasons: oversampleReasons
+			oversampleReason: oversampleReasons
 		};
 
 		event.pageviewToken = mw.user.getPageviewToken();
