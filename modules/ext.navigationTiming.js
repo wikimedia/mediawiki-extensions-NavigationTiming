@@ -26,23 +26,19 @@
 	 * The populated fields are:
 	 * - pageviewToken: unique token for the pageview to cross-reference the request between schemas
 	 * - isAnon: is the user anonymous or authenticated?
-	 * - isOversample: is the request an oversampled measurement?
-	 * - oversampleReason: why was the request oversampled if it was?
+	 * - isOversample: always false, the oversample is removed since we don't need it in Prometheus
 	 * - mobileMode: which mobile mode is the website in?
 	 * - originCountry: based on IP address, which country was the request made from?
 	 *
-	 * @param {Array} oversampleReasons List of zero or more oversample reason strings
 	 * @return {Object}
 	 */
-	function makeEventWithRequestContext( oversampleReasons ) {
+	function makeEventWithRequestContext() {
 		var event = {};
 		event.pageviewToken = mw.user.getPageviewToken();
 		event.isAnon = mw.config.get( 'wgUserId' ) === null;
-		event.isOversample = oversampleReasons.length > 0;
 
-		if ( oversampleReasons.length ) {
-			event.oversampleReason = JSON.stringify( oversampleReasons );
-		}
+		// This is old legacy from oversample
+		event.isOversample = false;
 
 		var mobileMode = mw.config.get( 'wgMFMode' );
 
@@ -63,15 +59,14 @@
 	 *
 	 * @param {Object} entry
 	 * @param {PerformanceObserver} observer
-	 * @param {Array} oversampleReasons List of zero or more oversample reason strings
 	 */
-	function emitFirstInputDelay( entry, observer, oversampleReasons ) {
-		var event = {
-			oversampleReason: oversampleReasons
-		};
+	function emitFirstInputDelay( entry, observer ) {
+		var event = {};
 
 		event.pageviewToken = mw.user.getPageviewToken();
-		event.isOversample = oversampleReasons.length > 0;
+		// This is old legacy from oversample
+		event.isOversample = false;
+
 		event.inputDelay = Math.round( entry.processingStart - entry.startTime );
 		event.skin = mw.config.get( 'skin' );
 
@@ -86,10 +81,8 @@
 
 	/**
 	 * Set up PerformanceObserver that will listen to First Input delay performance events.
-	 *
-	 * @param {Array} oversampleReasons List of zero or more oversample reason strings
 	 */
-	function setUpFirstInputDelayObserver( oversampleReasons ) {
+	function setUpFirstInputDelayObserver() {
 		var performanceObserver;
 
 		if ( window.PerformanceObserver ) {
@@ -97,7 +90,7 @@
 				var entries = list.getEntries();
 				if ( entries.length > 0 ) {
 					var firstEntry = entries[ 0 ];
-					emitFirstInputDelay( firstEntry, observer, oversampleReasons );
+					emitFirstInputDelay( firstEntry, observer );
 				}
 			} );
 
@@ -295,10 +288,9 @@
 	 * This is called from onLoadComplete().
 	 *
 	 * @see https://meta.wikimedia.org/wiki/Schema:CpuBenchmark
-	 * @param {Array} oversampleReasons List of zero or more oversample reason strings
 	 * @return {jQuery.Promise}
 	 */
-	function emitCpuBenchmark( oversampleReasons ) {
+	function emitCpuBenchmark() {
 		var blob, worker, work,
 			deferred = $.Deferred();
 
@@ -349,7 +341,7 @@
 				return;
 			}
 
-			var event = makeEventWithRequestContext( oversampleReasons );
+			var event = makeEventWithRequestContext();
 			event.score = result;
 
 			var batteryPromise = navigator.getBattery ?
@@ -389,10 +381,9 @@
 	 * available and isRegularNavigation() returns true.
 	 *
 	 * @see https://meta.wikimedia.org/wiki/Schema:NavigationTiming
-	 * @param {Array} oversampleReasons List of zero or more oversample reason strings
 	 */
-	function emitNavigationTimingWithOversample( oversampleReasons ) {
-		var event = makeEventWithRequestContext( oversampleReasons );
+	function emitNavigationTiming() {
+		var event = makeEventWithRequestContext();
 
 		// Properties: MediaWiki
 		//
@@ -520,13 +511,6 @@
 	}
 
 	/**
-	 * Simple wrapper function for readability
-	 */
-	function emitNavigationTiming() {
-		emitNavigationTimingWithOversample( [] );
-	}
-
-	/**
 	 * Emit a SaveTiming event if this was the page load following an edit submission.
 	 *
 	 * @see https://meta.wikimedia.org/wiki/Schema:SaveTiming
@@ -624,136 +608,10 @@
 	}
 
 	/**
-	 * Test whether this client is located in a geography that we want to
-	 * oversample
-	 *
-	 * @param {Object} geos Object whose properties are country/region codes to be
-	 *                      oversampled
-	 * @return {Array} A list of geos that were selected for oversample
-	 */
-	function testGeoOversamples( geos ) {
-		var geoOversamples = [];
-
-		// Geo oversample depends on the global Geo, which is created by the
-		// CentralNotice extension.  We don't depend on it, though, because
-		// it's pretty heavy.
-		if ( !Geo ) {
-			return geoOversamples;
-		}
-
-		var myGeo = Geo.country || Geo.country_code;
-		if ( myGeo in geos ) {
-			if ( mw.eventLog.randomTokenMatch( geos[ myGeo ] ) ) {
-				geoOversamples.push( myGeo );
-			}
-		}
-
-		return geoOversamples;
-	}
-
-	/**
-	 * Test whether this client's user agent is one that we want to oversample
-	 *
-	 * @param {Object} userAgents Objects whose properties are User Agent strings
-	 *                            to be oversampled, with value equal to the
-	 *                            sample frequency
-	 * @return {Array} An array of User Agent strings that are being oversampled
-	 */
-	function testUAOversamples( userAgents ) {
-		var userAgentSamples = [];
-
-		if ( !navigator.userAgent ) {
-			return userAgentSamples;
-		}
-
-		// Look at each user agent string that's been selected for oversampling,
-		// and check whether this client matches.  If it does, do a random to select
-		// whether or not to oversample in this case.
-		//
-		// For example, assume a client with user agent
-		//    "Firefox/57.0".
-		// If the oversamples are configured as
-		//    {'Firefox': 10, 'Firefox/57': 2}
-		// then the result will be
-		//    5% of the time: ['Firefox', 'Firefox/57']
-		//    45% of the time: ['Firefox/57']
-		//    5% of the time: ['Firefox']
-		//    45% of the time: []
-		//
-		for ( var userAgent in userAgents ) {
-			if ( navigator.userAgent.indexOf( userAgent ) >= 0 ) {
-				if ( mw.eventLog.randomTokenMatch( userAgents[ userAgent ] ) ) {
-					userAgentSamples.push( userAgent );
-				}
-			}
-		}
-
-		return userAgentSamples;
-	}
-
-	/**
-	 * Test whether this page name is one that we want to oversample
-	 *
-	 * @param {Object} pageNames Objects whose properties are page names
-	 *                            to be oversampled, with value equal to the
-	 *                            sample frequency
-	 * @return {Array} An array of page names that are being oversampled
-	 */
-	function testPageNameOversamples( pageNames ) {
-		var pageNamesSamples = [];
-
-		// Look at each page name that's been selected for oversampling,
-		// and check whether the current page matches.  If it does, do a random to select
-		// whether or not to oversample in this case.
-		var pageName = mw.config.get( 'wgPageName' );
-		if ( pageName in pageNames ) {
-			if ( mw.eventLog.randomTokenMatch( pageNames[ pageName ] ) ) {
-				pageNamesSamples.push( pageName );
-			}
-		}
-
-		return pageNamesSamples;
-	}
-
-	/**
 	 * Handle 'visibilitychange' event.
 	 */
 	function setVisibilityChanged() {
 		visibilityChanged = true;
-	}
-
-	/** @return {string[]} */
-	function getOversampleReasons() {
-		// Get any oversamples, and see whether we match
-		var oversamples = config.oversampleFactor;
-		var oversampleReasons = [];
-		if ( oversamples ) {
-			if ( 'geo' in oversamples ) {
-				testGeoOversamples( oversamples.geo ).forEach( function ( key ) {
-					oversampleReasons.push( 'geo:' + key );
-				} );
-			}
-
-			if ( 'userAgent' in oversamples ) {
-				testUAOversamples( oversamples.userAgent ).forEach( function ( key ) {
-					oversampleReasons.push( 'ua:' + key );
-				} );
-			}
-
-			if ( 'pageName' in oversamples ) {
-				testPageNameOversamples( oversamples.pageName ).forEach( function ( key ) {
-					oversampleReasons.push( 'pagename:' + key );
-				} );
-			}
-
-			if ( 'wiki' in oversamples ) {
-				if ( mw.eventLog.randomTokenMatch( oversamples.wiki ) ) {
-					oversampleReasons.push( 'wiki:' + mw.config.get( 'wgDBname' ) );
-				}
-			}
-		}
-
-		return oversampleReasons;
 	}
 
 	/**
@@ -781,29 +639,25 @@
 			return;
 		}
 
-		var oversampleReasons = getOversampleReasons();
 		var isInSample = mw.eventLog.inSample( config.samplingFactor || 0 );
-		if ( !oversampleReasons.length && !isInSample ) {
+		if ( !isInSample ) {
 			// NavTiming: Not sampled
 			return;
 		}
 
 		// These are events separate from NavigationTiming that emit under the
-		// same circumstances as navigation timing sampling and oversampling.
-		setUpFirstInputDelayObserver( oversampleReasons );
+		// same circumstances as navigation timing sampling.
+		setUpFirstInputDelayObserver();
 
 		// Run a CPU microbenchmark for a portion of measurements
 		if ( mw.eventLog.randomTokenMatch( config.cpuBenchmarkSamplingFactor || 0 ) ) {
-			emitCpuBenchmark( oversampleReasons );
+			emitCpuBenchmark();
 		}
 
 		if ( isInSample ) {
 			emitNavigationTiming();
 		}
 
-		if ( oversampleReasons.length ) {
-			emitNavigationTimingWithOversample( oversampleReasons );
-		}
 	}
 
 	/**
@@ -833,13 +687,8 @@
 		 */
 		module.exports = {
 			isRegularNavigation: isRegularNavigation,
-			getOversampleReasons: getOversampleReasons,
-			emitNavTiming: emitNavigationTiming,
-			emitNavigationTimingWithOversample: emitNavigationTimingWithOversample,
+			emitNavigationTiming: emitNavigationTiming,
 			emitFirstInputDelay: emitFirstInputDelay,
-			testGeoOversamples: testGeoOversamples,
-			testUAOversamples: testUAOversamples,
-			testPageNameOversamples: testPageNameOversamples,
 			onMwLoadEnd: onMwLoadEnd,
 			emitCpuBenchmark: emitCpuBenchmark,
 			makeEventWithRequestContext: makeEventWithRequestContext,
@@ -857,13 +706,7 @@
 		};
 
 		config = {
-			samplingFactor: 1,
-			oversampleFactor: {
-				geo: {
-					XX: 1
-				},
-				wiki: 1
-			}
+			samplingFactor: 1
 		};
 	}
 

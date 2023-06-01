@@ -67,7 +67,7 @@
 
 	// Basic test will ensure no exceptions are thrown and various
 	// of the core properties are set as expected.
-	QUnit.test( 'emitNavTiming - Basic', function ( assert ) {
+	QUnit.test( 'emitNavigationTiming - Basic', function ( assert ) {
 		var clock = this.sandbox.useFakeTimers();
 		this.performance.now = function () {
 			return 1234.56;
@@ -97,7 +97,7 @@
 
 		var stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		stub.returns( $.Deferred().promise() );
-		navigationTiming.emitNavTiming();
+		navigationTiming.emitNavigationTiming();
 		clock.tick( 10 );
 
 		assert.strictEqual( stub.callCount, 1, 'mw.eventLog.logEvent called' );
@@ -144,7 +144,7 @@
 		this.reinit();
 
 		stub.reset();
-		navigationTiming.emitNavTiming();
+		navigationTiming.emitNavigationTiming();
 		clock.tick( 10 );
 
 		assert.strictEqual( stub.callCount, 1, 'mw.eventLog.logEvent called' );
@@ -182,7 +182,7 @@
 		this.reinit();
 
 		stub.reset();
-		navigationTiming.emitNavTiming();
+		navigationTiming.emitNavigationTiming();
 		clock.tick( 10 );
 
 		assert.strictEqual( stub.callCount, 1, 'mw.eventLog.logEvent called' );
@@ -216,7 +216,7 @@
 
 	// Case with example values typical for a repeat view
 	// where DNS, TCP, SSL etc. are cached/re-used.
-	QUnit.test( 'emitNavTiming - Repeat view', function ( assert ) {
+	QUnit.test( 'emitNavigationTiming - Repeat view', function ( assert ) {
 		var clock = this.sandbox.useFakeTimers();
 		this.performance.timing = {
 			navigationStart: 100,
@@ -241,7 +241,7 @@
 
 		var stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
 		stub.returns( $.Deferred().promise() );
-		navigationTiming.emitNavTiming();
+		navigationTiming.emitNavigationTiming();
 
 		clock.tick( 10 );
 
@@ -295,115 +295,6 @@
 		assert.false( navigationTiming.isRegularNavigation() );
 	} );
 
-	QUnit.test( 'testGeoOversamples()', function ( assert ) {
-		this.Geo = {
-			country: 'XX'
-		};
-		this.reinit();
-
-		assert.propEqual( navigationTiming.testGeoOversamples( { XX: 1 } ), [ 'XX' ],
-			'Match Geo.country' );
-		assert.propEqual( navigationTiming.testGeoOversamples( { US: 1 } ), [],
-			'Not matching Geo.country' );
-		assert.propEqual( navigationTiming.testGeoOversamples( {} ), [],
-			'Empty object' );
-	} );
-
-	QUnit.test( 'testUAOversamples()', function ( assert ) {
-		this.reinit();
-
-		assert.propEqual( navigationTiming.testUAOversamples( { Chrome: 1 } ), [ 'Chrome' ],
-			'Generic Chrome user agent is identified and oversampled' );
-		assert.propEqual( navigationTiming.testUAOversamples( { 'Chrome/62.0.12345.94': 1 } ),
-			[ 'Chrome/62.0.12345.94' ],
-			'Chrome with very specific UA is oversampled' );
-		assert.propEqual( navigationTiming.testUAOversamples( {
-			Chrome: 1,
-			AppleWebKit: 1
-		} ), [ 'Chrome', 'AppleWebKit' ], 'Most likely oversample rate is the one used' );
-		assert.propEqual( navigationTiming.testUAOversamples( { FakeBrowser: 1 } ),
-			[], 'Non-matching user agent is not sampled' );
-	} );
-
-	QUnit.test( 'testPageNameOversamples()', function ( assert ) {
-		this.reinit();
-
-		mw.config.set( 'wgPageName', 'File:Foo.jpg' );
-		assert.propEqual( navigationTiming.testPageNameOversamples( { 'File:Foo.jpg': 1 } ), [ 'File:Foo.jpg' ],
-			'File page is identified and oversampled' );
-		mw.config.set( 'wgPageName', 'Something' );
-		assert.propEqual( navigationTiming.testPageNameOversamples( { Something: 1 } ),
-			[ 'Something' ],
-			'Main name space article is oversampled' );
-		assert.propEqual( navigationTiming.testPageNameOversamples( {
-			'File:Foo.jpg': 1,
-			Something: 1
-		} ), [ 'Something' ], 'Only matching page name is sampled' );
-		assert.propEqual( navigationTiming.testPageNameOversamples( { Foo: 1 } ),
-			[], 'Non-matching page name is not sampled' );
-	} );
-
-	QUnit.test( 'Oversampling - unsampled', function ( assert ) {
-		this.Geo = {
-			country: 'XX'
-		};
-		this.sandbox.stub( mw.eventLog, 'randomTokenMatch', function () {
-			return false;
-		} );
-		// Stub the random functions so that they return values that will always
-		// result in inSample() being false
-		this.sandbox.stub( Math, 'random' );
-		Math.random.returns( 1.0 );
-		this.sandbox.stub( window.crypto, 'getRandomValues' );
-		window.crypto.getRandomValues.returns( [ 4294967295 ] );
-		this.reinit();
-
-		assert.propEqual( navigationTiming.testGeoOversamples( { XX: 2 } ), [],
-			'When randomTokenMatch returns false, resulting list of geo oversamples is empty' );
-		assert.propEqual( navigationTiming.testUAOversamples( { Chrome: 2 } ), [],
-			'When randomTokenMatch returns false, the resulting list of oversample reasons is empty' );
-	} );
-
-	QUnit.test( 'emitOversampleNavigationTiming', function ( assert ) {
-		var clock = this.sandbox.useFakeTimers();
-		var logEventStub = this.sandbox.stub( mw.eventLog, 'logEvent' );
-		logEventStub.returns( $.Deferred().promise() );
-		var logFailureStub = this.sandbox.stub( mw.eventLog, 'logFailure' );
-		this.reinit();
-		navigationTiming.emitNavTiming();
-
-		clock.tick( 10 );
-
-		assert.equal( logEventStub.args[ 0 ][ 1 ].isOversample, false,
-			'Calling emitNavTiming emits an event with isOversample = false' );
-		logEventStub.reset();
-
-		navigationTiming.emitNavigationTimingWithOversample( [ 'UA:Chrome' ] );
-
-		clock.tick( 10 );
-
-		assert.equal( logEventStub.called, true,
-			'Calling emitOversampleNavigationTiming triggers logEvent' );
-		assert.equal( logFailureStub.called, false,
-			'Calling emitOversampleNavigationTiming does not trigger logFailure' );
-		assert.equal( logEventStub.args[ 0 ][ 1 ].isOversample, true,
-			'The event emitted had the isOversample flag set to true' );
-		assert.propEqual( JSON.parse( logEventStub.args[ 0 ][ 1 ].oversampleReason ),
-			[ 'UA:Chrome' ], 'The event emitted has the oversampleReason value set' );
-		logEventStub.reset();
-
-		navigationTiming.emitNavigationTimingWithOversample( [ 'UA:Chrome', 'geo:XX' ] );
-
-		clock.tick( 10 );
-
-		assert.strictEqual( logEventStub.callCount, 1,
-			'Calling eONT with mutiple oversample reasons triggers logEvent only once' );
-		assert.equal( logEventStub.args[ 0 ][ 1 ].isOversample, true,
-			'Calling eONT with multiple reasons results in isOversample set to true' );
-		assert.propEqual( JSON.parse( logEventStub.args[ 0 ][ 1 ].oversampleReason ),
-			[ 'UA:Chrome', 'geo:XX' ], 'Both reasons listed after calling ENTWO' );
-	} );
-
 	QUnit.test( 'onMwLoadEnd - simple', function ( assert ) {
 		window.RLPAGEMODULES = [ 'mediawiki.base' ];
 		return navigationTiming.onMwLoadEnd().then( function () {
@@ -437,7 +328,7 @@
 		} );
 	} );
 
-	QUnit.test( 'emitNavTiming - Optional APIs', function ( assert ) {
+	QUnit.test( 'emitNavigationTiming - Optional APIs', function ( assert ) {
 		var clock = this.sandbox.useFakeTimers();
 		var stub = this.sandbox.stub( this.performance, 'getEntriesByType' );
 		stub.withArgs( 'paint' ).returns(
@@ -507,7 +398,7 @@
 		this.sandbox.stub( mw.eventLog, 'logFailure' );
 
 		this.reinit();
-		navigationTiming.emitNavTiming();
+		navigationTiming.emitNavigationTiming();
 
 		clock.tick( 10 );
 
@@ -540,8 +431,7 @@
 
 		var entryMock = { processingStart: 5.4, startTime: 2.9 };
 		var observerMock = { disconnect: function () {} };
-		var oversampleReasonsMock = [ 'foo:bar', 'baz:biz' ];
-		navigationTiming.emitFirstInputDelay( entryMock, observerMock, oversampleReasonsMock );
+		navigationTiming.emitFirstInputDelay( entryMock, observerMock );
 
 		clock.tick( 10 );
 
@@ -551,11 +441,7 @@
 		assert.equal( schemaName, 'FirstInputDelay', 'Schema name: FirstInputDelay' );
 		assert.propEqual( event, {
 			inputDelay: 3,
-			isOversample: true,
-			oversampleReason: [
-				'foo:bar',
-				'baz:biz'
-			],
+			isOversample: false,
 			pageviewToken: '0000ffff0000ffff0000',
 			skin: 'vector'
 		} );
@@ -586,15 +472,6 @@
 		} );
 	} );
 
-	QUnit.test( 'getOversampleReasons - by wiki', function ( assert ) {
-		mw.config.set( 'wgDBname', 'foowiki' );
-		this.sandbox.stub( mw.eventLog, 'randomTokenMatch', function () {
-			return true;
-		} );
-
-		assert.deepEqual( navigationTiming.getOversampleReasons(), [ 'wiki:foowiki' ], 'reasons' );
-	} );
-
 	QUnit.test( 'makeEventWithRequestContext', function ( assert ) {
 		mw.config.set( 'wgUserId', 123 );
 		mw.config.set( 'wgMFMode', 'stable' );
@@ -604,7 +481,7 @@
 		};
 		this.reinit();
 
-		var event = navigationTiming.makeEventWithRequestContext( [] );
+		var event = navigationTiming.makeEventWithRequestContext();
 		assert.propContains( event, {
 			pageviewToken: '0000ffff0000ffff0000',
 			isAnon: false,
@@ -614,11 +491,10 @@
 		} );
 
 		mw.config.set( 'wgUserId', null );
-		event = navigationTiming.makeEventWithRequestContext( [ 'foo:bar', 'baz:biz' ] );
+		event = navigationTiming.makeEventWithRequestContext();
 		assert.propContains( event, {
 			isAnon: true,
-			isOversample: true,
-			oversampleReason: '["foo:bar","baz:biz"]'
+			isOversample: false
 		} );
 	} );
 }() );
