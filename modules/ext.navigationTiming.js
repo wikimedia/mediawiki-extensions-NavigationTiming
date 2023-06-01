@@ -107,69 +107,61 @@
 	 */
 	function getNavTimingLevel1() {
 		var timing = perf && perf.timing;
-		var navStart = timing && timing.navigationStart;
-		var timingData = {};
-
 		if ( !timing ) {
-			return timingData;
+			return {};
 		}
 
-		[
-			'connectEnd',
-			'connectStart',
-			'domComplete',
-			'domInteractive',
-			'fetchStart',
-			'loadEventEnd',
-			'loadEventStart',
-			'requestStart',
-			'responseEnd',
-			'responseStart',
-			'secureConnectionStart'
-		].forEach( function ( marker ) {
-			// Verify the key exists and that it is equal or above zero to avoid submit
-			// of invalid/negative values after subtracting navStart.
-			// While these keys are meant to be timestamps, they may be absent
-			// or 0 where the measured operation did not ocurr.
-			// E.g. secureConnectionStart is 0 when the connection is reused (T176105)
-			var value = timing[ marker ];
-			if ( typeof value === 'number' && value >= 0 ) {
-				if ( marker === 'secureConnectionStart' && value === 0 ) {
-					timingData[ marker ] = 0;
-				} else {
-					timingData[ marker ] = value - navStart;
-				}
-			}
-		} );
-		// If DNS is cached, it will be marked as start/end matching fetchStart.
-		// so this will actually never be 0
-		timingData.dnsLookup = timing.domainLookupEnd - timing.domainLookupStart;
-
-		// Watchout: There are some fields that are handled differently than the rest
-		// * redirectStart/redirectEnd,
-		// * unloadEventStart/unloadEventEnd
-		// * secureConnectionStart
-		// They can be zeroes instead of timestamps.
-		// See https://www.w3.org/TR/navigation-timing-2/
-		if ( timing.redirectStart ) {
-			timingData.redirecting = timing.redirectEnd - timing.redirectStart;
-		} else {
-			timingData.redirecting = 0;
+		// Verify the key exists and that it is equal or above zero to avoid submit
+		// of invalid/negative values after subtracting navStart.
+		// While these keys are meant to be timestamps, they may be absent
+		// or 0 where the measured operation did not ocurr.
+		function validate( value ) {
+			return ( typeof value === 'number' && value >= 0 ) ? value : undefined;
 		}
 
-		if ( timing.unloadEventStart ) {
-			timingData.unload = timing.unloadEventEnd - timing.unloadEventStart;
-		} else {
-			timingData.unload = 0;
-		}
+		var navStart = timing.navigationStart;
+		return {
+			connectEnd: validate( timing.connectEnd - navStart ),
+			connectStart: validate( timing.connectStart - navStart ),
+			domComplete: validate( timing.domComplete - navStart ),
+			domInteractive: validate( timing.domInteractive - navStart ),
+			fetchStart: validate( timing.fetchStart - navStart ),
+			loadEventEnd: validate( timing.loadEventEnd - navStart ),
+			loadEventStart: validate( timing.loadEventStart - navStart ),
+			requestStart: validate( timing.requestStart - navStart ),
+			responseEnd: validate( timing.responseEnd - navStart ),
+			responseStart: validate( timing.responseStart - navStart ),
 
-		// We probably have gaps in the navigation timing data so measure them.
-		timingData.gaps = timing.domainLookupStart - timing.fetchStart;
-		timingData.gaps += timing.connectStart - timing.domainLookupEnd;
-		timingData.gaps += timing.requestStart - timing.connectEnd;
-		timingData.gaps += timing.loadEventStart - timing.domComplete;
+			// It is not safe to unconditionally substract from secureConnectionStart
+			// because the offset it set to 0 when a connection is reused (T176105)
+			secureConnectionStart: timing.secureConnectionStart === 0 ?
+				0 :
+				validate( timing.secureConnectionStart - navStart ),
 
-		return timingData;
+			// It is safe to unconditionally substract for dnsLookup
+			// because when DNS is reused, its start/end offset simply match fetchStart.
+			dnsLookup: timing.domainLookupEnd - timing.domainLookupStart,
+
+			// Watchout: There are some fields that are handled differently than the rest
+			// * redirectStart/redirectEnd,
+			// * unloadEventStart/unloadEventEnd
+			// * secureConnectionStart
+			// They can be zeroes instead of timestamps.
+			// See https://www.w3.org/TR/navigation-timing-2/
+			redirecting: timing.redirectStart ?
+				timing.redirectEnd - timing.redirectStart :
+				0,
+
+			unload: timing.unloadEventStart ?
+				timing.unloadEventEnd - timing.unloadEventStart :
+				0,
+
+			// There are usually gaps between the offsets we measure above.
+			gaps: ( timing.domainLookupStart - timing.fetchStart ) +
+				( timing.connectStart - timing.domainLookupEnd ) +
+				( timing.requestStart - timing.connectEnd ) +
+				( timing.loadEventStart - timing.domComplete )
+		};
 	}
 
 	/**
@@ -496,9 +488,7 @@
 			} );
 		}
 
-		$.extend( event,
-			getNavTimingLevel1()
-		);
+		Object.assign( event, getNavTimingLevel1() );
 
 		mw.eventLog.logEvent( 'NavigationTiming', event );
 	}
