@@ -33,15 +33,14 @@
 	 * @return {Object}
 	 */
 	function makeEventWithRequestContext() {
-		var event = {};
-		event.pageviewToken = mw.user.getPageviewToken();
-		event.isAnon = mw.config.get( 'wgUserId' ) === null;
-
-		// This is old legacy from oversample
-		event.isOversample = false;
+		var event = {
+			pageviewToken: mw.user.getPageviewToken(),
+			isAnon: mw.config.get( 'wgUserId' ) === null,
+			// This is old legacy from oversample
+			isOversample: false
+		};
 
 		var mobileMode = mw.config.get( 'wgMFMode' );
-
 		if ( typeof mobileMode === 'string' && mobileMode.indexOf( 'desktop' ) === -1 ) {
 			// e.g. "stable" or "beta"
 			event.mobileMode = mobileMode;
@@ -61,14 +60,13 @@
 	 * @param {PerformanceObserver} observer
 	 */
 	function emitFirstInputDelay( entry, observer ) {
-		var event = {};
-
-		event.pageviewToken = mw.user.getPageviewToken();
-		// This is old legacy from oversample
-		event.isOversample = false;
-
-		event.inputDelay = Math.round( entry.processingStart - entry.startTime );
-		event.skin = mw.config.get( 'skin' );
+		var event = {
+			inputDelay: Math.round( entry.processingStart - entry.startTime ),
+			skin: mw.config.get( 'skin' ),
+			pageviewToken: mw.user.getPageviewToken(),
+			// This is old legacy from oversample
+			isOversample: false
+		};
 
 		if ( Geo && typeof Geo.country === 'string' ) {
 			event.originCountry = Geo.country;
@@ -88,7 +86,7 @@
 		if ( window.PerformanceObserver ) {
 			performanceObserver = new PerformanceObserver( function ( list, observer ) {
 				var entries = list.getEntries();
-				if ( entries.length > 0 ) {
+				if ( entries[ 0 ] ) {
 					var firstEntry = entries[ 0 ];
 					emitFirstInputDelay( firstEntry, observer );
 				}
@@ -109,7 +107,6 @@
 	function getNavTimingLevel1() {
 		var timing = perf && perf.timing;
 		var navStart = timing && timing.navigationStart;
-
 		var timingData = {};
 
 		if ( !timing ) {
@@ -180,7 +177,6 @@
 	 * @return {number}
 	 */
 	function getCumulativeLayoutShift() {
-
 		var perfObserver = new PerformanceObserver( function () {} );
 
 		// See https://github.com/mmocny/web-vitals/wiki/Snippets-for-LSN-using-PerformanceObserver#max-session-gap1s-limit5s
@@ -215,7 +211,6 @@
 	 * @return {{value: number, element: string}}  When the largest element was painted.
 	 */
 	function getLargestContentfulPaint() {
-
 		var element, value, perfObserver = new PerformanceObserver( function () {
 		} );
 		// See https://github.com/GoogleChrome/web-vitals/blob/v3.1.0/src/onLCP.ts
@@ -233,17 +228,15 @@
 	}
 
 	function getLongTask( firstContentfulPaint ) {
-		var totalEntries, totalDuration, longTasksBeforeFcp, longTasksDurationBeforeFcp,
-
-			perfObserver = new PerformanceObserver( function () {
-			} );
+		var perfObserver = new PerformanceObserver( function () {
+		} );
 		// https://github.com/w3c/longtasks/blob/6d0a5dff7f20083cff74f057822920fd7c731cef/README.md
 		perfObserver.observe( { type: 'longtask', buffered: true } );
 		var entries = perfObserver.takeRecords();
-		totalDuration = 0;
-		totalEntries = entries.length;
-		longTasksBeforeFcp = 0;
-		longTasksDurationBeforeFcp = 0;
+		var totalDuration = 0;
+		var totalEntries = entries.length;
+		var longTasksBeforeFcp = 0;
+		var longTasksDurationBeforeFcp = 0;
 		entries.forEach( function ( entry ) {
 			totalDuration += entry.duration;
 			if ( entry.startTime < firstContentfulPaint ) {
@@ -253,10 +246,12 @@
 		} );
 
 		perfObserver.disconnect();
-		return { totalEntries: totalEntries,
+		return {
+			totalEntries: totalEntries,
 			totalDuration: totalDuration,
 			longTasksBeforeFcp: longTasksBeforeFcp,
-			longTasksDurationBeforeFcp: longTasksDurationBeforeFcp };
+			longTasksDurationBeforeFcp: longTasksDurationBeforeFcp
+		};
 	}
 
 	/**
@@ -291,8 +286,7 @@
 	 * @return {jQuery.Promise}
 	 */
 	function emitCpuBenchmark() {
-		var blob, worker, work,
-			deferred = $.Deferred();
+		var deferred = $.Deferred();
 
 		if ( cpuBenchmarkDone ||
 			!window.Blob ||
@@ -323,11 +317,9 @@
 			postMessage( Math.round( performance.now() - startTime ) );
 		}
 
-		work = 'onmessage = ' + String( onMessage );
-
-		blob = new Blob( [ work ], { type: 'application/javascript' } );
-
-		worker = new Worker( URL.createObjectURL( blob ) );
+		var work = 'onmessage = ' + String( onMessage );
+		var blob = new Blob( [ work ], { type: 'application/javascript' } );
+		var worker = new Worker( URL.createObjectURL( blob ) );
 
 		worker.onmessage = function ( e ) {
 			deferred.resolve( e.data );
