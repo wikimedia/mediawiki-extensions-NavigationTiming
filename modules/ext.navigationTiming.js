@@ -19,34 +19,35 @@
 	var cpuBenchmarkDone;
 
 	/**
-	 * Creates an event object populated containing essential request context information.
-	 * These context fields are consumed by get_navigation_timing_context() in the navtiming daemon
-	 * and allow us to explore the data by facet in Prometheus/Grafana.
+	 * Shared context used by both NavigationTiming and CpuBenchmark schemas.
 	 *
-	 * The populated fields are:
-	 * - pageviewToken: unique token for the pageview to cross-reference the request between schemas
-	 * - isAnon: is the user anonymous or authenticated?
-	 * - isOversample: always false, the oversample is removed since we don't need it in Prometheus
-	 * - mobileMode: which mobile mode is the website in?
-	 * - originCountry: based on IP address, which country was the request made from?
+	 * These context fields are consumed by get_navigation_timing_context() in the navtiming.py
+	 * daemon, and allow us to explore the data by facet in Prometheus/Grafana.
+	 *
+	 * These fields are also used by AS Report (performance/asoranking) to join between
+	 * the two datasets.
 	 *
 	 * @return {Object}
 	 */
-	function makeEventWithRequestContext() {
+	function getNavTimingSharedEvent() {
 		var event = {
+			// unique token for the pageview to cross-reference the request between schemas
 			pageviewToken: mw.user.getPageviewToken(),
+			// is the user anonymous or authenticated?
 			isAnon: mw.config.get( 'wgUserId' ) === null,
 			// This is old legacy from oversample
+			// always false, the oversample is removed since we don't need it in Prometheus
 			isOversample: false
 		};
 
 		var mobileMode = mw.config.get( 'wgMFMode' );
 		if ( typeof mobileMode === 'string' && mobileMode.indexOf( 'desktop' ) === -1 ) {
-			// e.g. "stable" or "beta"
+			// which mode is MobileFrontend in? e.g. "stable" or "beta"
 			event.mobileMode = mobileMode;
 		}
 
 		if ( Geo && typeof Geo.country === 'string' ) {
+			// based on IP address, which country was the request made from?
 			event.originCountry = Geo.country;
 		}
 
@@ -333,7 +334,7 @@
 				return;
 			}
 
-			var event = makeEventWithRequestContext();
+			var event = getNavTimingSharedEvent();
 			event.score = result;
 
 			var batteryPromise = navigator.getBattery ?
@@ -375,7 +376,7 @@
 	 * @see https://meta.wikimedia.org/wiki/Schema:NavigationTiming
 	 */
 	function emitNavigationTiming() {
-		var event = makeEventWithRequestContext();
+		var event = getNavTimingSharedEvent();
 
 		// Properties: MediaWiki
 		//
@@ -683,7 +684,6 @@
 			emitFirstInputDelay: emitFirstInputDelay,
 			onMwLoadEnd: onMwLoadEnd,
 			emitCpuBenchmark: emitCpuBenchmark,
-			makeEventWithRequestContext: makeEventWithRequestContext,
 			reinit: function ( mocks ) {
 				// Reset initial state
 				perf = mocks && mocks.performance || undefined;

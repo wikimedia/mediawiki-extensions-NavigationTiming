@@ -87,12 +87,16 @@
 			requestStart: 250,
 			responseStart: 300,
 			responseEnd: 400,
+			domInteractive: 440,
 			domComplete: 450,
 			loadEventStart: 570,
 			loadEventEnd: 575
 		};
 		var perfObserver = this.sandbox.stub( window, 'PerformanceObserver', function () {} );
 		perfObserver.supportedEntryTypes = [];
+		this.Geo = {
+			country: 'XX'
+		};
 		this.reinit();
 
 		var stub = this.sandbox.stub( mw.eventLog, 'logEvent' );
@@ -110,6 +114,7 @@
 			mediaWikiVersion: '0.0-example',
 			namespaceId: 1,
 			pageviewToken: '0000ffff0000ffff0000',
+			originCountry: 'XX',
 			revId: null,
 			skin: 'vector',
 			// Device/connection metadata
@@ -128,6 +133,7 @@
 			requestStart: 150,
 			responseStart: 200,
 			responseEnd: 300,
+			domInteractive: 340,
 			domComplete: 350,
 			loadEventStart: 470,
 			loadEventEnd: 475,
@@ -156,6 +162,7 @@
 			mediaWikiVersion: '0.0-example',
 			namespaceId: 1,
 			pageviewToken: '0000ffff0000ffff0000',
+			originCountry: 'XX',
 			revId: null,
 			skin: 'vector',
 			// Device/connection metadata (ommitted)
@@ -168,6 +175,7 @@
 			requestStart: 150,
 			responseStart: 200,
 			responseEnd: 300,
+			domInteractive: 340,
 			domComplete: 350,
 			loadEventStart: 470,
 			loadEventEnd: 475,
@@ -193,6 +201,7 @@
 			mediaWikiVersion: '0.0-example',
 			mwSpecialPageName: 'MySpecialPage',
 			pageviewToken: '0000ffff0000ffff0000',
+			originCountry: 'XX',
 			skin: 'vector',
 			// Device/connection metadata (omitted)
 			// Page load
@@ -204,6 +213,7 @@
 			requestStart: 150,
 			responseStart: 200,
 			responseEnd: 300,
+			domInteractive: 340,
 			domComplete: 350,
 			loadEventStart: 470,
 			loadEventEnd: 475,
@@ -453,6 +463,9 @@
 			events.push( { schema: schema, event: event } );
 			return $.Deferred().resolve();
 		} );
+		this.Geo = {
+			country: 'XX'
+		};
 
 		this.reinit();
 		return navigationTiming.emitCpuBenchmark( [] ).then( function () {
@@ -460,6 +473,8 @@
 				[ {
 					schema: 'CpuBenchmark',
 					event: {
+						pageviewToken: '0000ffff0000ffff0000',
+						originCountry: 'XX',
 						isAnon: true,
 						isOversample: false,
 						batteryLevel: 0.2
@@ -469,32 +484,6 @@
 			);
 
 			assert.true( events[ 0 ].event.score > 0, 'event.score is non-zero' );
-		} );
-	} );
-
-	QUnit.test( 'makeEventWithRequestContext', function ( assert ) {
-		mw.config.set( 'wgUserId', 123 );
-		mw.config.set( 'wgMFMode', 'stable' );
-
-		this.Geo = {
-			country: 'XX'
-		};
-		this.reinit();
-
-		var event = navigationTiming.makeEventWithRequestContext();
-		assert.propContains( event, {
-			pageviewToken: '0000ffff0000ffff0000',
-			isAnon: false,
-			isOversample: false,
-			mobileMode: 'stable',
-			originCountry: 'XX'
-		} );
-
-		mw.config.set( 'wgUserId', null );
-		event = navigationTiming.makeEventWithRequestContext();
-		assert.propContains( event, {
-			isAnon: true,
-			isOversample: false
 		} );
 	} );
 }() );
