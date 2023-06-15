@@ -41,8 +41,7 @@
 					"name": "config.json",
 					"config": {
 						"samplingFactor": "NavigationTimingSamplingFactor",
-						"cpuBenchmarkSamplingFactor": "NavigationTimingCpuBenchmarkSamplingFactor",
-						"oversampleFactor": "NavigationTimingOversampleFactor"
+						"cpuBenchmarkSamplingFactor": "NavigationTimingCpuBenchmarkSamplingFactor"
 					}
 				}
 			],
@@ -81,9 +80,6 @@
 	},
 	"config": {
 		"NavigationTimingSamplingFactor": {
-			"value": false
-		},
-		"NavigationTimingOversampleFactor": {
 			"value": false
 		},
 		"NavigationTimingCpuBenchmarkSamplingFactor": {
