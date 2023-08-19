@@ -16,7 +16,7 @@
 	"license-name": "GPL-2.0-or-later",
 	"type": "other",
 	"requires": {
-		"MediaWiki": ">= 1.33.0",
+		"MediaWiki": ">= 1.41",
 		"extensions": {
 			"EventLogging": "*"
 		}
