@@ -2,15 +2,16 @@
 
 namespace MediaWiki\Extension\NavigationTiming;
 
+use MediaWiki\Hook\BeforePageDisplayHook;
 use OutputPage;
 use Skin;
 
-class Hooks {
+class Hooks implements BeforePageDisplayHook {
 	/**
-	 * @param OutputPage &$out
-	 * @param Skin &$skin
+	 * @param OutputPage $out
+	 * @param Skin $skin
 	 */
-	public static function onBeforePageDisplay( &$out, &$skin ) {
+	public function onBeforePageDisplay( $out, $skin ): void {
 		$out->addModules( 'ext.navigationTiming' );
 	}
 }
