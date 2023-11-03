@@ -622,7 +622,7 @@
 			return;
 		}
 
-		var isInSample = mw.eventLog.inSample( config.samplingFactor || 0 );
+		var isInSample = mw.eventLog.pageviewInSample( config.samplingFactor || 0 );
 		if ( !isInSample ) {
 			// NavTiming: Not sampled
 			return;
