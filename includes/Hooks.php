@@ -3,7 +3,7 @@
 namespace MediaWiki\Extension\NavigationTiming;
 
 use MediaWiki\Hook\BeforePageDisplayHook;
-use OutputPage;
+use MediaWiki\Output\OutputPage;
 use Skin;
 
 class Hooks implements BeforePageDisplayHook {
