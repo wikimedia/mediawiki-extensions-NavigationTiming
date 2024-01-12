@@ -48,10 +48,6 @@
 			"dependencies": [
 				"ext.eventLogging",
 				"mediawiki.user"
-			],
-			"targets": [
-				"desktop",
-				"mobile"
 			]
 		}
 	},
