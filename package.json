@@ -7,7 +7,7 @@
 		"test:banana": "banana-checker i18n/"
 	},
 	"devDependencies": {
-		"eslint-config-wikimedia": "0.25.0",
+		"eslint-config-wikimedia": "0.26.0",
 		"grunt-banana-checker": "0.11.0"
 	},
 	"eslintIgnore": [

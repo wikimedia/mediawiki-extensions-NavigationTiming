@@ -22,7 +22,9 @@
 				},
 				deviceMemory: 8,
 				hardwareConcurrency: 4,
-				getBattery: function () { return $.Deferred().resolve( { level: 0.2 } ); }
+				getBattery: function () {
+					return $.Deferred().resolve( { level: 0.2 } );
+				}
 			};
 			this.performance = {
 				now: performance.now.bind( performance ),
@@ -33,8 +35,12 @@
 					type: TYPE_NAVIGATE,
 					redirectCount: 0
 				},
-				getEntriesByType: function () { return []; },
-				getEntriesByName: function () { return []; }
+				getEntriesByType: function () {
+					return [];
+				},
+				getEntriesByName: function () {
+					return [];
+				}
 			};
 			this.reinit = function () {
 				navigationTiming.reinit( {
@@ -378,7 +384,9 @@
 
 		var performanceObserver = this.sandbox.stub( window, 'PerformanceObserver', function () {
 			return {
-				observe: function ( config ) { this.type = config.type; },
+				observe: function ( config ) {
+					this.type = config.type;
+				},
 				disconnect: function () {},
 				takeRecords: function () {
 					if ( this.type === 'layout-shift' ) {
