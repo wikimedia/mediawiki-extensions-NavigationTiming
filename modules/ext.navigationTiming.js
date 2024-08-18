@@ -85,7 +85,7 @@
 		var performanceObserver;
 
 		if ( window.PerformanceObserver ) {
-			performanceObserver = new PerformanceObserver( function ( list, observer ) {
+			performanceObserver = new PerformanceObserver( ( list, observer ) => {
 				var entries = list.getEntries();
 				if ( entries[ 0 ] ) {
 					var firstEntry = entries[ 0 ];
@@ -170,7 +170,7 @@
 	 * @return {number}
 	 */
 	function getCumulativeLayoutShift() {
-		var perfObserver = new PerformanceObserver( function () {} );
+		var perfObserver = new PerformanceObserver( () => {} );
 
 		// See https://github.com/mmocny/web-vitals/wiki/Snippets-for-LSN-using-PerformanceObserver#max-session-gap1s-limit5s
 		// https://github.com/GoogleChrome/web-vitals/blob/v3.1.0/src/onCLS.ts
@@ -180,7 +180,7 @@
 		var curr = 0;
 		var firstTs = Number.NEGATIVE_INFINITY;
 		var prevTs = Number.NEGATIVE_INFINITY;
-		entries.forEach( function ( entry ) {
+		entries.forEach( ( entry ) => {
 			if ( entry.hadRecentInput ) {
 				return;
 			}
@@ -204,7 +204,7 @@
 	 * @return {{value: number, element: string}}  When the largest element was painted.
 	 */
 	function getLargestContentfulPaint() {
-		var element, value, perfObserver = new PerformanceObserver( function () {
+		var element, value, perfObserver = new PerformanceObserver( () => {
 		} );
 		// See https://github.com/GoogleChrome/web-vitals/blob/v3.1.0/src/onLCP.ts
 		perfObserver.observe( { type: 'largest-contentful-paint', buffered: true } );
@@ -221,7 +221,7 @@
 	}
 
 	function getLongTask( firstContentfulPaint ) {
-		var perfObserver = new PerformanceObserver( function () {
+		var perfObserver = new PerformanceObserver( () => {
 		} );
 		// https://github.com/w3c/longtasks/blob/6d0a5dff7f20083cff74f057822920fd7c731cef/README.md
 		perfObserver.observe( { type: 'longtask', buffered: true } );
@@ -230,7 +230,7 @@
 		var totalEntries = entries.length;
 		var longTasksBeforeFcp = 0;
 		var longTasksDurationBeforeFcp = 0;
-		entries.forEach( function ( entry ) {
+		entries.forEach( ( entry ) => {
 			totalDuration += entry.duration;
 			if ( entry.startTime < firstContentfulPaint ) {
 				longTasksBeforeFcp++;
@@ -258,7 +258,7 @@
 
 		// https://github.com/w3c/paint-timing/blob/08005b9ef104918ff372a0c6cc8f5339f6b46906/README.md
 		var entries = perf.getEntriesByType( 'paint' );
-		entries.forEach( function ( entry ) {
+		entries.forEach( ( entry ) => {
 			if ( entry.name === 'first-paint' ) {
 				firstPaint = Math.round( entry.startTime );
 			} else if ( entry.name === 'first-contentful-paint' ) {
@@ -321,7 +321,7 @@
 
 		worker.postMessage( false );
 
-		return deferred.then( function ( result ) {
+		return deferred.then( ( result ) => {
 			if ( !result ) {
 				return;
 			}
@@ -333,11 +333,11 @@
 				navigator.getBattery() :
 				$.Deferred().reject();
 			return batteryPromise.then(
-				function ( battery ) {
+				( battery ) => {
 					event.batteryLevel = battery.level;
 					mw.eventLog.logEvent( 'CpuBenchmark', event );
 				},
-				function () {
+				() => {
 					mw.eventLog.logEvent( 'CpuBenchmark', event );
 				}
 			);
@@ -479,7 +479,7 @@
 			// Support: Safari < 11 (getEntriesByType missing)
 		}
 		if ( navigationEntry && navigationEntry.serverTiming ) {
-			navigationEntry.serverTiming.forEach( function ( entry ) {
+			navigationEntry.serverTiming.forEach( ( entry ) => {
 				if ( entry.name === 'cache' ) {
 					event.cacheResponseType = entry.description;
 				} else if ( entry.name === 'host' ) {
@@ -538,16 +538,14 @@
 		if ( !modules ) {
 			// Fallback for parser cache from 1.32.0-wmf.20 and earlier
 			mw.log.warn( 'Fallback RLPAGEMODULES' );
-			modules = mw.loader.getModuleNames().filter( function ( module ) {
-				return mw.loader.getState( module ) === 'loading';
-			} );
+			modules = mw.loader.getModuleNames().filter( ( module ) => mw.loader.getState( module ) === 'loading' );
 		}
 
 		// Wait for them to complete loading (regardless of failures). First, try a single
 		// mw.loader.using() call. That's efficient, but has the drawback of being rejected
 		// upon first failure. Fall back to tracking each module separately. We usually avoid
 		// that because of high overhead for that internally to mw.loader.
-		mw.loader.using( modules ).done( function () {
+		mw.loader.using( modules ).done( () => {
 			// Use done() and fail() instead of then() because then() is async.
 			// setMwLoadEnd() should happen in the same tick as when the modules
 			// become ready. Using then() would execute it after jQuery's setTimeout,
@@ -561,7 +559,7 @@
 			//   its attention back to the JS event loop.
 			setMwLoadEnd();
 			deferred.resolve();
-		} ).fail( function () {
+		} ).fail( () => {
 			var count = modules.length;
 			function decrement() {
 				count--;
@@ -578,12 +576,12 @@
 	}
 
 	function onLoadComplete( callback ) {
-		onMwLoadEnd().then( function () {
+		onMwLoadEnd().then( () => {
 			// Defer one tick for loadEventEnd to get set.
 			if ( document.readyState === 'complete' ) {
 				setTimeout( callback );
 			} else {
-				window.addEventListener( 'load', function () {
+				window.addEventListener( 'load', () => {
 					setTimeout( callback );
 				} );
 			}
