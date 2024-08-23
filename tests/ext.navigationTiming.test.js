@@ -50,9 +50,7 @@
 				} );
 			};
 
-			this.sandbox.stub( mw.user, 'getPageviewToken', function () {
-				return '0000ffff0000ffff0000';
-			} );
+			this.sandbox.stub( mw.user, 'getPageviewToken', () => '0000ffff0000ffff0000' );
 
 			mw.config.set( 'skin', 'vector' );
 			mw.config.set( 'wgVersion', '0.0-example' );
@@ -98,7 +96,7 @@
 			loadEventStart: 570,
 			loadEventEnd: 575
 		};
-		var perfObserver = this.sandbox.stub( window, 'PerformanceObserver', function () {} );
+		var perfObserver = this.sandbox.stub( window, 'PerformanceObserver', () => {} );
 		perfObserver.supportedEntryTypes = [];
 		this.Geo = {
 			country: 'XX'
@@ -311,9 +309,9 @@
 		assert.false( navigationTiming.isRegularNavigation() );
 	} );
 
-	QUnit.test( 'onMwLoadEnd - simple', function ( assert ) {
+	QUnit.test( 'onMwLoadEnd - simple', ( assert ) => {
 		window.RLPAGEMODULES = [ 'mediawiki.base' ];
-		return navigationTiming.onMwLoadEnd().then( function () {
+		return navigationTiming.onMwLoadEnd().then( () => {
 			assert.true( true, 'called' );
 		} );
 	} );
@@ -328,7 +326,7 @@
 			'test.mwLoadEnd.ok',
 			'test.mwLoadEnd.fail'
 		];
-		this.sandbox.stub( mw, 'requestIdleCallback', function ( fn ) {
+		this.sandbox.stub( mw, 'requestIdleCallback', ( fn ) => {
 			// Run test callback immediately and more reliably
 			fn();
 		} );
@@ -339,7 +337,7 @@
 		mw.loader.state( { 'test.mwLoadEnd.fail': 'error' } );
 		mw.loader.state( { 'test.mwLoadEnd.ok': 'ready' } );
 
-		return promise.then( function () {
+		return promise.then( () => {
 			assert.true( true, 'called' );
 		} );
 	} );
@@ -382,32 +380,30 @@
 			} ]
 		);
 
-		var performanceObserver = this.sandbox.stub( window, 'PerformanceObserver', function () {
-			return {
-				observe: function ( config ) {
-					this.type = config.type;
-				},
-				disconnect: function () {},
-				takeRecords: function () {
-					if ( this.type === 'layout-shift' ) {
-						return [
-							{ startTime: 1000, value: 0.110498 },
-							{ startTime: 1001, value: 0.005231 }
-						];
-					} else if ( this.type === 'largest-contentful-paint' ) {
-						return [
-							{ renderTime: 1000, element: { tagName: 'p' } },
-							{ loadTime: 1100, renderTime: 1200, element: { tagName: 'img' } }
-						];
-					} else if ( this.type === 'longtask' ) {
-						return [
-							{ startTime: 2951, duration: 104 },
-							{ startTime: 3285, duration: 75 }
-						];
-					}
+		var performanceObserver = this.sandbox.stub( window, 'PerformanceObserver', () => ( {
+			observe: function ( config ) {
+				this.type = config.type;
+			},
+			disconnect: function () {},
+			takeRecords: function () {
+				if ( this.type === 'layout-shift' ) {
+					return [
+						{ startTime: 1000, value: 0.110498 },
+						{ startTime: 1001, value: 0.005231 }
+					];
+				} else if ( this.type === 'largest-contentful-paint' ) {
+					return [
+						{ renderTime: 1000, element: { tagName: 'p' } },
+						{ loadTime: 1100, renderTime: 1200, element: { tagName: 'img' } }
+					];
+				} else if ( this.type === 'longtask' ) {
+					return [
+						{ startTime: 2951, duration: 104 },
+						{ startTime: 3285, duration: 75 }
+					];
 				}
-			};
-		} );
+			}
+		} ) );
 
 		performanceObserver.supportedEntryTypes = [ 'layout-shift', 'largest-contentful-paint', 'longtask' ];
 
@@ -467,7 +463,7 @@
 
 	QUnit.test( 'emitCpuBenchmark', function ( assert ) {
 		var events = [];
-		this.sandbox.stub( mw.eventLog, 'logEvent', function ( schema, event ) {
+		this.sandbox.stub( mw.eventLog, 'logEvent', ( schema, event ) => {
 			events.push( { schema: schema, event: event } );
 			return $.Deferred().resolve();
 		} );
@@ -476,7 +472,7 @@
 		};
 
 		this.reinit();
-		return navigationTiming.emitCpuBenchmark( [] ).then( function () {
+		return navigationTiming.emitCpuBenchmark( [] ).then( () => {
 			assert.propContains( events,
 				[ {
 					schema: 'CpuBenchmark',
