@@ -6,6 +6,7 @@
 		"wikimedia/jquery"
 	],
 	"rules": {
-		"no-var": "off"
+		"no-var": "off",
+		"no-jquery/no-done-fail": "warn"
 	}
 }
