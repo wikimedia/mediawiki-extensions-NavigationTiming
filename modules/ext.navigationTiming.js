@@ -40,9 +40,9 @@
 			isOversample: false
 		};
 
+		// MobileFrontend mode (e.g. "stable" or "beta")
 		var mobileMode = mw.config.get( 'wgMFMode' );
-		if ( typeof mobileMode === 'string' && mobileMode.indexOf( 'desktop' ) === -1 ) {
-			// which mode is MobileFrontend in? e.g. "stable" or "beta"
+		if ( mobileMode ) {
 			event.mobileMode = mobileMode;
 		}
 
