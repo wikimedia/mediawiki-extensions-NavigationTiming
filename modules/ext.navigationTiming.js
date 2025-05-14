@@ -434,11 +434,11 @@
 		//
 		// https://developer.mozilla.org/en-US/docs/Web/API/Layout_Instability_API
 		// https://wicg.github.io/layout-instability/#sec-layout-shift
-		if ( window.PerformanceObserver && window.PerformanceObserver.supportedEntryTypes && PerformanceObserver.supportedEntryTypes.indexOf( 'layout-shift' ) > -1 ) {
+		if ( window.PerformanceObserver && window.PerformanceObserver.supportedEntryTypes && PerformanceObserver.supportedEntryTypes.includes( 'layout-shift' ) ) {
 			event.cumulativeLayoutShift = getCumulativeLayoutShift();
 		}
 
-		if ( window.PerformanceObserver && PerformanceObserver.supportedEntryTypes && PerformanceObserver.supportedEntryTypes.indexOf( 'largest-contentful-paint' ) > -1 ) {
+		if ( window.PerformanceObserver && PerformanceObserver.supportedEntryTypes && PerformanceObserver.supportedEntryTypes.includes( 'largest-contentful-paint' ) ) {
 			var lcpInfo = getLargestContentfulPaint();
 			event.largestContentfulPaint = lcpInfo.value;
 			event.largestContentfulPaintElement = lcpInfo.element;
@@ -458,7 +458,7 @@
 			}
 		}
 
-		if ( window.PerformanceObserver && window.PerformanceObserver.supportedEntryTypes && PerformanceObserver.supportedEntryTypes.indexOf( 'longtask' ) > -1 ) {
+		if ( window.PerformanceObserver && window.PerformanceObserver.supportedEntryTypes && PerformanceObserver.supportedEntryTypes.includes( 'longtask' ) ) {
 			var ltInfo = getLongTask( event.firstContentfulPaint );
 			event.longTaskTotalDuration = ltInfo.totalDuration;
 			event.longTaskTotalTasks = ltInfo.totalEntries;
